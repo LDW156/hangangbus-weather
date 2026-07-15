@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#06131f">
+  <meta name="description" content="한강버스 기상·수문·운항환경 통합 대시보드">
+  <title>한강버스 운항환경 대시보드</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">HANGANG BUS OPERATIONS</p>
+      <h1>운항환경 통합 대시보드</h1>
+      <p class="header-sub">기상 · 수문 · 조석 · 노선별 운항판단</p>
+    </div>
+    <div class="header-right">
+      <span id="modeBadge" class="mode-badge">DEMO</span>
+      <span id="updatedAt" class="updated">갱신 확인 중</span>
+    </div>
+  </header>
+
+  <div id="systemBanner" class="system-banner demo">현재 데모 데이터로 표시 중입니다.</div>
+
+  <nav class="quick-nav" aria-label="섹터 이동">
+    <a href="#route">노선판단</a><a href="#jamsu">잠수교</a><a href="#dam">팔당댐</a>
+    <a href="#alerts">특보</a><a href="#rain">강수</a><a href="#wind">바람</a>
+    <a href="#river">수위</a><a href="#tide">조석</a>
+  </nav>
+
+  <main class="container">
+    <section id="route" class="section first">
+      <div class="section-head"><div><span>01</span><h2>노선별 운항 가능 여부</h2></div><small>핵심 위험요소를 종합한 데모 판정</small></div>
+      <div class="route-grid">
+        <article id="eastRoute" class="route-card"></article>
+        <article id="westRoute" class="route-card"></article>
+      </div>
+      <div id="demoControls" class="scenario-controls" hidden>
+        <span>데모 시나리오</span>
+        <button data-scenario="normal">정상</button>
+        <button data-scenario="caution">주의</button>
+        <button data-scenario="stop">운항불가</button>
+      </div>
+    </section>
+
+    <section id="jamsu" class="section">
+      <div class="section-head"><div><span>02</span><h2>잠수교 통과높이</h2></div><small>동부선 운항판단 핵심값</small></div>
+      <div class="jamsu-layout">
+        <article id="jamsuHero" class="jamsu-hero"></article>
+        <article class="panel chart-panel">
+          <div class="panel-title"><h3>최근 수위 추이</h3><span id="jamsuChartMeta">10분 간격</span></div>
+          <svg id="jamsuChart" viewBox="0 0 600 190" role="img" aria-label="잠수교 수위 추이"></svg>
+          <div class="chart-legend"><span class="line water"></span>수위 <span class="line caution"></span>주의 4.10m <span class="line stop"></span>불가 4.46m</div>
+        </article>
+      </div>
+    </section>
+
+    <section id="dam" class="section">
+      <div class="section-head"><div><span>03</span><h2>팔당댐 수문정보</h2></div><small>유입량·방류량·증감·추이</small></div>
+      <div id="damMetrics" class="metric-grid four"></div>
+      <article class="panel chart-panel top-gap">
+        <div class="panel-title"><h3>유입량·방류량 추이</h3><span id="damTrendText"></span></div>
+        <svg id="damChart" viewBox="0 0 800 220" role="img" aria-label="팔당댐 유입량 방류량 추이"></svg>
+        <div class="chart-legend"><span class="line inflow"></span>유입량 <span class="line outflow"></span>방류량 <span class="line east"></span>동부 2,000 <span class="line west"></span>서부 3,000</div>
+      </article>
+      <article class="panel table-panel top-gap">
+        <div class="panel-title"><h3>유입량·방류량 시각별 비교</h3><span>현재·10분·30분·1시간</span></div>
+        <div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>유입량</th><th>방류량</th><th>유입-방류</th></tr></thead><tbody id="damComparisonBody"></tbody></table></div>
+      </article>
+    </section>
+
+    <section id="alerts" class="section">
+      <div class="section-head"><div><span>04</span><h2>기상특보·예비특보</h2></div><small>공식 특보와 내부 사전경보 구분</small></div>
+      <div id="alertList" class="alert-list"></div>
+    </section>
+
+    <section id="rain" class="section">
+      <div class="section-head"><div><span>05</span><h2>예상 강수량</h2></div><small>서부선·동부선 구분</small></div>
+      <div id="rainCards" class="sector-grid"></div>
+    </section>
+
+    <section id="wind" class="section">
+      <div class="section-head"><div><span>06</span><h2>선착장별 풍향·풍속</h2></div><small>평균풍속·최대순간풍속</small></div>
+      <div id="windGrid" class="station-grid"></div>
+    </section>
+
+    <section id="river" class="section">
+      <div class="section-head"><div><span>07</span><h2>한강 수위</h2></div><small>현재값·변화량·갱신상태</small></div>
+      <div id="riverGrid" class="metric-grid two"></div>
+    </section>
+
+    <section id="tide" class="section">
+      <div class="section-head"><div><span>08</span><h2>인천 조석</h2></div><small>만조·간조·대조기·중첩위험</small></div>
+      <div id="tideGrid" class="metric-grid four"></div>
+      <article class="panel table-panel top-gap">
+        <div class="panel-title"><h3>조석 전후 시각 비교</h3><span>이전·현재·다음 이벤트</span></div>
+        <div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>조위</th><th>비교</th></tr></thead><tbody id="tideComparisonBody"></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="section data-state">
+      <div class="section-head"><div><span>09</span><h2>데이터 상태</h2></div><small>갱신 지연 시 운항판단 사용 금지</small></div>
+      <div id="healthGrid" class="health-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>주의:</strong> 데모 화면의 수치와 풍속·강수 판정값은 검증용입니다. 실제 운항판단은 회사 지침과 현장 확인을 우선합니다.
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="data/demo-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
