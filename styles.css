@@ -8,3 +8,336 @@
 @media(max-width:850px){.detail-grid.three{grid-template-columns:repeat(2,1fr)}.comparison-grid{grid-template-columns:1fr 1fr}.hour-grid{grid-template-columns:repeat(4,minmax(70px,1fr))}}
 @media(max-width:600px){.comparison-grid{grid-template-columns:1fr}.detail-grid.three{grid-template-columns:1fr 1fr}.wind-compare-grid{grid-template-columns:1fr}.station-grid{grid-template-columns:1fr 1fr}.hour-grid{grid-template-columns:repeat(3,minmax(68px,1fr))}}
 @media(max-width:430px){.station-grid{grid-template-columns:1fr}.detail-grid.three{grid-template-columns:1fr 1fr}}
+/* =========================================================
+   한강버스 대시보드 밝은 업무용 테마
+   styles.css 최하단에 추가
+========================================================= */
+
+:root {
+  color-scheme: light;
+
+  --bg: #eef2f5;
+  --surface: #ffffff;
+  --surface-sub: #f6f8fa;
+  --surface-strong: #e8eef3;
+
+  --border: #cbd5df;
+  --border-dark: #aab8c4;
+
+  --text: #17212b;
+  --text-sub: #526474;
+  --text-muted: #758695;
+
+  --primary: #176da5;
+  --primary-dark: #0d537f;
+  --primary-light: #e4f1f8;
+
+  --normal: #168454;
+  --normal-bg: #e5f5ec;
+
+  --caution: #b96a05;
+  --caution-bg: #fff3dc;
+
+  --danger: #c7353e;
+  --danger-bg: #fde8e9;
+
+  --info: #176da5;
+  --info-bg: #e4f1f8;
+
+  --shadow: 0 2px 8px rgba(20, 40, 60, 0.08);
+}
+
+/* 전체 화면 */
+html,
+body {
+  background: #eef2f5 !important;
+  color: #17212b !important;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* 상단 헤더 */
+.app-header {
+  background: #ffffff !important;
+  color: #17212b !important;
+  border-bottom: 1px solid #cbd5df !important;
+  box-shadow: 0 2px 8px rgba(20, 40, 60, 0.06) !important;
+}
+
+.app-header h1 {
+  color: #17212b !important;
+}
+
+.eyebrow {
+  color: #176da5 !important;
+}
+
+.header-sub,
+.updated {
+  color: #607383 !important;
+}
+
+/* DEMO 표시 */
+.mode-badge {
+  background: #e4f1f8 !important;
+  border: 1px solid #9dc5dc !important;
+  color: #0d5c8b !important;
+}
+
+/* 시스템 배너 */
+.system-banner {
+  background: #ffffff !important;
+  color: #374957 !important;
+  border-bottom: 1px solid #cbd5df !important;
+}
+
+.system-banner.demo {
+  background: #fff4dc !important;
+  color: #7a4d05 !important;
+  border-color: #e1bf75 !important;
+}
+
+/* 상단 빠른 이동 메뉴 */
+.quick-nav {
+  background: rgba(238, 242, 245, 0.96) !important;
+  border-bottom: 1px solid #cbd5df !important;
+  backdrop-filter: blur(8px);
+}
+
+.quick-nav a {
+  background: #ffffff !important;
+  color: #334655 !important;
+  border: 1px solid #cbd5df !important;
+  box-shadow: none !important;
+}
+
+.quick-nav a:hover {
+  background: #e4f1f8 !important;
+  color: #0d5c8b !important;
+  border-color: #8ebbd5 !important;
+}
+
+/* 각 섹터 */
+.section {
+  color: #17212b !important;
+}
+
+.section-head h2 {
+  color: #17212b !important;
+}
+
+.section-head > div > span {
+  background: #176da5 !important;
+  color: #ffffff !important;
+}
+
+.section-head small {
+  color: #687b8b !important;
+}
+
+/* 공통 카드 */
+.route-card,
+.panel,
+.jamsu-hero,
+.metric-card,
+.sector-card,
+.station-card,
+.alert-card,
+.health-card,
+.health-item {
+  background: #ffffff !important;
+  color: #17212b !important;
+  border: 1px solid #cbd5df !important;
+  box-shadow: 0 2px 8px rgba(20, 40, 60, 0.07) !important;
+}
+
+/* 카드 내부 보조 글자 */
+.route-card small,
+.panel small,
+.jamsu-hero small,
+.metric-card small,
+.sector-card small,
+.station-card small,
+.health-card small,
+.health-item small,
+.metric-label,
+.card-label,
+.sub-value,
+.chart-meta {
+  color: #667988 !important;
+}
+
+/* 큰 숫자 */
+.metric-value,
+.main-value,
+.route-status,
+.jamsu-value {
+  color: #17212b !important;
+}
+
+/* 시나리오 버튼 */
+.scenario-controls {
+  background: #ffffff !important;
+  border: 1px solid #cbd5df !important;
+}
+
+.scenario-controls span {
+  color: #526474 !important;
+}
+
+.scenario-controls button {
+  background: #f5f7f9 !important;
+  color: #334655 !important;
+  border: 1px solid #bdc9d3 !important;
+}
+
+.scenario-controls button:hover,
+.scenario-controls button.active {
+  background: #176da5 !important;
+  color: #ffffff !important;
+  border-color: #176da5 !important;
+}
+
+/* 표 */
+.table-panel {
+  background: #ffffff !important;
+}
+
+.data-table {
+  color: #263746 !important;
+}
+
+.data-table th {
+  background: #e8eef3 !important;
+  color: #344958 !important;
+  border-bottom: 1px solid #b9c6d0 !important;
+}
+
+.data-table td {
+  background: #ffffff !important;
+  color: #263746 !important;
+  border-bottom: 1px solid #e0e6eb !important;
+}
+
+.data-table tbody tr:hover td {
+  background: #f2f7fa !important;
+}
+
+/* 그래프 영역 */
+.chart-panel {
+  background: #ffffff !important;
+}
+
+.chart-panel svg {
+  background: #f8fafb !important;
+  border: 1px solid #dde5eb !important;
+  border-radius: 8px;
+}
+
+.chart-legend,
+.panel-title span {
+  color: #647786 !important;
+}
+
+/* 상태별 카드 */
+.status-normal,
+.route-card.normal,
+.metric-card.normal,
+.station-card.normal {
+  background: #edf8f2 !important;
+  border-color: #91c9aa !important;
+}
+
+.status-caution,
+.route-card.caution,
+.metric-card.caution,
+.station-card.caution {
+  background: #fff6e5 !important;
+  border-color: #dfbd72 !important;
+}
+
+.status-stop,
+.status-danger,
+.route-card.stop,
+.route-card.danger,
+.metric-card.stop,
+.station-card.stop {
+  background: #fdecee !important;
+  border-color: #dda0a5 !important;
+}
+
+/* 상태 글자 */
+.normal,
+.status-normal-text {
+  color: #168454 !important;
+}
+
+.caution,
+.status-caution-text {
+  color: #a85e04 !important;
+}
+
+.stop,
+.danger,
+.status-stop-text {
+  color: #c12e38 !important;
+}
+
+/* 특보 */
+.alert-list {
+  color: #17212b !important;
+}
+
+.alert-card {
+  background: #ffffff !important;
+}
+
+.alert-card.official {
+  border-left: 5px solid #c7353e !important;
+}
+
+.alert-card.preliminary {
+  border-left: 5px solid #c48119 !important;
+}
+
+.alert-card.internal {
+  border-left: 5px solid #176da5 !important;
+}
+
+/* 데이터 상태 */
+.data-state {
+  background: transparent !important;
+}
+
+.health-grid {
+  color: #17212b !important;
+}
+
+/* 스크롤바 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #edf1f4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #afbdc8;
+  border-radius: 10px;
+  border: 2px solid #edf1f4;
+}
+
+/* 하단 주의문 */
+footer {
+  background: #e4e9ed !important;
+  color: #4e606e !important;
+  border-top: 1px solid #c4d0d9 !important;
+}
+
+footer strong {
+  color: #b52b35 !important;
+}
