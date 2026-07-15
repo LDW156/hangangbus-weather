@@ -473,3 +473,131 @@ footer strong {
   background: #e8f4fa !important;
   color: #163d55 !important;
 }
+/* =========================================================
+   한강 수위 · 인천 조석 카드 강제 밝은 테마
+========================================================= */
+
+/* 카드 자체 */
+#riverGrid > *,
+#tideGrid > * {
+  background: #ffffff !important;
+  color: #17212b !important;
+  border: 1px solid #c7d4de !important;
+  box-shadow: 0 2px 7px rgba(20, 40, 60, 0.08) !important;
+}
+
+/* 카드 안 모든 기본 글자 */
+#riverGrid > * h3,
+#riverGrid > * h4,
+#riverGrid > * p,
+#riverGrid > * span,
+#riverGrid > * small,
+#riverGrid > * strong,
+#riverGrid > * b,
+#riverGrid > * div,
+
+#tideGrid > * h3,
+#tideGrid > * h4,
+#tideGrid > * p,
+#tideGrid > * span,
+#tideGrid > * small,
+#tideGrid > * strong,
+#tideGrid > * b,
+#tideGrid > * div {
+  color: #263a48 !important;
+}
+
+/* 카드 제목 */
+#riverGrid > * h3,
+#riverGrid > * h4,
+#tideGrid > * h3,
+#tideGrid > * h4 {
+  color: #17212b !important;
+  font-weight: 800 !important;
+}
+
+/* 현재 수위, 만조·간조 시각 등 큰 값 */
+#riverGrid .metric-value,
+#riverGrid .value,
+#riverGrid .main-value,
+#riverGrid strong,
+
+#tideGrid .metric-value,
+#tideGrid .value,
+#tideGrid .main-value,
+#tideGrid strong {
+  color: #176da5 !important;
+}
+
+/* 관측시각·자료시각 */
+#riverGrid small,
+#riverGrid .data-time,
+#riverGrid .metric-time,
+
+#tideGrid small,
+#tideGrid .data-time,
+#tideGrid .metric-time {
+  color: #6a7e8d !important;
+}
+
+/* 10분·30분·1시간 비교행 */
+#riverGrid .row,
+#riverGrid .comparison-row,
+#riverGrid li {
+  border-bottom: 1px solid #dce5eb !important;
+  color: #334a59 !important;
+}
+
+#riverGrid .row:last-child,
+#riverGrid .comparison-row:last-child,
+#riverGrid li:last-child {
+  border-bottom: 0 !important;
+}
+
+/* 조석 카드 내부 구분선 */
+#tideGrid .row,
+#tideGrid .comparison-row,
+#tideGrid li {
+  border-bottom: 1px solid #dce5eb !important;
+}
+
+/* 대조기·주의 상태만 별도 강조 */
+#tideGrid .caution,
+#tideGrid .warning,
+#tideGrid .status-caution {
+  color: #a85e04 !important;
+}
+
+/* 정상 상승·하강 수치 */
+#riverGrid .positive,
+#riverGrid .increase {
+  color: #c13b42 !important;
+}
+
+#riverGrid .negative,
+#riverGrid .decrease {
+  color: #176da5 !important;
+}
+
+/* 조석 중첩 위험 카드 */
+#tideGrid > *.caution,
+#tideGrid > *.warning,
+#tideGrid > *.danger {
+  background: #fff4df !important;
+  border-color: #ddb66b !important;
+}
+
+/* 한강 수위 카드 현재값 강조 */
+#riverGrid > *:first-child {
+  border-left: 5px solid #176da5 !important;
+}
+
+/* 인천 조석 만조 카드 */
+#tideGrid > *:first-child {
+  border-left: 5px solid #176da5 !important;
+}
+
+/* 인천 조석 위험판단 카드 */
+#tideGrid > *:last-child {
+  border-left: 5px solid #c47a14 !important;
+}
