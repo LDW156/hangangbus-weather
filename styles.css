@@ -1,321 +1,1303 @@
-:root{--bg:#06131f;--bg2:#081a28;--panel:#0c2030;--panel2:#10283a;--line:#29485f;--text:#eff8fe;--muted:#91a8b9;--green:#47ce8b;--yellow:#f1c75b;--orange:#f29a52;--red:#ef646b;--blue:#55b7ec;--purple:#ac8afc;--shadow:0 18px 42px rgba(0,0,0,.23)}
-*{box-sizing:border-box}html{scroll-behavior:smooth;background:var(--bg)}body{margin:0;color:var(--text);background:radial-gradient(circle at 20% -10%,rgba(65,151,205,.18),transparent 33%),linear-gradient(180deg,#071725,#06131f 45%);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;min-height:100vh}.app-header{max-width:1180px;margin:auto;padding:20px 16px 12px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.eyebrow{font-size:10px;letter-spacing:.16em;color:#6fbce7;font-weight:900;margin:0 0 5px}.app-header h1{font-size:25px;letter-spacing:-.05em;margin:0}.header-sub{font-size:11px;color:var(--muted);margin:5px 0 0}.header-right{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.mode-badge,.updated{font-size:10px;font-weight:850;border-radius:8px;padding:7px 9px;border:1px solid var(--line);background:#0b1c29;color:#bad0df}.mode-badge{color:#f5d68e;border-color:#654f25;background:#2b2111}.system-banner{max-width:1148px;margin:0 auto 10px;padding:9px 12px;border-radius:11px;font-size:10.5px;border:1px solid}.system-banner.demo{border-color:#665026;background:#261e10;color:#f2d398}.system-banner.live{border-color:#276049;background:#10281f;color:#aee9ca}.system-banner.error{border-color:#77343a;background:#2b1519;color:#ffc0c3}.quick-nav{position:sticky;top:0;z-index:20;display:flex;gap:7px;overflow:auto;max-width:1180px;margin:auto;padding:8px 16px;background:rgba(6,19,31,.94);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.04)}.quick-nav a{flex:0 0 auto;text-decoration:none;color:#c7dae6;border:1px solid var(--line);background:#0b1e2c;border-radius:9px;padding:8px 10px;font-size:10.5px;font-weight:800}.container{max-width:1180px;margin:auto;padding:0 16px 42px}.section{scroll-margin-top:60px;margin-top:22px}.section.first{margin-top:12px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 2px 9px}.section-head>div{display:flex;align-items:center;gap:8px}.section-head span{width:25px;height:25px;display:grid;place-items:center;border:1px solid #31536a;background:#0a2131;border-radius:8px;font-size:9px;color:#87c8ec;font-weight:900}.section-head h2{font-size:16px;letter-spacing:-.035em;margin:0}.section-head small{font-size:9.5px;color:var(--muted)}.route-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.route-card{border-radius:17px;padding:18px;border:1px solid var(--line);background:linear-gradient(140deg,#0d2536,#091925);box-shadow:var(--shadow);position:relative;overflow:hidden}.route-card:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-90px;top:-105px;background:rgba(255,255,255,.045)}.route-name{font-size:12px;color:#abc0cf;font-weight:800}.route-status{font-size:29px;font-weight:950;letter-spacing:-.06em;margin:4px 0 5px}.route-card.normal{border-color:#27654b}.route-card.caution{border-color:#725d2e}.route-card.stop{border-color:#7b333b}.normal .route-status,.good{color:var(--green)}.caution .route-status,.warn{color:var(--yellow)}.stop .route-status,.danger{color:var(--red)}.route-reasons{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}.route-reasons li{font-size:10.5px;color:#bdd0dc;padding-left:13px;position:relative}.route-reasons li:before{content:"";position:absolute;left:0;top:.55em;width:5px;height:5px;border-radius:50%;background:#6aaed5}.scenario-controls{display:flex;align-items:center;gap:7px;margin-top:9px;padding:8px;border-radius:11px;border:1px dashed #36556b;background:rgba(9,28,41,.55)}.scenario-controls span{font-size:10px;color:var(--muted);font-weight:800;margin-right:2px}.scenario-controls button{border:1px solid #35566d;background:#102b3e;color:#d6ebf8;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:850;cursor:pointer}.scenario-controls button.active{border-color:#78bce4;background:#17405a}.jamsu-layout{display:grid;grid-template-columns:.78fr 1.22fr;gap:10px}.jamsu-hero,.panel{border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,var(--panel),#091925);padding:15px}.jamsu-hero{display:flex;flex-direction:column;justify-content:space-between}.jamsu-label{font-size:10px;color:var(--muted);font-weight:800}.clearance{font-size:43px;font-weight:950;letter-spacing:-.06em;margin:3px 0}.jamsu-status{font-size:15px;font-weight:900}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px}.detail{border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(0,0,0,.12);padding:9px}.detail span{display:block;color:var(--muted);font-size:9px}.detail b{font-size:13px}.panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}.panel-title h3{font-size:12px;margin:0}.panel-title span{font-size:9px;color:var(--muted)}.chart-panel svg{display:block;width:100%;height:190px}.chart-grid{stroke:#223d51;stroke-width:1}.chart-axis{fill:#718b9e;font-size:9px}.chart-line{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.chart-fill{opacity:.09}.chart-legend{display:flex;gap:13px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:9px;margin-top:2px}.line{display:inline-block;width:15px;height:3px;border-radius:3px;margin-right:4px;vertical-align:middle}.line.water{background:var(--blue)}.line.caution{background:var(--yellow)}.line.stop{background:var(--red)}.line.inflow{background:var(--orange)}.line.outflow{background:var(--blue)}.line.east{background:var(--yellow)}.line.west{background:var(--red)}.metric-grid{display:grid;gap:9px}.metric-grid.four{grid-template-columns:repeat(4,1fr)}.metric-grid.two{grid-template-columns:repeat(2,1fr)}.metric{border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,var(--panel),#091925);padding:13px}.metric-label{font-size:9.5px;color:var(--muted);font-weight:750}.metric-value{font-size:22px;font-weight:900;margin:4px 0 2px}.metric-sub{font-size:9.5px;color:#92aabc}.top-gap{margin-top:9px}.alert-list{display:grid;gap:8px}.alert-card{border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:13px;background:var(--panel);padding:12px}.alert-card.watch{border-left-color:var(--yellow)}.alert-card.advisory{border-left-color:var(--orange)}.alert-card.warning{border-left-color:var(--red)}.alert-card.internal{border-left-color:var(--purple)}.alert-top{display:flex;justify-content:space-between;gap:8px}.alert-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}.tag{font-size:8.5px;border-radius:99px;padding:3px 6px;font-weight:900;background:#17364b;color:#c7e6f8}.tag.internal{background:#332652;color:#d5c5ff}.alert-card h3{font-size:13px;margin:0}.alert-time{font-size:9px;color:var(--muted);white-space:nowrap}.alert-card p{font-size:10.5px;color:#bcd0dc;line-height:1.5;margin:7px 0 0}.empty-card{border:1px dashed #35556a;border-radius:13px;padding:20px;text-align:center;color:var(--muted);font-size:10.5px;background:rgba(9,29,43,.45)}.sector-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.sector-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:13px}.sector-title{display:flex;align-items:center;justify-content:space-between}.sector-title h3{font-size:13px;margin:0}.sector-title span{font-size:9px;color:var(--muted)}.rain-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}.rain-item{padding:8px 6px;border-radius:9px;background:#091927;border:1px solid rgba(255,255,255,.06);text-align:center}.rain-item b{display:block;font-size:13px}.rain-item span{font-size:8px;color:var(--muted)}.bars{height:90px;display:flex;gap:5px;align-items:end;padding-top:7px;border-bottom:1px solid #29465b}.bar-wrap{height:100%;flex:1;display:flex;align-items:end;position:relative}.bar{width:100%;min-height:2px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#72c5f0,#357ca6)}.bar-wrap small{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:7.5px;color:#71899a}.station-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.station-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:11px}.station-head{display:flex;justify-content:space-between;gap:6px}.station-head h3{font-size:12px;margin:0}.sector-pill{font-size:8px;color:#9bcbe7;background:#123248;border-radius:99px;padding:3px 6px}.wind-main{font-size:18px;font-weight:900;margin:8px 0 3px}.wind-sub{font-size:9px;color:var(--muted)}.health-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.health-card{border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:10px}.health-card span{display:block;color:var(--muted);font-size:9px}.health-card b{font-size:12px}footer{max-width:1148px;margin:0 auto 32px;border-top:1px solid #1f394b;padding:13px 0;color:#71899a;font-size:9.5px;line-height:1.5}
-@media(max-width:850px){.metric-grid.four{grid-template-columns:repeat(2,1fr)}.station-grid{grid-template-columns:repeat(2,1fr)}.jamsu-layout{grid-template-columns:1fr}.health-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.app-header{padding-top:15px}.app-header h1{font-size:20px}.route-grid,.sector-grid{grid-template-columns:1fr}.section-head small{display:none}.route-status{font-size:25px}.metric-grid.two{grid-template-columns:1fr}.rain-summary{grid-template-columns:repeat(5,1fr);gap:3px}.rain-item{padding:7px 2px}.clearance{font-size:38px}footer{margin-left:16px;margin-right:16px}}
-@media(max-width:600px){.app-header{flex-direction:column;gap:10px}.header-right{justify-content:flex-start}.app-header h1{white-space:normal}}
-/* V2 시간축·비교값 */
-.data-time{font-size:8.7px;color:#7894a8;margin-bottom:7px;line-height:1.35}.route-card-time{font-size:8.5px;color:#718da0;margin-bottom:5px}.detail-grid.three{grid-template-columns:repeat(3,1fr)}.comparison-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.comparison-cell{border:1px solid rgba(255,255,255,.07);background:#081a27;border-radius:9px;padding:8px}.comparison-cell span,.comparison-cell b,.comparison-cell em{display:block}.comparison-cell span{font-size:8px;color:var(--muted)}.comparison-cell b{font-size:12px;margin:3px 0}.comparison-cell em{font-size:8px;color:#8fa7b8;font-style:normal}.table-scroll{overflow:auto}.data-table{width:100%;border-collapse:collapse;min-width:560px;font-size:9.5px}.data-table th,.data-table td{text-align:left;padding:8px;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}.data-table th{color:#8fa8ba;font-weight:800;background:#091927}.data-table td{color:#c6d7e2}.data-table tr.current-row td{background:rgba(85,183,236,.08);color:#edf8ff;font-weight:800}.table-panel{padding-bottom:10px}.alert-period{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.07);font-size:8.7px;color:#8fa6b7}.alert-period b{color:#cbdde8}.bar-wrap{min-width:22px}.bar-wrap .bar-value{position:absolute;bottom:calc(var(--bar-height, 0%) + 3px);left:50%;transform:translateX(-50%);font-size:7px;color:#b9cedc}.bar-wrap.observed .bar{background:linear-gradient(180deg,#7795a8,#435d6f)}.bar-wrap.current .bar{background:linear-gradient(180deg,#f1c75b,#a97820)}.bar-wrap.forecast .bar{background:linear-gradient(180deg,#72c5f0,#357ca6)}.bar-value{top:-11px;bottom:auto!important}.bar-legend{display:flex;gap:8px;align-items:center;font-size:8px;color:var(--muted);margin-top:18px}.obs-dot,.current-dot,.forecast-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:2px}.obs-dot{background:#6f8b9e}.current-dot{background:var(--yellow)}.forecast-dot{background:var(--blue)}.hour-grid{display:grid;grid-template-columns:repeat(6,minmax(70px,1fr));gap:5px;overflow:auto;margin-top:8px;padding-bottom:2px}.hour-cell{border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:6px;background:#091927}.hour-cell span,.hour-cell b,.hour-cell em{display:block}.hour-cell span{font-size:8px;color:var(--muted)}.hour-cell b{font-size:11px;margin:2px 0}.hour-cell em{font-size:7px;color:#6f8da1;font-style:normal}.hour-cell.current{border-color:#78652f}.wind-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.wind-compare{border:1px solid rgba(255,255,255,.07);background:#091927;border-radius:8px;padding:6px}.wind-compare span,.wind-compare b,.wind-compare em{display:block}.wind-compare span{font-size:7.5px;color:var(--muted)}.wind-compare b{font-size:9.5px;margin:2px 0}.wind-compare em{font-size:7.5px;color:#7e9aad;font-style:normal}.comparison-list{display:grid;gap:5px;margin-top:9px}.comparison-list>div{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.06)}.comparison-list span{font-size:8.5px;color:var(--muted)}.comparison-list b{font-size:10px}.comparison-list em{font-size:8.5px;font-style:normal;color:#91a9b9}.event-countdown{margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);font-size:8.5px;color:#8fa7b8}.health-card em{display:block;font-size:8px;color:#7893a6;font-style:normal;margin-top:4px}
-@media(max-width:850px){.detail-grid.three{grid-template-columns:repeat(2,1fr)}.comparison-grid{grid-template-columns:1fr 1fr}.hour-grid{grid-template-columns:repeat(4,minmax(70px,1fr))}}
-@media(max-width:600px){.comparison-grid{grid-template-columns:1fr}.detail-grid.three{grid-template-columns:1fr 1fr}.wind-compare-grid{grid-template-columns:1fr}.station-grid{grid-template-columns:1fr 1fr}.hour-grid{grid-template-columns:repeat(3,minmax(68px,1fr))}}
-@media(max-width:430px){.station-grid{grid-template-columns:1fr}.detail-grid.three{grid-template-columns:1fr 1fr}}
 /* =========================================================
-   한강버스 대시보드 밝은 업무용 테마
-   styles.css 최하단에 추가
+   한강버스 운항환경 대시보드
+   밝은 업무용 통합 테마 · FULL REPLACEMENT
+   기존 styles.css 전체를 이 파일로 교체
 ========================================================= */
 
 :root {
   color-scheme: light;
 
-  --bg: #eef2f5;
+  --bg: #eef3f7;
+  --bg-soft: #f6f8fa;
   --surface: #ffffff;
-  --surface-sub: #f6f8fa;
-  --surface-strong: #e8eef3;
+  --surface-soft: #f3f7fa;
+  --surface-strong: #e7eef3;
 
-  --border: #cbd5df;
-  --border-dark: #aab8c4;
+  --line: #c8d4de;
+  --line-soft: #dde5eb;
+  --line-strong: #aabac6;
 
-  --text: #17212b;
-  --text-sub: #526474;
-  --text-muted: #758695;
+  --text: #182733;
+  --text-sub: #405667;
+  --muted: #6a7f8f;
 
-  --primary: #176da5;
+  --primary: #176fa6;
   --primary-dark: #0d537f;
-  --primary-light: #e4f1f8;
+  --primary-soft: #e4f1f8;
 
-  --normal: #168454;
-  --normal-bg: #e5f5ec;
+  --green: #178655;
+  --green-soft: #e9f7f0;
 
-  --caution: #b96a05;
-  --caution-bg: #fff3dc;
+  --yellow: #a96600;
+  --yellow-soft: #fff3d8;
 
-  --danger: #c7353e;
-  --danger-bg: #fde8e9;
+  --orange: #bf6415;
+  --orange-soft: #fff0e3;
 
-  --info: #176da5;
-  --info-bg: #e4f1f8;
+  --red: #c4313b;
+  --red-soft: #fdebed;
 
-  --shadow: 0 2px 8px rgba(20, 40, 60, 0.08);
+  --blue: #2585bb;
+  --blue-soft: #e8f4fa;
+
+  --purple: #7455b5;
+  --purple-soft: #f1ecfb;
+
+  --shadow: 0 2px 9px rgba(25, 55, 75, 0.08);
+  --shadow-strong: 0 5px 18px rgba(25, 55, 75, 0.11);
 }
 
-/* 전체 화면 */
-html,
-body {
-  background: #eef2f5 !important;
-  color: #17212b !important;
+/* =========================================================
+   기본
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);
 }
 
 body {
   min-height: 100vh;
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 15% -15%, rgba(64, 151, 199, 0.12), transparent 28%),
+    linear-gradient(180deg, #f6f9fb 0%, var(--bg) 46%);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Noto Sans KR",
+    sans-serif;
 }
 
-/* 상단 헤더 */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* =========================================================
+   상단 헤더
+========================================================= */
+
 .app-header {
-  background: #ffffff !important;
-  color: #17212b !important;
-  border-bottom: 1px solid #cbd5df !important;
-  box-shadow: 0 2px 8px rgba(20, 40, 60, 0.06) !important;
-}
-
-.app-header h1 {
-  color: #17212b !important;
+  max-width: 1180px;
+  margin: auto;
+  padding: 20px 16px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .eyebrow {
-  color: #176da5 !important;
+  margin: 0 0 5px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
 }
 
-.header-sub,
+.app-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 25px;
+  letter-spacing: -0.05em;
+}
+
+.header-sub {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.header-right {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mode-badge,
 .updated {
-  color: #607383 !important;
+  padding: 7px 9px;
+  color: var(--text-sub);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 10px;
+  font-weight: 850;
 }
 
-/* DEMO 표시 */
 .mode-badge {
-  background: #e4f1f8 !important;
-  border: 1px solid #9dc5dc !important;
-  color: #0d5c8b !important;
+  color: #815300;
+  background: var(--yellow-soft);
+  border-color: #ddb96b;
 }
 
-/* 시스템 배너 */
+/* =========================================================
+   시스템 배너
+========================================================= */
+
 .system-banner {
-  background: #ffffff !important;
-  color: #374957 !important;
-  border-bottom: 1px solid #cbd5df !important;
+  max-width: 1148px;
+  margin: 0 auto 10px;
+  padding: 9px 12px;
+  border: 1px solid;
+  border-radius: 11px;
+  font-size: 10.5px;
 }
 
 .system-banner.demo {
-  background: #fff4dc !important;
-  color: #7a4d05 !important;
-  border-color: #e1bf75 !important;
+  color: #744900;
+  background: var(--yellow-soft);
+  border-color: #dcb769;
 }
 
-/* 상단 빠른 이동 메뉴 */
+.system-banner.live {
+  color: #0f6942;
+  background: var(--green-soft);
+  border-color: #91c9aa;
+}
+
+.system-banner.error {
+  color: #a62831;
+  background: var(--red-soft);
+  border-color: #dda0a5;
+}
+
+/* =========================================================
+   빠른 이동 메뉴
+========================================================= */
+
 .quick-nav {
-  background: rgba(238, 242, 245, 0.96) !important;
-  border-bottom: 1px solid #cbd5df !important;
-  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 7px;
+  overflow: auto;
+  max-width: 1180px;
+  margin: auto;
+  padding: 8px 16px;
+  background: rgba(238, 243, 247, 0.96);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(10px);
 }
 
 .quick-nav a {
-  background: #ffffff !important;
-  color: #334655 !important;
-  border: 1px solid #cbd5df !important;
-  box-shadow: none !important;
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  color: var(--text-sub);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(20, 40, 60, 0.04);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .quick-nav a:hover {
-  background: #e4f1f8 !important;
-  color: #0d5c8b !important;
-  border-color: #8ebbd5 !important;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-color: #96c1d8;
 }
 
-/* 각 섹터 */
+/* =========================================================
+   공통 레이아웃
+========================================================= */
+
+.container {
+  max-width: 1180px;
+  margin: auto;
+  padding: 0 16px 42px;
+}
+
 .section {
-  color: #17212b !important;
+  margin-top: 22px;
+  color: var(--text);
+  scroll-margin-top: 60px;
+}
+
+.section.first {
+  margin-top: 12px;
+}
+
+.section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 9px;
+}
+
+.section-head > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-head span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: var(--primary);
+  border: 1px solid var(--primary-dark);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 900;
 }
 
 .section-head h2 {
-  color: #17212b !important;
-}
-
-.section-head > div > span {
-  background: #176da5 !important;
-  color: #ffffff !important;
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  letter-spacing: -0.035em;
 }
 
 .section-head small {
-  color: #687b8b !important;
+  color: var(--muted);
+  font-size: 9.5px;
 }
 
-/* 공통 카드 */
+/* =========================================================
+   공통 카드
+========================================================= */
+
 .route-card,
-.panel,
 .jamsu-hero,
-.metric-card,
+.panel,
+.metric,
+.alert-card,
 .sector-card,
 .station-card,
-.alert-card,
 .health-card,
-.health-item {
-  background: #ffffff !important;
-  color: #17212b !important;
-  border: 1px solid #cbd5df !important;
-  box-shadow: 0 2px 8px rgba(20, 40, 60, 0.07) !important;
-}
-
-/* 카드 내부 보조 글자 */
-.route-card small,
-.panel small,
-.jamsu-hero small,
-.metric-card small,
-.sector-card small,
-.station-card small,
-.health-card small,
-.health-item small,
-.metric-label,
-.card-label,
-.sub-value,
-.chart-meta {
-  color: #667988 !important;
-}
-
-/* 큰 숫자 */
-.metric-value,
-.main-value,
-.route-status,
-.jamsu-value {
-  color: #17212b !important;
-}
-
-/* 시나리오 버튼 */
+.empty-card,
 .scenario-controls {
-  background: #ffffff !important;
-  border: 1px solid #cbd5df !important;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.panel,
+.jamsu-hero {
+  padding: 15px;
+  border-radius: 15px;
+}
+
+.metric {
+  padding: 13px;
+  background-image: none;
+  border-radius: 13px;
+}
+
+.metric-label {
+  color: var(--text-sub);
+  font-size: 9.5px;
+  font-weight: 750;
+}
+
+.metric-value {
+  margin: 4px 0 2px;
+  color: var(--primary-dark);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.metric-sub {
+  color: var(--muted);
+  font-size: 9.5px;
+}
+
+.data-time,
+.route-card-time {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 8.7px;
+  line-height: 1.35;
+}
+
+.top-gap {
+  margin-top: 9px;
+}
+
+/* =========================================================
+   노선 판단
+========================================================= */
+
+.route-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.route-card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+  background-image: none;
+  border-radius: 17px;
+  box-shadow: var(--shadow-strong);
+}
+
+.route-card::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  top: -105px;
+  right: -90px;
+  background: rgba(23, 111, 166, 0.06);
+  border-radius: 50%;
+}
+
+.route-name {
+  color: var(--text-sub);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.route-status {
+  margin: 4px 0 5px;
+  font-size: 29px;
+  font-weight: 950;
+  letter-spacing: -0.06em;
+}
+
+.route-card.normal {
+  background: var(--green-soft);
+  border-color: #8cc7a7;
+}
+
+.route-card.caution {
+  background: var(--yellow-soft);
+  border-color: #dcb96d;
+}
+
+.route-card.stop,
+.route-card.danger {
+  background: var(--red-soft);
+  border-color: #dda0a5;
+}
+
+.normal .route-status,
+.good {
+  color: var(--green);
+}
+
+.caution .route-status,
+.warn {
+  color: var(--yellow);
+}
+
+.stop .route-status,
+.danger {
+  color: var(--red);
+}
+
+.route-reasons {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-reasons li {
+  position: relative;
+  padding-left: 13px;
+  color: var(--text-sub);
+  font-size: 10.5px;
+}
+
+.route-reasons li::before {
+  content: "";
+  position: absolute;
+  top: 0.55em;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+.scenario-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 8px;
+  border-style: dashed;
+  border-radius: 11px;
 }
 
 .scenario-controls span {
-  color: #526474 !important;
+  margin-right: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .scenario-controls button {
-  background: #f5f7f9 !important;
-  color: #334655 !important;
-  border: 1px solid #bdc9d3 !important;
+  padding: 6px 10px;
+  color: var(--text-sub);
+  background: var(--bg-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 850;
 }
 
-.scenario-controls button:hover,
-.scenario-controls button.active {
-  background: #176da5 !important;
-  color: #ffffff !important;
-  border-color: #176da5 !important;
+.scenario-controls button.active,
+.scenario-controls button:hover {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
-/* 표 */
-.table-panel {
-  background: #ffffff !important;
+/* =========================================================
+   잠수교
+========================================================= */
+
+.jamsu-layout {
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: 10px;
 }
 
-.data-table {
-  color: #263746 !important;
+.jamsu-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.data-table th {
-  background: #e8eef3 !important;
-  color: #344958 !important;
-  border-bottom: 1px solid #b9c6d0 !important;
+.jamsu-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
 }
 
-.data-table td {
-  background: #ffffff !important;
-  color: #263746 !important;
-  border-bottom: 1px solid #e0e6eb !important;
+.clearance {
+  margin: 3px 0;
+  color: var(--primary-dark);
+  font-size: 43px;
+  font-weight: 950;
+  letter-spacing: -0.06em;
 }
 
-.data-table tbody tr:hover td {
-  background: #f2f7fa !important;
+.jamsu-status {
+  font-size: 15px;
+  font-weight: 900;
 }
 
-/* 그래프 영역 */
-.chart-panel {
-  background: #ffffff !important;
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.detail-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.detail {
+  padding: 9px;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.detail span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.detail b {
+  color: var(--primary-dark);
+  font-size: 13px;
+}
+
+/* =========================================================
+   차트
+========================================================= */
+
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.panel-title h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.panel-title span {
+  color: var(--muted);
+  font-size: 9px;
 }
 
 .chart-panel svg {
-  background: #f8fafb !important;
-  border: 1px solid #dde5eb !important;
+  display: block;
+  width: 100%;
+  height: 190px;
+  background: #fbfcfd;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+}
+
+.chart-grid {
+  stroke: #d9e3e9;
+  stroke-width: 1;
+}
+
+.chart-axis {
+  fill: #607788;
+  font-size: 9px;
+}
+
+.chart-line {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-fill {
+  opacity: 0.09;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.line {
+  display: inline-block;
+  width: 15px;
+  height: 3px;
+  margin-right: 4px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+.line.water,
+.line.outflow {
+  background: var(--blue);
+}
+
+.line.caution,
+.line.east {
+  background: #d5a32c;
+}
+
+.line.stop,
+.line.west {
+  background: var(--red);
+}
+
+.line.inflow {
+  background: var(--orange);
+}
+
+/* =========================================================
+   지표 그리드
+========================================================= */
+
+.metric-grid {
+  display: grid;
+  gap: 9px;
+}
+
+.metric-grid.four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.metric-grid.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+#damMetrics > .metric {
+  border-top: 4px solid var(--orange);
+}
+
+#riverGrid > .metric {
+  border-top: 4px solid var(--primary);
+}
+
+#tideGrid > .metric {
+  border-top: 4px solid #478baa;
+}
+
+#tideGrid > .metric:last-child {
+  background: var(--yellow-soft);
+  border-color: #dcb86b;
+  border-top-color: var(--orange);
+}
+
+/* =========================================================
+   특보
+========================================================= */
+
+.alert-list {
+  display: grid;
+  gap: 8px;
+}
+
+.alert-card {
+  padding: 12px;
+  border-left: 5px solid var(--blue);
+  border-radius: 13px;
+}
+
+.alert-card.watch {
+  background: var(--yellow-soft);
+  border-left-color: #d3a127;
+}
+
+.alert-card.advisory {
+  background: var(--orange-soft);
+  border-left-color: var(--orange);
+}
+
+.alert-card.warning {
+  background: var(--red-soft);
+  border-left-color: var(--red);
+}
+
+.alert-card.internal {
+  background: var(--purple-soft);
+  border-left-color: var(--purple);
+}
+
+.alert-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.alert-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.tag {
+  padding: 3px 6px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-radius: 99px;
+  font-size: 8.5px;
+  font-weight: 900;
+}
+
+.tag.internal {
+  color: #6241a3;
+  background: #e8ddf8;
+}
+
+.alert-card h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.alert-time {
+  color: var(--muted);
+  white-space: nowrap;
+  font-size: 9px;
+}
+
+.alert-card p {
+  margin: 7px 0 0;
+  color: var(--text-sub);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.alert-period {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 7px;
+  color: var(--muted);
+  border-top: 1px solid var(--line-soft);
+  font-size: 8.7px;
+}
+
+.alert-period b {
+  color: var(--text-sub);
+}
+
+.empty-card {
+  padding: 20px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border-style: dashed;
+  border-radius: 13px;
+  text-align: center;
+  font-size: 10.5px;
+}
+
+/* =========================================================
+   강수
+========================================================= */
+
+.sector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.sector-card {
+  padding: 13px;
+  border-radius: 14px;
+}
+
+.sector-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sector-title h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.sector-title span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.rain-summary {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.rain-item {
+  min-height: 58px;
+  padding: 8px 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  text-align: center;
+}
+
+.rain-item b {
+  display: block;
+  color: var(--primary);
+  font-size: 13px;
+}
+
+.rain-item span {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.bars {
+  height: 90px;
+  display: flex;
+  align-items: end;
+  gap: 5px;
+  padding-top: 7px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bar-wrap {
+  position: relative;
+  min-width: 22px;
+  height: 100%;
+  display: flex;
+  flex: 1;
+  align-items: end;
+}
+
+.bar {
+  width: 100%;
+  min-height: 2px;
+  background: linear-gradient(180deg, #71c3ed, #357ca6);
+  border-radius: 4px 4px 0 0;
+}
+
+.bar-wrap.observed .bar {
+  background: linear-gradient(180deg, #97abb8, #637c8c);
+}
+
+.bar-wrap.current .bar {
+  background: linear-gradient(180deg, #f2c65b, #b27f1f);
+}
+
+.bar-wrap.forecast .bar {
+  background: linear-gradient(180deg, #72c5f0, #357ca6);
+}
+
+.bar-wrap small {
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  color: #637b8b;
+  font-size: 7.5px;
+  transform: translateX(-50%);
+}
+
+.bar-wrap .bar-value {
+  position: absolute;
+  top: -11px;
+  bottom: auto !important;
+  left: 50%;
+  color: var(--text-sub);
+  font-size: 7px;
+  transform: translateX(-50%);
+}
+
+.bar-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.obs-dot,
+.current-dot,
+.forecast-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 2px;
+  border-radius: 50%;
+}
+
+.obs-dot {
+  background: #6f8b9e;
+}
+
+.current-dot {
+  background: #d7a52c;
+}
+
+.forecast-dot {
+  background: var(--blue);
+}
+
+.hour-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(70px, 1fr));
+  gap: 5px;
+  overflow: auto;
+  margin-top: 8px;
+  padding-bottom: 2px;
+}
+
+.hour-cell {
+  padding: 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
-.chart-legend,
-.panel-title span {
-  color: #647786 !important;
+.hour-cell span,
+.hour-cell b,
+.hour-cell em {
+  display: block;
 }
 
-/* 상태별 카드 */
+.hour-cell span {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.hour-cell b {
+  margin: 2px 0;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.hour-cell em {
+  color: #60798a;
+  font-size: 7px;
+  font-style: normal;
+}
+
+.hour-cell.current {
+  background: var(--yellow-soft);
+  border: 2px solid #d6a32b;
+}
+
+.hour-cell.current b {
+  color: #875600;
+}
+
+/* =========================================================
+   풍향·풍속
+========================================================= */
+
+.station-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.station-card {
+  padding: 11px;
+  border-radius: 12px;
+}
+
+.station-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.station-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.sector-pill {
+  padding: 3px 6px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border: 1px solid #a8ccdf;
+  border-radius: 99px;
+  font-size: 8px;
+}
+
+.wind-main {
+  margin: 8px 0 3px;
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.wind-sub {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.wind-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.wind-compare {
+  min-height: 54px;
+  padding: 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.wind-compare span,
+.wind-compare b,
+.wind-compare em {
+  display: block;
+}
+
+.wind-compare span {
+  color: var(--muted);
+  font-size: 7.5px;
+}
+
+.wind-compare b {
+  margin: 2px 0;
+  color: var(--primary-dark);
+  font-size: 9.5px;
+}
+
+.wind-compare em {
+  color: #60798a;
+  font-size: 7.5px;
+  font-style: normal;
+}
+
+/* =========================================================
+   비교값
+========================================================= */
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.comparison-cell {
+  padding: 8px;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.comparison-cell span,
+.comparison-cell b,
+.comparison-cell em {
+  display: block;
+}
+
+.comparison-cell span {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.comparison-cell b {
+  margin: 3px 0;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.comparison-cell em {
+  color: #60798a;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.comparison-list {
+  display: grid;
+  gap: 0;
+  margin-top: 9px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.comparison-list > div {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.comparison-list > div:last-child {
+  border-bottom: 0;
+}
+
+.comparison-list span {
+  color: var(--text-sub);
+  font-size: 8.5px;
+}
+
+.comparison-list b {
+  color: var(--text);
+  font-size: 10px;
+}
+
+.comparison-list em {
+  color: var(--primary);
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.comparison-list em.up,
+.comparison-list em.increase,
+.comparison-list em.positive {
+  color: var(--red);
+}
+
+.comparison-list em.down,
+.comparison-list em.decrease,
+.comparison-list em.negative {
+  color: var(--blue);
+}
+
+/* =========================================================
+   표
+========================================================= */
+
+.table-scroll {
+  overflow: auto;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  color: var(--text);
+  font-size: 9.5px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.data-table th {
+  color: var(--text-sub);
+  background: var(--surface-strong);
+  font-weight: 800;
+}
+
+.data-table td {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.data-table tbody tr:hover td {
+  background: #f1f7fa;
+}
+
+.data-table tr.current-row td {
+  color: #173e55;
+  background: var(--blue-soft);
+  font-weight: 800;
+}
+
+.table-panel {
+  padding-bottom: 10px;
+}
+
+/* =========================================================
+   조석
+========================================================= */
+
+.event-countdown {
+  margin-top: 7px;
+  padding-top: 7px;
+  color: var(--text-sub);
+  border-top: 1px solid var(--line-soft);
+  font-size: 8.5px;
+}
+
+/* =========================================================
+   데이터 상태
+========================================================= */
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.health-card {
+  padding: 10px;
+  border-radius: 11px;
+}
+
+.health-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.health-card b {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.health-card em {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-style: normal;
+}
+
+/* =========================================================
+   상태색
+========================================================= */
+
 .status-normal,
-.route-card.normal,
-.metric-card.normal,
+.metric.normal,
 .station-card.normal {
-  background: #edf8f2 !important;
-  border-color: #91c9aa !important;
+  background: var(--green-soft);
+  border-color: #91c9aa;
 }
 
 .status-caution,
-.route-card.caution,
-.metric-card.caution,
+.metric.caution,
 .station-card.caution {
-  background: #fff6e5 !important;
-  border-color: #dfbd72 !important;
+  background: var(--yellow-soft);
+  border-color: #dfbd72;
 }
 
 .status-stop,
 .status-danger,
-.route-card.stop,
-.route-card.danger,
-.metric-card.stop,
-.station-card.stop {
-  background: #fdecee !important;
-  border-color: #dda0a5 !important;
+.metric.stop,
+.metric.danger,
+.station-card.stop,
+.station-card.danger {
+  background: var(--red-soft);
+  border-color: #dda0a5;
 }
 
-/* 상태 글자 */
-.normal,
 .status-normal-text {
-  color: #168454 !important;
+  color: var(--green);
 }
 
-.caution,
 .status-caution-text {
-  color: #a85e04 !important;
+  color: var(--yellow);
 }
 
-.stop,
-.danger,
 .status-stop-text {
-  color: #c12e38 !important;
+  color: var(--red);
 }
 
-/* 특보 */
-.alert-list {
-  color: #17212b !important;
+/* =========================================================
+   하단
+========================================================= */
+
+footer {
+  max-width: 1148px;
+  margin: 0 auto 32px;
+  padding: 13px 0;
+  color: #566d7c;
+  background: transparent;
+  border-top: 1px solid var(--line);
+  font-size: 9.5px;
+  line-height: 1.5;
 }
 
-.alert-card {
-  background: #ffffff !important;
+footer strong {
+  color: var(--red);
 }
 
-.alert-card.official {
-  border-left: 5px solid #c7353e !important;
-}
+/* =========================================================
+   스크롤바
+========================================================= */
 
-.alert-card.preliminary {
-  border-left: 5px solid #c48119 !important;
-}
-
-.alert-card.internal {
-  border-left: 5px solid #176da5 !important;
-}
-
-/* 데이터 상태 */
-.data-state {
-  background: transparent !important;
-}
-
-.health-grid {
-  color: #17212b !important;
-}
-
-/* 스크롤바 */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -326,278 +1308,123 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #afbdc8;
-  border-radius: 10px;
+  background: #adbdc8;
   border: 2px solid #edf1f4;
+  border-radius: 10px;
 }
 
-/* 하단 주의문 */
-footer {
-  background: #e4e9ed !important;
-  color: #4e606e !important;
-  border-top: 1px solid #c4d0d9 !important;
-}
-
-footer strong {
-  color: #b52b35 !important;
-}
 /* =========================================================
-   내부 남색 미니카드 시인성 개선
+   반응형
 ========================================================= */
 
-/* 강수·풍속·수위·잠수교 내부 카드 */
-.rain-item,
-.hour-cell,
-.wind-compare,
-.comparison-cell,
-.detail {
-  background: #f3f7fa !important;
-  color: #17212b !important;
-  border: 1px solid #c7d4de !important;
-  box-shadow: none !important;
+@media (max-width: 850px) {
+  .metric-grid.four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .station-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .jamsu-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .health-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .detail-grid.three {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .comparison-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hour-grid {
+    grid-template-columns: repeat(4, minmax(70px, 1fr));
+  }
 }
 
-/* 내부 카드 주요 수치 */
-.rain-item b,
-.hour-cell b,
-.wind-compare b,
-.comparison-cell b,
-.detail b {
-  color: #17212b !important;
-  font-weight: 800 !important;
+@media (max-width: 600px) {
+  .app-header {
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 15px;
+  }
+
+  .app-header h1 {
+    font-size: 20px;
+    white-space: normal;
+  }
+
+  .header-right {
+    justify-content: flex-start;
+  }
+
+  .route-grid,
+  .sector-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-head small {
+    display: none;
+  }
+
+  .route-status {
+    font-size: 25px;
+  }
+
+  .metric-grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .rain-summary {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+  }
+
+  .rain-item {
+    padding: 7px 2px;
+  }
+
+  .clearance {
+    font-size: 38px;
+  }
+
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid.three {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wind-compare-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .station-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hour-grid {
+    grid-template-columns: repeat(3, minmax(68px, 1fr));
+  }
+
+  footer {
+    margin-right: 16px;
+    margin-left: 16px;
+  }
 }
 
-/* 내부 카드 항목명 */
-.rain-item span,
-.hour-cell span,
-.wind-compare span,
-.comparison-cell span,
-.detail span {
-  color: #536979 !important;
-  font-weight: 650 !important;
-}
+@media (max-width: 430px) {
+  .station-grid {
+    grid-template-columns: 1fr;
+  }
 
-/* 내부 카드 부가정보 */
-.hour-cell em,
-.wind-compare em,
-.comparison-cell em {
-  color: #667e8f !important;
-}
-
-/* 현재 시각 강수칸 */
-.hour-cell.current {
-  background: #fff3d6 !important;
-  border: 2px solid #d7a52c !important;
-}
-
-.hour-cell.current b {
-  color: #8b5800 !important;
-}
-
-/* 풍속 예보·관측 박스 */
-.wind-compare {
-  min-height: 54px;
-}
-
-.wind-compare b {
-  color: #164f70 !important;
-}
-
-/* 강수 상단 요약 박스 */
-.rain-item {
-  min-height: 58px;
-}
-
-.rain-item b {
-  color: #176da5 !important;
-}
-
-/* 잠수교 상세값 */
-.detail {
-  background: #eef4f7 !important;
-}
-
-.detail b {
-  color: #123d58 !important;
-}
-
-/* 비교카드 */
-.comparison-cell {
-  background: #f5f8fa !important;
-}
-
-/* 관측·예보 시간 글자 */
-.data-time,
-.route-card-time {
-  color: #526b7c !important;
-}
-
-/* 풍속 카드 안 작은 설명 */
-.wind-sub {
-  color: #526b7c !important;
-}
-
-/* 권역 표시 */
-.sector-pill {
-  background: #e1f0f8 !important;
-  color: #12577d !important;
-  border: 1px solid #a8ccdf !important;
-}
-
-/* 그래프 시각과 수치 */
-.bar-wrap small,
-.bar-wrap .bar-value,
-.bar-legend {
-  color: #506879 !important;
-}
-
-/* 차트 축 글자 */
-.chart-axis {
-  fill: #51697a !important;
-}
-
-/* 표도 밝게 통일 */
-.data-table th {
-  background: #e6edf2 !important;
-  color: #304958 !important;
-  border-bottom: 1px solid #b9c8d2 !important;
-}
-
-.data-table td {
-  background: #ffffff !important;
-  color: #263a48 !important;
-  border-bottom: 1px solid #dce4e9 !important;
-}
-
-.data-table tr.current-row td {
-  background: #e8f4fa !important;
-  color: #163d55 !important;
-}
-/* =========================================================
-   한강 수위 · 인천 조석 카드 강제 밝은 테마
-========================================================= */
-
-/* 카드 자체 */
-#riverGrid > *,
-#tideGrid > * {
-  background: #ffffff !important;
-  color: #17212b !important;
-  border: 1px solid #c7d4de !important;
-  box-shadow: 0 2px 7px rgba(20, 40, 60, 0.08) !important;
-}
-
-/* 카드 안 모든 기본 글자 */
-#riverGrid > * h3,
-#riverGrid > * h4,
-#riverGrid > * p,
-#riverGrid > * span,
-#riverGrid > * small,
-#riverGrid > * strong,
-#riverGrid > * b,
-#riverGrid > * div,
-
-#tideGrid > * h3,
-#tideGrid > * h4,
-#tideGrid > * p,
-#tideGrid > * span,
-#tideGrid > * small,
-#tideGrid > * strong,
-#tideGrid > * b,
-#tideGrid > * div {
-  color: #263a48 !important;
-}
-
-/* 카드 제목 */
-#riverGrid > * h3,
-#riverGrid > * h4,
-#tideGrid > * h3,
-#tideGrid > * h4 {
-  color: #17212b !important;
-  font-weight: 800 !important;
-}
-
-/* 현재 수위, 만조·간조 시각 등 큰 값 */
-#riverGrid .metric-value,
-#riverGrid .value,
-#riverGrid .main-value,
-#riverGrid strong,
-
-#tideGrid .metric-value,
-#tideGrid .value,
-#tideGrid .main-value,
-#tideGrid strong {
-  color: #176da5 !important;
-}
-
-/* 관측시각·자료시각 */
-#riverGrid small,
-#riverGrid .data-time,
-#riverGrid .metric-time,
-
-#tideGrid small,
-#tideGrid .data-time,
-#tideGrid .metric-time {
-  color: #6a7e8d !important;
-}
-
-/* 10분·30분·1시간 비교행 */
-#riverGrid .row,
-#riverGrid .comparison-row,
-#riverGrid li {
-  border-bottom: 1px solid #dce5eb !important;
-  color: #334a59 !important;
-}
-
-#riverGrid .row:last-child,
-#riverGrid .comparison-row:last-child,
-#riverGrid li:last-child {
-  border-bottom: 0 !important;
-}
-
-/* 조석 카드 내부 구분선 */
-#tideGrid .row,
-#tideGrid .comparison-row,
-#tideGrid li {
-  border-bottom: 1px solid #dce5eb !important;
-}
-
-/* 대조기·주의 상태만 별도 강조 */
-#tideGrid .caution,
-#tideGrid .warning,
-#tideGrid .status-caution {
-  color: #a85e04 !important;
-}
-
-/* 정상 상승·하강 수치 */
-#riverGrid .positive,
-#riverGrid .increase {
-  color: #c13b42 !important;
-}
-
-#riverGrid .negative,
-#riverGrid .decrease {
-  color: #176da5 !important;
-}
-
-/* 조석 중첩 위험 카드 */
-#tideGrid > *.caution,
-#tideGrid > *.warning,
-#tideGrid > *.danger {
-  background: #fff4df !important;
-  border-color: #ddb66b !important;
-}
-
-/* 한강 수위 카드 현재값 강조 */
-#riverGrid > *:first-child {
-  border-left: 5px solid #176da5 !important;
-}
-
-/* 인천 조석 만조 카드 */
-#tideGrid > *:first-child {
-  border-left: 5px solid #176da5 !important;
-}
-
-/* 인천 조석 위험판단 카드 */
-#tideGrid > *:last-child {
-  border-left: 5px solid #c47a14 !important;
+  .detail-grid.three {
+    grid-template-columns: 1fr 1fr;
+  }
 }
