@@ -341,3 +341,135 @@ footer {
 footer strong {
   color: #b52b35 !important;
 }
+/* =========================================================
+   내부 남색 미니카드 시인성 개선
+========================================================= */
+
+/* 강수·풍속·수위·잠수교 내부 카드 */
+.rain-item,
+.hour-cell,
+.wind-compare,
+.comparison-cell,
+.detail {
+  background: #f3f7fa !important;
+  color: #17212b !important;
+  border: 1px solid #c7d4de !important;
+  box-shadow: none !important;
+}
+
+/* 내부 카드 주요 수치 */
+.rain-item b,
+.hour-cell b,
+.wind-compare b,
+.comparison-cell b,
+.detail b {
+  color: #17212b !important;
+  font-weight: 800 !important;
+}
+
+/* 내부 카드 항목명 */
+.rain-item span,
+.hour-cell span,
+.wind-compare span,
+.comparison-cell span,
+.detail span {
+  color: #536979 !important;
+  font-weight: 650 !important;
+}
+
+/* 내부 카드 부가정보 */
+.hour-cell em,
+.wind-compare em,
+.comparison-cell em {
+  color: #667e8f !important;
+}
+
+/* 현재 시각 강수칸 */
+.hour-cell.current {
+  background: #fff3d6 !important;
+  border: 2px solid #d7a52c !important;
+}
+
+.hour-cell.current b {
+  color: #8b5800 !important;
+}
+
+/* 풍속 예보·관측 박스 */
+.wind-compare {
+  min-height: 54px;
+}
+
+.wind-compare b {
+  color: #164f70 !important;
+}
+
+/* 강수 상단 요약 박스 */
+.rain-item {
+  min-height: 58px;
+}
+
+.rain-item b {
+  color: #176da5 !important;
+}
+
+/* 잠수교 상세값 */
+.detail {
+  background: #eef4f7 !important;
+}
+
+.detail b {
+  color: #123d58 !important;
+}
+
+/* 비교카드 */
+.comparison-cell {
+  background: #f5f8fa !important;
+}
+
+/* 관측·예보 시간 글자 */
+.data-time,
+.route-card-time {
+  color: #526b7c !important;
+}
+
+/* 풍속 카드 안 작은 설명 */
+.wind-sub {
+  color: #526b7c !important;
+}
+
+/* 권역 표시 */
+.sector-pill {
+  background: #e1f0f8 !important;
+  color: #12577d !important;
+  border: 1px solid #a8ccdf !important;
+}
+
+/* 그래프 시각과 수치 */
+.bar-wrap small,
+.bar-wrap .bar-value,
+.bar-legend {
+  color: #506879 !important;
+}
+
+/* 차트 축 글자 */
+.chart-axis {
+  fill: #51697a !important;
+}
+
+/* 표도 밝게 통일 */
+.data-table th {
+  background: #e6edf2 !important;
+  color: #304958 !important;
+  border-bottom: 1px solid #b9c8d2 !important;
+}
+
+.data-table td {
+  background: #ffffff !important;
+  color: #263a48 !important;
+  border-bottom: 1px solid #dce4e9 !important;
+}
+
+.data-table tr.current-row td {
+  background: #e8f4fa !important;
+  color: #163d55 !important;
+}
