@@ -8,7 +8,16 @@
   <title>한강버스 운항환경 대시보드</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=31">
+  <script>
+    // 새 배포 파일을 즉시 받도록 이전 한강버스 캐시를 정리합니다.
+    if ('caches' in window) {
+      caches.keys().then((keys) => Promise.all(
+        keys.filter((key) => key.startsWith('hangangbus-') && key !== 'hangangbus-hybrid-v2')
+            .map((key) => caches.delete(key))
+      )).catch(() => {});
+    }
+  </script>
 </head>
 <body>
   <header class="app-header">
@@ -136,9 +145,29 @@
     </section>
   </div>
 
-  <script src="config.js"></script>
-  <script src="data/demo-data.js"></script>
-  <script src="hrfco.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js?v=31"></script>
+  <script src="data/demo-data.js?v=31"></script>
+  <script src="hrfco.js?v=31"></script>
+  <script>
+  // 구버전 서비스워커/캐시가 남아 있어도 수문 설정창은 즉시 열리도록 하는 안전장치
+  (() => {
+    const button = document.getElementById('hydrologySettingsBtn');
+    const modal = document.getElementById('hydrologyModal');
+    if (!button || !modal) return;
+
+    button.addEventListener('click', () => {
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+    });
+
+    modal.querySelectorAll('[data-close-settings]').forEach((el) => {
+      el.addEventListener('click', () => {
+        modal.hidden = true;
+        document.body.classList.remove('modal-open');
+      });
+    });
+  })();
+</script>
+  <script src="app.js?v=31"></script>
 </body>
 </html>
