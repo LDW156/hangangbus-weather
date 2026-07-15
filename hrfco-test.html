@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#eef3f7">
+  <meta name="description" content="한강홍수통제소 HRFCO 브라우저 직접 연결 테스트">
+  <title>HRFCO 연결 테스트 · 한강버스</title>
+  <style>
+    :root{
+      color-scheme:light;
+      --bg:#eef3f7;--surface:#fff;--soft:#f4f7f9;--line:#c9d6df;
+      --text:#182733;--sub:#526878;--muted:#718695;--primary:#176fa6;
+      --green:#178655;--green-bg:#e9f7f0;--yellow:#9a6200;--yellow-bg:#fff3d8;
+      --red:#c4313b;--red-bg:#fdebed;--blue-bg:#e8f4fa;
+      --shadow:0 3px 12px rgba(25,55,75,.09)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#f7fafc,var(--bg));color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif;min-height:100vh}
+    .wrap{width:min(880px,100%);margin:auto;padding:22px 15px 48px}
+    header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+    h1{margin:0;font-size:24px;letter-spacing:-.04em}
+    .sub{margin:5px 0 0;color:var(--muted);font-size:11px}
+    .back{color:var(--primary);text-decoration:none;font-size:11px;font-weight:800;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+    .notice{padding:11px 12px;border:1px solid #ddbd75;border-radius:12px;background:var(--yellow-bg);color:#724a00;font-size:11px;line-height:1.55;margin-bottom:12px}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:15px;box-shadow:var(--shadow);margin-top:10px}
+    .card h2{font-size:14px;margin:0 0 10px}
+    label{display:block;color:var(--sub);font-size:10px;font-weight:800;margin-bottom:6px}
+    .input-row{display:grid;grid-template-columns:1fr auto auto;gap:7px}
+    input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd;color:var(--text);font-size:11px;outline:none}
+    input:focus{border-color:#70afd1;box-shadow:0 0 0 3px rgba(23,111,166,.1)}
+    button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--text);font-size:10.5px;font-weight:850;cursor:pointer;white-space:nowrap}
+    button.primary{background:var(--primary);border-color:var(--primary);color:white}
+    button:disabled{opacity:.55;cursor:wait}
+    .help{margin-top:8px;color:var(--muted);font-size:9.5px;line-height:1.55}
+    .status{display:none;padding:13px;border-radius:12px;border:1px solid;margin-top:10px;font-size:11px;line-height:1.55}
+    .status.show{display:block}
+    .status.testing{background:var(--blue-bg);border-color:#9fc8dd;color:#245a76}
+    .status.success{background:var(--green-bg);border-color:#91c9aa;color:#0f6741}
+    .status.warning{background:var(--yellow-bg);border-color:#ddbd75;color:#744a00}
+    .status.error{background:var(--red-bg);border-color:#dda0a5;color:#9e2630}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+    .metric{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:10px}
+    .metric span{display:block;color:var(--muted);font-size:8.5px}
+    .metric b{display:block;margin-top:3px;color:var(--primary);font-size:14px;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;font-size:10px;margin-top:10px}
+    th,td{text-align:left;padding:8px;border-bottom:1px solid #e0e7ec;vertical-align:top}
+    th{background:#e8eef3;color:#3c5261}
+    td{overflow-wrap:anywhere}
+    pre{margin:10px 0 0;padding:12px;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#f7f9fa;color:#294150;font-size:9.5px;line-height:1.45;white-space:pre-wrap;word-break:break-all}
+    .decision{margin-top:10px;padding:12px;border-radius:12px;background:#f3f7fa;border:1px solid var(--line);font-size:11px;line-height:1.6}
+    code{background:#e7eef3;border-radius:5px;padding:2px 4px;color:#174f6e}
+    @media(max-width:680px){.input-row{grid-template-columns:1fr 1fr}.input-row input{grid-column:1/-1}.summary{grid-template-columns:1fr 1fr}header{flex-direction:column}.back{align-self:flex-start}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>HRFCO 브라우저 직접 연결 테스트</h1>
+        <p class="sub">GitHub Pages에서 한강홍수통제소 XML을 JavaScript로 읽을 수 있는지 확인합니다.</p>
+      </div>
+      <a class="back" href="./">대시보드로 돌아가기</a>
+    </header>
+
+    <div class="notice">
+      전체 호출 URL에는 인증키가 포함됩니다. 이 페이지는 입력값을 저장하거나 서버로 전송하지 않습니다.
+      테스트 결과를 캡처할 때 주소 입력란은 가리십시오.
+    </div>
+
+    <section class="card">
+      <h2>1. 호출 URL 입력</h2>
+      <label for="apiUrl">브라우저 주소창에서 XML이 정상 출력됐던 전체 URL</label>
+      <div class="input-row">
+        <input id="apiUrl" type="password" autocomplete="off" spellcheck="false" placeholder="https://api.hrfco.go.kr/...xml">
+        <button id="toggleBtn" type="button">표시</button>
+        <button id="openBtn" type="button">새 탭 확인</button>
+      </div>
+      <div class="help">
+        URL은 <code>http://</code> 또는 <code>https://</code>로 시작해야 합니다. 새 탭 확인은 원본 XML이 직접 열리는지만 확인합니다.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. GitHub Pages 직접 호출 테스트</h2>
+      <button id="testBtn" class="primary" type="button">연결 테스트 시작</button>
+      <div id="status" class="status"></div>
+      <div id="result" hidden>
+        <div class="summary">
+          <div class="metric"><span>HTTP 상태</span><b id="httpStatus">-</b></div>
+          <div class="metric"><span>응답 형식</span><b id="contentType">-</b></div>
+          <div class="metric"><span>응답 길이</span><b id="responseLength">-</b></div>
+          <div class="metric"><span>소요시간</span><b id="elapsed">-</b></div>
+        </div>
+        <div id="decision" class="decision"></div>
+        <table>
+          <thead><tr><th>XML 필드</th><th>값</th><th>추정 의미</th></tr></thead>
+          <tbody id="fieldBody"></tbody>
+        </table>
+        <pre id="preview"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+      const $ = (id) => document.getElementById(id);
+      const input = $('apiUrl');
+      const status = $('status');
+      const testBtn = $('testBtn');
+
+      const fieldMeaning = {
+        dmobscd: '댐 관측소 코드',
+        wlobscd: '수위 관측소 코드',
+        ymdhm: '관측시각(YYYYMMDDHHmm)',
+        infl: '유입량으로 추정 — 공식 설명표 확인 필요',
+        sfw: '필드 의미 공식 설명표 확인 필요',
+        swl: '필드 의미 공식 설명표 확인 필요',
+        tototf: '총방류량 계열로 추정 — 공식 설명표 확인 필요',
+        exroc: '필드 의미 공식 설명표 확인 필요',
+        wl: '수위 계열로 추정 — 공식 설명표 확인 필요'
+      };
+
+      function setStatus(type, html) {
+        status.className = `status show ${type}`;
+        status.innerHTML = html;
+      }
+
+      function validUrl(value) {
+        try {
+          const url = new URL(value);
+          return ['http:', 'https:'].includes(url.protocol);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function maskUrl(value) {
+        try {
+          const url = new URL(value);
+          const parts = url.pathname.split('/').filter(Boolean);
+          if (parts.length) parts[0] = '***';
+          url.pathname = '/' + parts.join('/');
+          ['serviceKey', 'authKey', 'key'].forEach(k => {
+            if (url.searchParams.has(k)) url.searchParams.set(k, '***');
+          });
+          return url.toString();
+        } catch (_) {
+          return 'URL 비공개';
+        }
+      }
+
+      $('toggleBtn').addEventListener('click', () => {
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        $('toggleBtn').textContent = show ? '숨김' : '표시';
+      });
+
+      $('openBtn').addEventListener('click', () => {
+        const url = input.value.trim();
+        if (!validUrl(url)) {
+          setStatus('error', '실제 <b>http://</b> 또는 <b>https://</b> 호출 URL을 입력하십시오.');
+          return;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+      });
+
+      testBtn.addEventListener('click', async () => {
+        const url = input.value.trim();
+        $('result').hidden = true;
+        if (!validUrl(url)) {
+          setStatus('error', '호출 URL 형식이 올바르지 않습니다.');
+          return;
+        }
+
+        testBtn.disabled = true;
+        setStatus('testing', `직접 호출 중입니다.<br>대상: ${maskUrl(url)}`);
+        const started = performance.now();
+
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            cache: 'no-store',
+            credentials: 'omit',
+            redirect: 'follow'
+          });
+          const text = await response.text();
+          const elapsed = Math.round(performance.now() - started);
+
+          $('httpStatus').textContent = `${response.status} ${response.statusText}`.trim();
+          $('contentType').textContent = response.headers.get('content-type') || '확인 불가';
+          $('responseLength').textContent = `${text.length.toLocaleString('ko-KR')}자`;
+          $('elapsed').textContent = `${elapsed.toLocaleString('ko-KR')}ms`;
+          $('preview').textContent = text.slice(0, 5000);
+
+          if (!response.ok) {
+            setStatus('error', `원본 서버가 HTTP ${response.status}로 응답했습니다.`);
+            $('decision').innerHTML = '<b>판정:</b> 브라우저 연결은 됐지만 요청변수·인증키·관측소 코드 또는 서버 응답을 확인해야 합니다.';
+            $('fieldBody').innerHTML = '';
+          } else {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(text, 'application/xml');
+            const parseError = xml.querySelector('parsererror');
+            if (parseError) {
+              setStatus('warning', 'HTTP 연결은 성공했지만 응답이 정상 XML로 해석되지 않았습니다.');
+              $('decision').innerHTML = '<b>판정:</b> 직접 호출은 가능하지만 응답 형식을 별도로 확인해야 합니다.';
+              $('fieldBody').innerHTML = '';
+            } else {
+              const content = xml.querySelector('content') || xml.documentElement;
+              const fields = [...content.children].filter(el => el.children.length === 0);
+              $('fieldBody').innerHTML = fields.map(el => {
+                const tag = el.tagName;
+                const value = el.textContent.trim();
+                const meaning = fieldMeaning[tag.toLowerCase()] || '공식 API 필드 설명표 확인 필요';
+                return `<tr><td>${escapeHtml(tag)}</td><td>${escapeHtml(value)}</td><td>${escapeHtml(meaning)}</td></tr>`;
+              }).join('') || '<tr><td colspan="3">단일 필드를 찾지 못했습니다. XML 미리보기를 확인하십시오.</td></tr>';
+
+              setStatus('success', '<b>연결 성공.</b> GitHub Pages의 JavaScript가 HRFCO XML을 직접 읽었습니다.');
+              $('decision').innerHTML = '<b>판정:</b> HRFCO는 브라우저 직접 호출 방식으로 앱에 연결할 수 있습니다. 단, 인증키가 브라우저 요청에 노출될 수 있습니다.';
+            }
+          }
+          $('result').hidden = false;
+        } catch (error) {
+          const elapsed = Math.round(performance.now() - started);
+          const message = error && error.message ? error.message : String(error);
+          setStatus('error', `<b>직접 호출 실패.</b><br>${escapeHtml(message)}`);
+          $('httpStatus').textContent = '응답 수신 전 실패';
+          $('contentType').textContent = '-';
+          $('responseLength').textContent = '-';
+          $('elapsed').textContent = `${elapsed.toLocaleString('ko-KR')}ms`;
+          $('fieldBody').innerHTML = '';
+          $('preview').textContent = message;
+          $('decision').innerHTML = '<b>판정:</b> 원본 URL이 주소창에서는 열리지만 이 테스트에서 <code>Failed to fetch</code> 또는 CORS 오류가 나면, GitHub Pages JavaScript 직접 연결은 불가능합니다. 국내 중계 서버가 필요합니다.';
+          $('result').hidden = false;
+        } finally {
+          testBtn.disabled = false;
+        }
+      });
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, c => ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+        }[c]));
+      }
+    })();
+  </script>
+</body>
+</html>
