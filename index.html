@@ -8,7 +8,7 @@
   <title>한강버스 운항환경 대시보드</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
   <header class="app-header">
@@ -18,6 +18,7 @@
       <p class="header-sub">기상 · 수문 · 조석 · 노선별 운항판단</p>
     </div>
     <div class="header-right">
+      <button id="hydrologySettingsBtn" class="header-settings-btn" type="button">수문 연결</button>
       <span id="modeBadge" class="mode-badge">DEMO</span>
       <span id="updatedAt" class="updated">갱신 확인 중</span>
     </div>
@@ -111,8 +112,33 @@
     <strong>주의:</strong> 데모 화면의 수치와 풍속·강수 판정값은 검증용입니다. 실제 운항판단은 회사 지침과 현장 확인을 우선합니다.
   </footer>
 
+  <div id="hydrologyModal" class="settings-modal" hidden>
+    <div class="settings-backdrop" data-close-settings></div>
+    <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="hydrologySettingsTitle">
+      <div class="settings-head">
+        <div>
+          <p class="eyebrow">HRFCO DIRECT CONNECTION</p>
+          <h2 id="hydrologySettingsTitle">한강 수문 연결 설정</h2>
+        </div>
+        <button type="button" class="settings-close" data-close-settings aria-label="닫기">×</button>
+      </div>
+      <p class="settings-help">한강홍수통제소 API 호출 화면에서 생성한 전체 URL을 입력하십시오. URL은 GitHub가 아니라 이 브라우저에만 저장됩니다. 시작·종료시각이 포함된 URL은 앱이 최근 2시간 범위로 자동 갱신합니다.</p>
+      <label>팔당댐 URL<input id="paldangUrlInput" type="password" autocomplete="off" placeholder="http(s)://api.hrfco.go.kr/.../dam/list/10M/...xml"></label>
+      <label>잠수교 URL<input id="jamsuUrlInput" type="password" autocomplete="off" placeholder="http(s)://api.hrfco.go.kr/.../waterlevel/list/10M/...xml"></label>
+      <label>한강대교 URL<input id="hangangUrlInput" type="password" autocomplete="off" placeholder="http(s)://api.hrfco.go.kr/.../waterlevel/list/10M/...xml"></label>
+      <label class="show-url"><input id="showHrfcoUrls" type="checkbox"> 입력 URL 표시</label>
+      <div id="hydrologyTestResult" class="settings-result">연결 전</div>
+      <div class="settings-actions">
+        <button id="testHydrologyBtn" type="button" class="secondary-btn">3개 URL 테스트</button>
+        <button id="clearHydrologyBtn" type="button" class="danger-btn">저장값 삭제</button>
+        <button id="saveHydrologyBtn" type="button" class="primary-btn">저장 후 적용</button>
+      </div>
+    </section>
+  </div>
+
   <script src="config.js"></script>
   <script src="data/demo-data.js"></script>
+  <script src="hrfco.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

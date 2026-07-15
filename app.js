@@ -2,7 +2,7 @@
   'use strict';
   const cfg = window.HANGANG_CONFIG;
   let data = null;
-  let scenario = 'caution';
+  let scenario = 'normal';
   const $ = (id) => document.getElementById(id);
   const fmt = (n, d=0) => Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -42,20 +42,48 @@
   };
 
   async function loadData(){
-    if(cfg.DATA_MODE === 'live' && cfg.API_URL){
+    data = structuredClone(window.HANGANG_DEMO_DATA[scenario]);
+
+    if(cfg.DATA_MODE === 'hybrid' && cfg.HRFCO?.ENABLED){
+      if(!window.HRFCO?.isConfigured()){
+        $('modeBadge').textContent='SETUP';
+        setBanner('demo','수문 실데이터 연결 전입니다. 상단의 “수문 연결”에서 팔당댐·잠수교·한강대교 URL을 등록하십시오. 기상·조석은 데모 데이터입니다.');
+      }else{
+        try{
+          const live = await window.HRFCO.loadHydrology();
+          data.hydrology = {
+            paldang: live.paldang,
+            jamsuBridge: live.jamsuBridge,
+            hangangBridge: live.hangangBridge
+          };
+          data.meta.generatedAt = live.fetchedAt;
+          data.meta.mode = 'hybrid';
+          data.meta.dataTimes.hydrology = live.fetchedAt;
+          data.health = (data.health || []).filter(x => !['한강수위','팔당댐'].includes(x.name));
+          data.health.unshift(
+            {name:'한강수위',status:'normal',updatedAt:live.jamsuBridge.observedAt,intervalMinutes:10},
+            {name:'팔당댐',status:'normal',updatedAt:live.paldang.observedAt,intervalMinutes:10}
+          );
+          $('modeBadge').textContent='HYBRID';
+          setBanner('live','팔당댐·잠수교·한강대교는 HRFCO 실데이터입니다. 기상·특보·조석은 현재 데모 데이터입니다.');
+        }catch(err){
+          $('modeBadge').textContent='ERROR';
+          setBanner('error',`수문 실데이터 수집 실패: ${err.message} · 현재 수문값은 데모이므로 운항판단에 사용하지 마십시오.`);
+        }
+      }
+    }else if(cfg.DATA_MODE === 'live' && cfg.API_URL){
       try{
         const res = await fetch(cfg.API_URL,{cache:'no-store'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         data = await res.json();
         $('modeBadge').textContent='LIVE';
-        $('modeBadge').style.color='#aee9ca';
         setBanner('live','실시간 API 데이터로 표시 중입니다. 각 카드의 관측·예보 시각을 확인하십시오.');
       }catch(err){
-        data = structuredClone(window.HANGANG_DEMO_DATA[scenario]);
-        setBanner('error',`실시간 API 연결 실패로 데모 데이터를 표시합니다: ${err.message}`);
+        $('modeBadge').textContent='ERROR';
+        setBanner('error',`실시간 API 연결 실패: ${err.message} · 운항판단에 사용하지 마십시오.`);
       }
     }else{
-      data = structuredClone(window.HANGANG_DEMO_DATA[scenario]);
+      $('modeBadge').textContent='DEMO';
       setBanner('demo','현재 데모 데이터로 표시 중입니다. 수문은 10분, 기상예보는 1시간 단위 비교값을 표시합니다.');
     }
     render();
@@ -249,8 +277,67 @@
     svg.innerHTML=`${grid}${ref}<polyline class="chart-line" stroke="#f29a52" points="${inflow}"/><polyline class="chart-line" stroke="#55b7ec" points="${outflow}"/>${dots}${labels}`;
   }
 
+
+  function openHydrologySettings(){
+    const s=window.HRFCO?.getSettings?.()||{};
+    $('paldangUrlInput').value=s.paldangUrl||'';
+    $('jamsuUrlInput').value=s.jamsuUrl||'';
+    $('hangangUrlInput').value=s.hangangUrl||'';
+    $('hydrologyTestResult').className='settings-result';
+    $('hydrologyTestResult').textContent='URL을 입력한 뒤 테스트하십시오.';
+    $('hydrologyModal').hidden=false;
+    document.body.classList.add('modal-open');
+  }
+  function closeHydrologySettings(){
+    $('hydrologyModal').hidden=true;
+    document.body.classList.remove('modal-open');
+  }
+  function hydrologyFormValues(){
+    return {
+      paldangUrl:$('paldangUrlInput').value.trim(),
+      jamsuUrl:$('jamsuUrlInput').value.trim(),
+      hangangUrl:$('hangangUrlInput').value.trim()
+    };
+  }
+  async function testHydrologySettings(){
+    const v=hydrologyFormValues(), result=$('hydrologyTestResult');
+    if(!v.paldangUrl||!v.jamsuUrl||!v.hangangUrl){
+      result.className='settings-result error';result.textContent='URL 3개를 모두 입력하십시오.';return;
+    }
+    result.className='settings-result loading';result.textContent='팔당댐·잠수교·한강대교 연결 확인 중...';
+    try{
+      const [p,j,h]=await Promise.all([
+        window.HRFCO.testUrl('paldang',v.paldangUrl),
+        window.HRFCO.testUrl('jamsu',v.jamsuUrl),
+        window.HRFCO.testUrl('hangang',v.hangangUrl)
+      ]);
+      result.className='settings-result success';
+      result.textContent=`연결 성공 · 팔당 ${fmt(p.outflowCms,1)}㎥/s · 잠수교 ${fmt(j.waterLevelM,2)}m · 한강대교 ${fmt(h.waterLevelM,2)}m`;
+    }catch(err){
+      result.className='settings-result error';result.textContent=`연결 실패: ${err.message}`;
+    }
+  }
+  function bindHydrologySettings(){
+    $('hydrologySettingsBtn')?.addEventListener('click',openHydrologySettings);
+    document.querySelectorAll('[data-close-settings]').forEach(x=>x.addEventListener('click',closeHydrologySettings));
+    $('showHrfcoUrls')?.addEventListener('change',e=>{
+      ['paldangUrlInput','jamsuUrlInput','hangangUrlInput'].forEach(id=>$(id).type=e.target.checked?'text':'password');
+    });
+    $('testHydrologyBtn')?.addEventListener('click',testHydrologySettings);
+    $('saveHydrologyBtn')?.addEventListener('click',async()=>{
+      const v=hydrologyFormValues();
+      if(!v.paldangUrl||!v.jamsuUrl||!v.hangangUrl){$('hydrologyTestResult').className='settings-result error';$('hydrologyTestResult').textContent='URL 3개를 모두 입력하십시오.';return;}
+      window.HRFCO.saveSettings(v);closeHydrologySettings();await loadData();
+    });
+    $('clearHydrologyBtn')?.addEventListener('click',()=>{
+      window.HRFCO.clearSettings();
+      ['paldangUrlInput','jamsuUrlInput','hangangUrlInput'].forEach(id=>$(id).value='');
+      $('hydrologyTestResult').className='settings-result';$('hydrologyTestResult').textContent='저장값을 삭제했습니다.';
+    });
+  }
   document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData();});
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
+  bindHydrologySettings();
   loadData();
-  setInterval(()=>{if(cfg.DATA_MODE==='live')loadData()},cfg.REFRESH_MS);
+  setInterval(()=>{if(cfg.DATA_MODE==='live'||cfg.DATA_MODE==='hybrid')loadData()},cfg.REFRESH_MS);
 })();

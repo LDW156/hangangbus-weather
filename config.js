@@ -1,10 +1,15 @@
 window.HANGANG_CONFIG = {
   APP_NAME: '한강버스 운항환경 통합 대시보드',
-  DATA_MODE: 'demo', // demo | live
-  API_URL: '',       // Google Apps Script Web App URL
+  DATA_MODE: 'hybrid', // demo | hybrid | live
   REFRESH_MS: 300000,
-  SHOW_DEMO_CONTROLS: true,
+  SHOW_DEMO_CONTROLS: false,
   STRUCTURE_HEIGHT_M: 11.76,
+  HRFCO: {
+    ENABLED: true,
+    STORAGE_KEY: 'hangangbus_hrfco_urls_v1',
+    HISTORY_MINUTES: 130,
+    INTERVAL_MINUTES: 10
+  },
   THRESHOLDS: {
     jamsu: {
       cautionLevelM: 4.10,
@@ -18,7 +23,6 @@ window.HANGANG_CONFIG = {
       westStopCms: 3000,
       westCautionCms: 2700
     },
-    // 아래 풍속값은 데모 표시용 초안입니다. 회사 확정 기준으로 수정해야 합니다.
     wind: {
       cautionMs: 8,
       stopMs: 12,
