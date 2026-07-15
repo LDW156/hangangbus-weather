@@ -155,7 +155,7 @@
   function parseDam(doc) {
     const rows = contentRecords(doc).map(node => {
       const timestamp = parseApiTimestamp(nodeText(node, ['ymdhm','obstm','tm','time']));
-      const inflow = num(nodeText(node, ['infl','inflow']));
+      const inflow = num(nodeText(node, ['inf','inflow','infl']));
       const outflow = num(nodeText(node, ['tototf','outflow','totoutf','totot']));
       return timestamp && inflow !== null && outflow !== null
         ? { timestamp, time: timeLabel(timestamp), inflow, outflow }
