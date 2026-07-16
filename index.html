@@ -8,12 +8,12 @@
   <title>한강버스 기상·수문 모니터링</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=59">
+  <link rel="stylesheet" href="styles.css?v=60">
   <script>
     // 새 배포 파일을 즉시 받도록 이전 한강버스 캐시를 정리합니다.
     if ('caches' in window) {
       caches.keys().then((keys) => Promise.all(
-        keys.filter((key) => key.startsWith('hangangbus-') && key !== 'hangangbus-layout-cleanup-v59')
+        keys.filter((key) => key.startsWith('hangangbus-') && key !== 'hangangbus-logo-tooltip-v60')
             .map((key) => caches.delete(key))
       )).catch(() => {});
     }
@@ -22,9 +22,8 @@
 <body>
   <header class="app-header">
     <div class="brand-lockup">
-      <div class="brand-mark" aria-label="한강버스 HB 로고">
-        <span>HB</span>
-        <i></i>
+      <div class="brand-mark official-logo" aria-label="한강버스 공식 로고">
+        <img src="./assets/hangangbus-logo.png?v=60" alt="한강버스 로고">
       </div>
       <div class="brand-copy">
         <p class="eyebrow">HANGANG BUS WEATHER MONITORING</p>
@@ -129,12 +128,12 @@
   <footer>
     <strong>주의:</strong> 공식기관 자료를 취합한 운항 참고용 화면입니다. 실제 운항판단은 회사 지침과 현장 확인을 우선합니다. <span class="footer-credit">제작 · 운항감독 이대운</span>
   </footer>
-<script src="shared-config.js?v=59"></script>
-  <script src="weather-config.js?v=59"></script>
-  <script src="config.js?v=59"></script>
-  <script src="data/demo-data.js?v=59"></script>
-  <script src="hrfco.js?v=59"></script>
-  <script src="kma.js?v=59"></script>
-  <script src="app.js?v=59"></script>
+<script src="shared-config.js?v=60"></script>
+  <script src="weather-config.js?v=60"></script>
+  <script src="config.js?v=60"></script>
+  <script src="data/demo-data.js?v=60"></script>
+  <script src="hrfco.js?v=60"></script>
+  <script src="kma.js?v=60"></script>
+  <script src="app.js?v=60"></script>
 </body>
 </html>

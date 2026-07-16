@@ -791,6 +791,86 @@
   }
 
 
+  function ensureChartTooltip(svg){
+    const host=svg.parentElement;
+    host.classList.add('interactive-chart-host');
+
+    let tooltip=host.querySelector(':scope > .chart-hover-tooltip');
+    if(!tooltip){
+      tooltip=document.createElement('div');
+      tooltip.className='chart-hover-tooltip';
+      tooltip.hidden=true;
+      host.appendChild(tooltip);
+    }
+
+    return tooltip;
+  }
+
+  function bindChartTooltip(svg,options){
+    const tooltip=ensureChartTooltip(svg);
+    const history=options.history||[];
+    const series=options.series||[];
+    const hover=svg.querySelector('.chart-hover-layer');
+    const hoverLine=hover?.querySelector('.chart-hover-line');
+    const hoverDots=[...(hover?.querySelectorAll('.chart-hover-dot')||[])];
+
+    if(!history.length||!hover||!hoverLine)return;
+
+    const hide=()=>{
+      hover.style.display='none';
+      tooltip.hidden=true;
+    };
+
+    const showAtClientX=clientX=>{
+      const rect=svg.getBoundingClientRect();
+      if(!rect.width)return;
+
+      const viewBox=svg.viewBox.baseVal;
+      const svgX=(clientX-rect.left)/rect.width*viewBox.width;
+      const rawIndex=(svgX-options.left)/Math.max(1,options.plotWidth)*(history.length-1);
+      const index=Math.max(0,Math.min(history.length-1,Math.round(rawIndex)));
+      const row=history[index];
+      const pointX=options.x(index);
+
+      hoverLine.setAttribute('x1',pointX);
+      hoverLine.setAttribute('x2',pointX);
+      hoverLine.setAttribute('y1',options.top);
+      hoverLine.setAttribute('y2',options.bottomY);
+
+      series.forEach((item,seriesIndex)=>{
+        const dot=hoverDots[seriesIndex];
+        if(!dot)return;
+        const value=Number(row[item.key]);
+        if(!Number.isFinite(value)){
+          dot.style.display='none';
+          return;
+        }
+        dot.style.display='block';
+        dot.setAttribute('cx',pointX);
+        dot.setAttribute('cy',item.y(value));
+        dot.setAttribute('fill',item.color);
+      });
+
+      hover.style.display='block';
+      tooltip.innerHTML=options.format(row,index);
+      tooltip.hidden=false;
+
+      const hostRect=svg.parentElement.getBoundingClientRect();
+      const desiredLeft=clientX-hostRect.left+13;
+      const maxLeft=Math.max(8,hostRect.width-tooltip.offsetWidth-8);
+      tooltip.style.left=`${Math.max(8,Math.min(maxLeft,desiredLeft))}px`;
+      tooltip.style.top=`${Math.max(38,rect.top-hostRect.top+14)}px`;
+    };
+
+    svg.style.touchAction='pan-y';
+    svg.onpointermove=event=>showAtClientX(event.clientX);
+    svg.onpointerdown=event=>showAtClientX(event.clientX);
+    svg.onpointerleave=event=>{
+      if(event.pointerType==='mouse')hide();
+    };
+    svg.onblur=hide;
+  }
+
   function lineChart(svg,history,opt){
     const W=700,H=230;
     const left=48,right=20,top=18,bottom=38;
@@ -838,23 +918,98 @@
     `).join('');
 
     svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.setAttribute('tabindex','0');
     svg.innerHTML=`
       ${grid}
       ${refs}
       <polyline class="chart-line" stroke="${opt.color}" points="${pts}"/>
       ${dots}
       ${labels}
+      <g class="chart-hover-layer" style="display:none">
+        <line class="chart-hover-line"/>
+        <circle class="chart-hover-dot" r="6"/>
+      </g>
     `;
+
+    bindChartTooltip(svg,{
+      history,left,plotWidth,top,bottomY:H-bottom,x,
+      series:[{key:opt.key,y,color:opt.color}],
+      format:(row,index)=>{
+        const level=Number(row[opt.key]);
+        const previous=index>0?Number(history[index-1][opt.key]):null;
+        const delta=previous===null?null:level-previous;
+        const clearance=cfg.STRUCTURE_HEIGHT_M-level;
+
+        return `<div class="chart-tooltip-time">${esc(dateTimeText(row.timestamp)||row.time)}</div>
+          <div class="chart-tooltip-row"><span>잠수교 수위</span><b>${fmt(level,2)}m</b></div>
+          <div class="chart-tooltip-row"><span>통과높이</span><b>${fmt(clearance,2)}m</b></div>
+          <div class="chart-tooltip-row"><span>10분 전 대비</span><b class="${delta===null?'':deltaClass(delta)}">${delta===null?'-':signed(delta,2,'m')}</b></div>`;
+      }
+    });
   }
 
   function damChart(svg,h){
-    const W=800,H=220,p=40,max=Math.max(3300,...h.flatMap(v=>[v.inflow,v.outflow])),min=0,x=i=>p+i*(W-2*p)/(h.length-1),y=v=>H-p-(v-min)*(H-2*p)/(max-min);
-    const grid=[0,1000,2000,3000].map(v=>`<line class="chart-grid" x1="${p}" x2="${W-p}" y1="${y(v)}" y2="${y(v)}"/><text class="chart-axis" x="2" y="${y(v)+3}">${v}</text>`).join('');
-    const ref=`<line x1="${p}" x2="${W-p}" y1="${y(2000)}" y2="${y(2000)}" stroke="#f1c75b" stroke-width="2" stroke-dasharray="8 6"/><line x1="${p}" x2="${W-p}" y1="${y(3000)}" y2="${y(3000)}" stroke="#ef646b" stroke-width="2" stroke-dasharray="8 6"/>`;
-    const inflow=h.map((v,i)=>`${x(i)},${y(v.inflow)}`).join(' '),outflow=h.map((v,i)=>`${x(i)},${y(v.outflow)}`).join(' ');
-    const labels=h.map((v,i)=>i%2===0||i===h.length-1?`<text class="chart-axis" text-anchor="middle" x="${x(i)}" y="${H-9}">${v.time}</text>`:'').join('');
-    const dots=h.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v.inflow)}" r="${i===h.length-1?4:2}" fill="#f29a52"/><circle cx="${x(i)}" cy="${y(v.outflow)}" r="${i===h.length-1?4:2}" fill="#55b7ec"/>`).join('');
-    svg.innerHTML=`${grid}${ref}<polyline class="chart-line" stroke="#f29a52" points="${inflow}"/><polyline class="chart-line" stroke="#55b7ec" points="${outflow}"/>${dots}${labels}`;
+    const W=800,H=220;
+    const left=46,right=22,top=20,bottom=40;
+    const plotWidth=W-left-right;
+    const plotHeight=H-top-bottom;
+    const max=Math.max(3300,...h.flatMap(v=>[v.inflow,v.outflow]));
+    const min=0;
+    const x=i=>h.length<=1?left+plotWidth/2:left+i*plotWidth/(h.length-1);
+    const y=v=>top+(max-v)*plotHeight/(max-min);
+
+    const grid=[0,1000,2000,3000].map(v=>`
+      <line class="chart-grid" x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}"/>
+      <text class="chart-axis chart-axis-y" x="${left-8}" y="${y(v)+4}" text-anchor="end">${v}</text>
+    `).join('');
+
+    const ref=`
+      <line x1="${left}" x2="${W-right}" y1="${y(2000)}" y2="${y(2000)}" stroke="#d89a16" stroke-width="2.5" stroke-dasharray="11 6"/>
+      <line x1="${left}" x2="${W-right}" y1="${y(3000)}" y2="${y(3000)}" stroke="#d43942" stroke-width="2.5" stroke-dasharray="4 4"/>`;
+
+    const inflow=h.map((v,i)=>`${x(i)},${y(v.inflow)}`).join(' ');
+    const outflow=h.map((v,i)=>`${x(i)},${y(v.outflow)}`).join(' ');
+    const labelStep=Math.max(1,Math.ceil(h.length/7));
+    const labels=h.map((v,i)=>
+      i%labelStep===0||i===h.length-1
+        ? `<text class="chart-axis chart-axis-x" text-anchor="middle" x="${x(i)}" y="${H-11}">${esc(v.time)}</text>`
+        : ''
+    ).join('');
+    const dots=h.map((v,i)=>`
+      <circle cx="${x(i)}" cy="${y(v.inflow)}" r="${i===h.length-1?4.5:2.3}" fill="#e77f2f"/>
+      <circle cx="${x(i)}" cy="${y(v.outflow)}" r="${i===h.length-1?4.5:2.3}" fill="#2499d8"/>
+    `).join('');
+
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.setAttribute('tabindex','0');
+    svg.innerHTML=`${grid}${ref}
+      <polyline class="chart-line" stroke="#e77f2f" points="${inflow}"/>
+      <polyline class="chart-line" stroke="#2499d8" points="${outflow}"/>
+      ${dots}${labels}
+      <g class="chart-hover-layer" style="display:none">
+        <line class="chart-hover-line"/>
+        <circle class="chart-hover-dot" r="6"/>
+        <circle class="chart-hover-dot" r="6"/>
+      </g>`;
+
+    bindChartTooltip(svg,{
+      history:h,left,plotWidth,top,bottomY:H-bottom,x,
+      series:[
+        {key:'inflow',y,color:'#e77f2f'},
+        {key:'outflow',y,color:'#2499d8'}
+      ],
+      format:(row,index)=>{
+        const previous=index>0?h[index-1]:null;
+        const difference=Number(row.inflow)-Number(row.outflow);
+        const outflowDelta=previous?Number(row.outflow)-Number(previous.outflow):null;
+
+        return `<div class="chart-tooltip-time">${esc(dateTimeText(row.timestamp)||row.time)}</div>
+          <div class="chart-tooltip-row inflow"><span>유입량</span><b>${fmt(row.inflow)}㎥/s</b></div>
+          <div class="chart-tooltip-row outflow"><span>방류량</span><b>${fmt(row.outflow)}㎥/s</b></div>
+          <div class="chart-tooltip-row"><span>유입-방류</span><b class="${deltaClass(difference)}">${signed(difference,0,'㎥/s')}</b></div>
+          <div class="chart-tooltip-row"><span>10분 전 방류 대비</span><b class="${outflowDelta===null?'':deltaClass(outflowDelta)}">${outflowDelta===null?'-':signed(outflowDelta,0,'㎥/s')}</b></div>`;
+      }
+    });
   }
 
 

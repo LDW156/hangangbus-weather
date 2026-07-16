@@ -1,16 +1,17 @@
-const CACHE='hangangbus-layout-cleanup-v59';
+const CACHE='hangangbus-logo-tooltip-v60';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=59',
-  './shared-config.js?v=59',
-  './weather-config.js?v=59',
-  './config.js?v=59',
-  './hrfco.js?v=59',
-  './kma.js?v=59',
-  './app.js?v=59',
-  './data/demo-data.js?v=59',
+  './styles.css?v=60',
+  './shared-config.js?v=60',
+  './weather-config.js?v=60',
+  './config.js?v=60',
+  './hrfco.js?v=60',
+  './kma.js?v=60',
+  './app.js?v=60',
+  './data/demo-data.js?v=60',
   './manifest.webmanifest',
+  './assets/hangangbus-logo.png?v=60',
   './assets/icon-192.png',
   './assets/icon-512.png'
 ];
