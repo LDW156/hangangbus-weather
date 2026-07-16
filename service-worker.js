@@ -1,11 +1,11 @@
-const CACHE='hangangbus-tide-live-v62';
+const CACHE='hangangbus-ocean-proxy-sync-v65';
 const ASSETS=[
   './',
   './index.html',
   './styles.css?v=62',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
-  './ocean-config.js?v=62',
+  './ocean-config.js?v=65',
   './config.js?v=62',
   './hrfco.js?v=62',
   './kma.js?v=62',

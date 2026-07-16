@@ -1,9 +1,16 @@
 /*
- * 한강버스 바다누리 조석 API 설정
- * 인증키는 GitHub에 저장하지 않고 Cloudflare Worker Secret에 저장합니다.
+ * 한강버스 조석 API 설정 v65
+ * 기상·조석 통합 Worker를 사용하므로 기상 설정의 Worker 주소를 자동으로 공유합니다.
  */
-window.HANGANG_OCEAN_CONFIG = {
-  ENABLED: true,
-  PROXY_BASE: 'https://hangangbus-ocean.akchdleodns.workers.dev',
-  OBS_CODE: 'DT_0001'
-};
+(() => {
+  const weather = window.HANGANG_WEATHER_CONFIG || {};
+  const proxyBase = String(weather.PROXY_BASE || '')
+    .trim()
+    .replace(/\/$/, '');
+
+  window.HANGANG_OCEAN_CONFIG = {
+    ENABLED: weather.ENABLED !== false,
+    PROXY_BASE: proxyBase,
+    OBS_CODE: 'DT_0001'
+  };
+})();
