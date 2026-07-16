@@ -1,13 +1,13 @@
-const CACHE='hangangbus-shared-hrfco-v41';
+const CACHE='hangangbus-jamsu-chart-v42';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=41',
-  './shared-config.js?v=41',
-  './config.js?v=41',
-  './hrfco.js?v=41',
-  './app.js?v=41',
-  './data/demo-data.js?v=41',
+  './styles.css?v=42',
+  './shared-config.js?v=42',
+  './config.js?v=42',
+  './hrfco.js?v=42',
+  './app.js?v=42',
+  './data/demo-data.js?v=42',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'

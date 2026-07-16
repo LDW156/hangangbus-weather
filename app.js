@@ -183,7 +183,30 @@
         ${comparisonCell('1시간 전',timeText(h[h.length-7].timestamp),cur,historyValue(h,6),2,'m')}
       </div>`;
     $('jamsuChartMeta').textContent=`${timeText(h[0].timestamp)}~${timeText(last(h).timestamp)} · 10분 간격`;
-    lineChart($('jamsuChart'),h,{key:'value',min:3.5,max:4.7,lines:[{v:4.10,color:'#f1c75b'},{v:4.46,color:'#ef646b'}],color:'#55b7ec'});
+
+    // 실제 수위가 3.50m 아래이거나 4.70m 위여도 그래프가 잘리지 않도록
+    // 관측값과 주의·불가 기준선을 모두 포함해 Y축을 자동 계산합니다.
+    const chartValues = h
+      .map(row => Number(row.value))
+      .filter(Number.isFinite);
+    const referenceValues = [4.10, 4.46];
+    const rawMin = Math.min(...chartValues, ...referenceValues);
+    const rawMax = Math.max(...chartValues, ...referenceValues);
+    const rawSpan = Math.max(rawMax - rawMin, 0.40);
+    const padding = Math.max(0.10, rawSpan * 0.10);
+    const chartMin = Math.max(0, Math.floor((rawMin - padding) * 10) / 10);
+    const chartMax = Math.ceil((rawMax + padding) * 10) / 10;
+
+    lineChart($('jamsuChart'),h,{
+      key:'value',
+      min:chartMin,
+      max:chartMax,
+      lines:[
+        {v:4.10,color:'#f1c75b'},
+        {v:4.46,color:'#ef646b'}
+      ],
+      color:'#55b7ec'
+    });
   }
 
   function compareRows(history){
