@@ -567,7 +567,6 @@
     const amount=Number(row?.amount)||0;
     const probability=Number(row?.probability)||0;
     const pty=Number(row?.pty)||0;
-    const sky=Number(row?.sky)||1;
 
     if([1,4,5].includes(pty)||amount>0){
       return {icon:'🌧️',label:'비',className:'rain-now'};
@@ -581,27 +580,11 @@
       return {icon:'❄️',label:'눈',className:'rain-now'};
     }
 
-    if(probability>=60){
-      return {icon:'☔',label:'비 가능성 높음',className:'prob-high'};
-    }
-
-    if(probability>=30){
-      return {icon:'🌦️',label:'비 가능성 있음',className:'prob-mid'};
-    }
-
     if(probability>=20){
-      return {icon:'🌂',label:'비 가능성 낮음',className:'prob-low'};
+      return {icon:'🌦️',label:'비 가능성 있음',className:'rain-possible'};
     }
 
-    if(sky===4){
-      return {icon:'☁️',label:'흐림',className:'prob-none'};
-    }
-
-    if(sky===3){
-      return {icon:'🌥️',label:'구름 많음',className:'prob-none'};
-    }
-
-    return {icon:'☀️',label:'강수 가능성 낮음',className:'prob-none'};
+    return {icon:'☀️',label:'강수 예보 없음',className:'rain-none'};
   }
 
   function renderRain(){
@@ -670,7 +653,7 @@
         <div class="rain-summary rain-summary-v57">
           ${summaries.map(x=>{
             const probability=Number(x[2])||0;
-            const band=probability>=60?'high':probability>=30?'mid':probability>=20?'low':'none';
+            const band=probability>=20?'possible':'none';
 
             return `<div class="rain-item probability-${band}">
               <span>${x[0]} 누적</span>

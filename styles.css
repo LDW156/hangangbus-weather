@@ -2096,3 +2096,48 @@ footer strong {
     flex: 0 0 148px;
   }
 }
+
+
+/* =========================================================
+   v58 강수 표시 단순화
+   - 비
+   - 비 가능성 있음
+   - 강수 예보 없음
+========================================================= */
+
+.rain-summary-v57 .rain-item.probability-possible {
+  background: #e9f5ff;
+  border-color: #65afe0;
+}
+
+.rain-summary-v57 .rain-item.probability-none {
+  background: #f5f8fa;
+  border-color: #cdd9df;
+}
+
+/* 기존 확률 다단계 색상 제거 */
+.rain-summary-v57 .rain-item.probability-low,
+.rain-summary-v57 .rain-item.probability-mid,
+.rain-summary-v57 .rain-item.probability-high {
+  background: #e9f5ff;
+  border-color: #65afe0;
+  box-shadow: none;
+}
+
+.rain-hour-card.rain-possible {
+  background: #e9f5ff;
+  border-color: #65afe0;
+}
+
+.rain-hour-card.rain-none {
+  background: #f6f8fa;
+  border-color: #cdd8de;
+}
+
+/* 기존 확률 다단계 카드 색상 제거 */
+.rain-hour-card.prob-low,
+.rain-hour-card.prob-mid,
+.rain-hour-card.prob-high {
+  background: #e9f5ff;
+  border-color: #65afe0;
+}
