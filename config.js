@@ -1,5 +1,5 @@
 window.HANGANG_CONFIG = {
-  APP_NAME: '한강버스 운항환경 통합 대시보드',
+  APP_NAME: '한강버스 기상·수문 모니터링',
   DATA_MODE: 'hybrid',
   REFRESH_MS: 300000,
   SHOW_DEMO_CONTROLS: false,

@@ -2141,3 +2141,591 @@ footer strong {
   background: #e9f5ff;
   border-color: #65afe0;
 }
+
+
+/* =========================================================
+   v59 레이아웃 정리 / 브랜드 / 잠수교 / 강수 / 풍향풍속
+========================================================= */
+
+/* 상단 브랜드 */
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand-mark {
+  position: relative;
+  display: grid;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(145deg,#08669d,#0b8ab4);
+  border: 1px solid rgba(0,69,111,.28);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(10,86,126,.18);
+}
+
+.brand-mark span {
+  position: relative;
+  z-index: 2;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -.06em;
+}
+
+.brand-mark i,
+.brand-mark i::before {
+  position: absolute;
+  right: -10px;
+  bottom: 8px;
+  width: 54px;
+  height: 13px;
+  border: 3px solid rgba(255,255,255,.55);
+  border-top: 0;
+  border-left: 0;
+  border-radius: 0 0 50% 50%;
+  content: "";
+  transform: rotate(-8deg);
+}
+
+.brand-mark i::before {
+  right: 7px;
+  bottom: 8px;
+  width: 43px;
+  opacity: .55;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 13px;
+}
+
+.creator-credit {
+  margin: 0;
+  padding-left: 12px;
+  color: #3f6579;
+  border-left: 1px solid #b9ccd7;
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.footer-credit {
+  float: right;
+  color: #526f7e;
+  font-weight: 850;
+}
+
+/* 예상 강수량 */
+.sector-grid {
+  align-items: stretch;
+}
+
+.rain-card-v59 {
+  width: 100%;
+  min-width: 0;
+  padding: 15px;
+}
+
+.rain-table-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  margin: 13px 0 7px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid #9bb9ca;
+}
+
+.rain-table-heading h4 {
+  margin: 0;
+  color: #153f56;
+  font-size: 13px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.rain-table-heading span {
+  max-width: 68%;
+  color: #718894;
+  font-size: 7.7px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.rain-hour-scroll-v59 {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 0;
+  overflow: visible;
+}
+
+.rain-hour-scroll-v59 .rain-hour-card {
+  width: 100%;
+  min-width: 0;
+  min-height: 145px;
+  box-sizing: border-box;
+}
+
+.rain-hour-scroll-v59 .rain-hour-source {
+  display: none;
+}
+
+/* 풍향·풍속 4열 × 2행 */
+.station-grid {
+  grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+  gap: 9px !important;
+}
+
+.wind-card-v59 {
+  min-width: 0;
+  padding: 10px;
+}
+
+.wind-station-head {
+  align-items: flex-start;
+}
+
+.wind-card-v59 .station-head h3 {
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.wind-card-v59 .station-coordinate {
+  margin-top: 2px;
+  font-size: 7px;
+  font-weight: 650;
+}
+
+.sector-pill-v59 {
+  flex: 0 0 auto;
+  min-width: 48px;
+  padding: 5px 7px;
+  color: #fff;
+  background: #0877aa;
+  border: 0;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.wind-current-compact {
+  display: grid;
+  grid-template-columns: 64px minmax(0,1fr);
+  align-items: center;
+  gap: 9px;
+  margin: 8px 0;
+  padding: 8px;
+  background: #f4f8fa;
+  border: 1px solid #cbd9e1;
+  border-radius: 10px;
+}
+
+.wind-card-v59 .wind-compass.small {
+  width: 60px;
+  height: 60px;
+}
+
+.wind-current-value span,
+.wind-current-value b,
+.wind-current-value em {
+  display: block;
+}
+
+.wind-current-value span {
+  color: #607986;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.wind-current-value b {
+  margin: 2px 0;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.wind-current-value b small {
+  margin-left: 2px;
+  font-size: 9px;
+}
+
+.wind-current-value em {
+  color: #335a6e;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.wind-forecast-grid-v59 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.wind-forecast-grid-v59 .wind-forecast-card {
+  min-width: 0;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.wind-forecast-grid-v59 .wind-forecast-head {
+  font-size: 7.5px;
+}
+
+.wind-forecast-grid-v59 .wind-forecast-body {
+  gap: 4px;
+}
+
+.wind-forecast-grid-v59 .wind-compass.small {
+  width: 34px;
+  height: 34px;
+}
+
+.wind-forecast-grid-v59 .wind-forecast-body strong {
+  font-size: 10px;
+}
+
+.wind-forecast-grid-v59 .wind-forecast-body em {
+  font-size: 7px;
+}
+
+/* 잠수교 */
+.jamsu-layout {
+  grid-template-columns: minmax(430px,.92fr) minmax(0,1.08fr);
+  align-items: stretch;
+}
+
+.jamsu-layout > article {
+  min-height: 100%;
+}
+
+.jamsu-hero {
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 15px;
+}
+
+.jamsu-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.jamsu-top-row .data-time {
+  margin: 2px 0 0;
+}
+
+.jamsu-stop-standard {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  color: #a91f2a;
+  background: #fff0f1;
+  border: 1px solid #df858c;
+  border-radius: 9px;
+  box-shadow: inset 4px 0 0 #d43942;
+}
+
+.jamsu-stop-standard span {
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.jamsu-stop-standard b {
+  font-size: 13px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.jamsu-primary-grid {
+  display: grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap: 8px;
+}
+
+.jamsu-primary {
+  padding: 12px;
+  border: 1px solid #c5d6df;
+  border-radius: 12px;
+}
+
+.jamsu-primary span,
+.jamsu-primary b,
+.jamsu-primary em {
+  display: block;
+}
+
+.jamsu-primary span {
+  color: #4d6b7a;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.jamsu-primary b {
+  margin: 3px 0 1px;
+  color: #064f78;
+  font-size: 31px;
+  font-weight: 950;
+  letter-spacing: -.04em;
+}
+
+.jamsu-primary em {
+  color: #546f7e;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.clearance-primary {
+  background: #eef8fd;
+  border-color: #8fc4de;
+}
+
+.level-primary {
+  background: #f6f8fa;
+}
+
+.jamsu-change-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1px;
+}
+
+.jamsu-change-title h4 {
+  margin: 0;
+  color: #173f54;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.jamsu-change-title span {
+  color: #708895;
+  font-size: 8px;
+}
+
+.jamsu-change-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 7px;
+}
+
+.jamsu-change-card {
+  padding: 9px;
+  background: #f6f9fb;
+  border: 1px solid #cbd9e1;
+  border-radius: 10px;
+}
+
+.jamsu-change-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.jamsu-change-head span {
+  color: #345b70;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.jamsu-change-head em {
+  color: #78909c;
+  font-size: 7px;
+  font-style: normal;
+}
+
+.jamsu-change-card > b,
+.jamsu-change-card > small,
+.jamsu-change-card > strong {
+  display: block;
+}
+
+.jamsu-change-card > b {
+  margin-top: 5px;
+  color: #163f55;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.jamsu-change-card > small {
+  margin: 1px 0 5px;
+  color: #78909c;
+  font-size: 7.5px;
+}
+
+.jamsu-change-card > strong {
+  font-size: 9px;
+  font-weight: 900;
+}
+
+/* 잠수교 그래프 */
+.jamsu-layout .chart-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 15px;
+}
+
+.jamsu-layout .chart-panel svg {
+  flex: 1;
+  width: 100%;
+  min-height: 245px;
+  height: 245px;
+  background: #fff;
+  border-color: #bdcfd9;
+}
+
+.chart-axis {
+  fill: #294c60 !important;
+  font-size: 10px !important;
+  font-weight: 800;
+}
+
+.chart-grid {
+  stroke: #cedbe2;
+}
+
+.chart-line {
+  stroke-width: 4.5;
+}
+
+.chart-reference.caution {
+  opacity: .95;
+}
+
+.chart-reference.stop {
+  opacity: 1;
+}
+
+.jamsu-chart-legend {
+  gap: 14px;
+  color: #3f5e6e;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.line.water {
+  height: 4px;
+  background: #2499d8;
+}
+
+.line.dashed-long {
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    #d89a16 0 11px,
+    transparent 11px 17px
+  );
+}
+
+.line.dashed-short {
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    #d43942 0 5px,
+    transparent 5px 9px
+  );
+}
+
+@media (max-width: 1100px) {
+  .station-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .jamsu-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .rain-table-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .rain-table-heading span {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .rain-hour-scroll-v59 {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .footer-credit {
+    float: none;
+    display: block;
+    margin-top: 5px;
+  }
+}
+
+@media (max-width: 560px) {
+  .brand-mark {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+  }
+
+  .brand-mark span {
+    font-size: 17px;
+  }
+
+  .creator-credit {
+    width: 100%;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .station-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rain-hour-scroll-v59 {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    overflow: visible;
+  }
+
+  .jamsu-top-row {
+    flex-direction: column;
+  }
+
+  .jamsu-stop-standard {
+    width: 100%;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .jamsu-primary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .jamsu-primary b {
+    font-size: 25px;
+  }
+
+  .jamsu-change-grid {
+    grid-template-columns: 1fr;
+  }
+}

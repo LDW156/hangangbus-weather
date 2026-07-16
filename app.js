@@ -425,49 +425,84 @@
   }
 
   function renderJamsu(c){
-    const j=data.hydrology.jamsuBridge,h=j.history;
+    const j=data.hydrology.jamsuBridge;
+    const h=j.history;
     const cur=j.waterLevelM;
-    const d10=historyDelta(h,1),d30=historyDelta(h,3),d60=historyDelta(h,6);
-    const clearance10=cfg.STRUCTURE_HEIGHT_M-historyValue(h,1);
+
+    const changeCard=(label,steps)=>{
+      const point=historyPoint(h,steps);
+      const previous=historyValue(h,steps);
+      const delta=cur-previous;
+
+      return `<div class="jamsu-change-card">
+        <div class="jamsu-change-head">
+          <span>${label}</span>
+          <em>${timeText(point.timestamp)}</em>
+        </div>
+        <b>${fmt(previous,2)}m</b>
+        <small>잠수교 수위</small>
+        <strong class="${deltaClass(delta)}">현재 대비 ${signed(delta,2,'m')}</strong>
+      </div>`;
+    };
+
     $('jamsuHero').className=`jamsu-hero ${c.jamsu}`;
     $('jamsuHero').innerHTML=`
-      <div class="data-time">관측 ${fullDateTimeText(j.observedAt)} · ${j.intervalMinutes}분 간격</div>
-      <div><div class="jamsu-label">현재 잠수교 통과높이</div><div class="clearance">${fmt(c.clearance,2)}m</div><div class="jamsu-status">${statusText[c.jamsu]}</div></div>
-      <div class="detail-grid three">
-        <div class="detail"><span>현재 수위 · ${timeText(j.observedAt)}</span><b>${fmt(cur,2)}m</b></div>
-        <div class="detail"><span>10분 수위변화</span><b class="${deltaClass(d10)}">${signed(d10,2,'m')}</b></div>
-        <div class="detail"><span>10분 통과높이 변화</span><b class="${deltaClass(c.clearance-clearance10,true)}">${signed(c.clearance-clearance10,2,'m')}</b></div>
-        <div class="detail"><span>30분 수위변화</span><b class="${deltaClass(d30)}">${signed(d30,2,'m')}</b></div>
-        <div class="detail"><span>1시간 수위변화</span><b class="${deltaClass(d60)}">${signed(d60,2,'m')}</b></div>
-        <div class="detail"><span>불가 기준</span><b>7.30m</b></div>
+      <div class="jamsu-top-row">
+        <div class="data-time">관측 ${fullDateTimeText(j.observedAt)} · ${j.intervalMinutes}분 간격</div>
+        <div class="jamsu-stop-standard">
+          <span>운항중지 기준 통과높이</span>
+          <b>${fmt(cfg.THRESHOLDS.jamsu.stopClearanceM,2)}m 이하</b>
+        </div>
       </div>
-      <div class="comparison-grid">
-        ${comparisonCell('10분 전',timeText(historyPoint(h,1).timestamp),cur,historyValue(h,1),2,'m')}
-        ${comparisonCell('30분 전',timeText(historyPoint(h,3).timestamp),cur,historyValue(h,3),2,'m')}
-        ${comparisonCell('1시간 전',timeText(historyPoint(h,6).timestamp),cur,historyValue(h,6),2,'m')}
-      </div>`;
-    $('jamsuChartMeta').textContent=`${timeText(h[0].timestamp)}~${timeText(last(h).timestamp)} · 10분 간격`;
 
-    const chartValues = h
-      .map(row => Number(row.value))
+      <div class="jamsu-primary-grid">
+        <div class="jamsu-primary clearance-primary">
+          <span>현재 잠수교 통과높이</span>
+          <b>${fmt(c.clearance,2)}m</b>
+          <em>${statusText[c.jamsu]}</em>
+        </div>
+
+        <div class="jamsu-primary level-primary">
+          <span>현재 잠수교 수위</span>
+          <b>${fmt(cur,2)}m</b>
+          <em>${timeText(j.observedAt)} 관측</em>
+        </div>
+      </div>
+
+      <div class="jamsu-change-title">
+        <h4>시간대별 잠수교 수위 변화</h4>
+        <span>현재 수위와 비교</span>
+      </div>
+
+      <div class="jamsu-change-grid">
+        ${changeCard('10분 전',1)}
+        ${changeCard('30분 전',3)}
+        ${changeCard('1시간 전',6)}
+      </div>`;
+
+    $('jamsuChartMeta').textContent=
+      `${timeText(h[0].timestamp)}~${timeText(last(h).timestamp)} · 10분 간격`;
+
+    const chartValues=h
+      .map(row=>Number(row.value))
       .filter(Number.isFinite);
-    const referenceValues = [4.10, 4.46];
-    const rawMin = Math.min(...chartValues, ...referenceValues);
-    const rawMax = Math.max(...chartValues, ...referenceValues);
-    const rawSpan = Math.max(rawMax - rawMin, 0.40);
-    const padding = Math.max(0.10, rawSpan * 0.10);
-    const chartMin = Math.max(0, Math.floor((rawMin - padding) * 10) / 10);
-    const chartMax = Math.ceil((rawMax + padding) * 10) / 10;
+    const referenceValues=[4.10,4.46];
+    const rawMin=Math.min(...chartValues,...referenceValues);
+    const rawMax=Math.max(...chartValues,...referenceValues);
+    const rawSpan=Math.max(rawMax-rawMin,0.40);
+    const padding=Math.max(0.10,rawSpan*0.10);
+    const chartMin=Math.max(0,Math.floor((rawMin-padding)*10)/10);
+    const chartMax=Math.ceil((rawMax+padding)*10)/10;
 
     lineChart($('jamsuChart'),h,{
       key:'value',
       min:chartMin,
       max:chartMax,
       lines:[
-        {v:4.10,color:'#f1c75b'},
-        {v:4.46,color:'#ef646b'}
+        {v:4.10,color:'#d89a16',dash:'11 6',className:'caution'},
+        {v:4.46,color:'#d43942',dash:'4 4',className:'stop'}
       ],
-      color:'#55b7ec'
+      color:'#2499d8'
     });
   }
 
@@ -602,7 +637,6 @@
 
       const rows=(r.timeline||[]).map(x=>{
         const visual=rainVisual(x);
-        const source=compactRainSource(x.source);
 
         return `<div class="rain-hour-card ${visual.className}">
           <div class="rain-hour-top">
@@ -615,36 +649,35 @@
             <span>강수확률</span>
             <b>${fmt(x.probability)}%</b>
           </div>
-          <div class="rain-hour-source">최대값 기준 ${esc(source)}</div>
         </div>`;
       }).join('');
 
       const notice=!r.dataAvailable
         ? `<div class="rain-state missing"><b>강수자료 확인 필요</b><span>${esc(r.dryMessage)}</span></div>`
         : r.allDry
-          ? `<div class="rain-state dry"><b>현재 강수 없음</b><span>시간별 강수확률과 하늘상태는 아래 카드에서 확인하십시오.</span></div>`
+          ? `<div class="rain-state dry"><b>현재 강수 없음</b><span>시간별 강수확률과 비 여부는 아래 표에서 확인하십시오.</span></div>`
           : '';
 
-      return `<article class="sector-card rain-card-v57">
+      return `<article class="sector-card rain-card-v59">
         <div class="data-time">
           실황 ${dateTimeText(r.observedAt)} · 예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 첫 예보 ${dateTimeText(r.forecastStartAt)}
         </div>
 
         <div class="sector-title rain-sector-title">
           <h3>${names[k]}</h3>
-          <span>노선 내 최대 강수량·강수확률 기준</span>
+          <span>노선별 대표 예보값</span>
         </div>
 
         <div class="rain-current-row">
           <div>
             <span>최근 1시간 실황</span>
             <b>${fmt(r.currentRate,1)}mm</b>
-            <em>최대값 기준 ${esc(compactRainSource(r.currentSource))} · ${timeText(r.observedAt)}</em>
+            <em>${timeText(r.observedAt)} 관측</em>
           </div>
           <div>
             <span>시간별 예보 시작</span>
             <b>${timeText(r.forecastStartAt)}</b>
-            <em>강수량·강수확률·비 여부를 함께 표시</em>
+            <em>강수량·확률·비 여부</em>
           </div>
         </div>
 
@@ -663,12 +696,12 @@
           }).join('')}
         </div>
 
-        <div class="rain-basis">
-          <b>기상 기준좌표</b>
-          <span>${esc(r.basisLabel)}</span>
+        <div class="rain-table-heading">
+          <h4>예상 강수량(시간별)</h4>
+          <span>기상 기준좌표 ${esc(r.basisLabel)}</span>
         </div>
 
-        <div class="rain-hour-scroll rain-hour-scroll-v57">
+        <div class="rain-hour-scroll rain-hour-scroll-v59">
           ${rows||'<div class="empty-message">향후 시간별 강수예보 자료 없음</div>'}
         </div>
       </article>`;
@@ -704,36 +737,27 @@
       const coordinate=
         `${Number(w.lat).toFixed(5)}°N, ${Number(w.lon).toFixed(5)}°E`;
 
-      return `<article class="station-card wind-card-v57">
-        <div class="station-head">
+      return `<article class="station-card wind-card-v59">
+        <div class="station-head wind-station-head">
           <div>
             <h3>${esc(w.name)}</h3>
-            <div class="station-coordinate">기상 기준좌표 ${esc(coordinate)}</div>
+            <div class="station-coordinate">${esc(coordinate)}</div>
           </div>
-          <span class="sector-pill sector-pill-v57">${w.sector==='east'?'동부선':'서부선'}</span>
+          <span class="sector-pill sector-pill-v59">${w.sector==='east'?'동부선':'서부선'}</span>
         </div>
 
-        <div class="data-time wind-data-time">
-          실황 ${dateTimeText(w.observedAt)} · 초단기예보 1시간 간격
-        </div>
-
-        <div class="wind-current-layout wind-current-layout-v57">
-          <div class="wind-compass-column">
-            ${compass(w.directionDeg,w.speed)}
-            <strong>${esc(w.direction)}</strong>
-            <small>${fmt(w.directionDeg)}°</small>
+        <div class="wind-current-compact">
+          <div class="wind-current-compass">
+            ${compass(w.directionDeg,w.speed,true)}
           </div>
-
-          <div class="wind-reading wind-reading-v57">
-            <span>현재 평균풍속</span>
+          <div class="wind-current-value">
+            <span>현재 ${timeText(w.observedAt)}</span>
             <b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
-            <em>${esc(w.direction)}에서 불어오는 바람</em>
+            <em>${esc(w.direction)} · ${fmt(w.directionDeg)}°</em>
           </div>
         </div>
 
-        <div class="wind-direction-note">화살표 끝이 바람이 불어오는 방향입니다.</div>
-
-        <div class="wind-forecast-grid-v57">
+        <div class="wind-forecast-grid-v59">
           ${[1,2].map(h=>forecastWindCard(w.forecasts?.find(x=>x.hour===h))).join('')}
         </div>
       </article>`;
@@ -768,15 +792,61 @@
 
 
   function lineChart(svg,history,opt){
-    const W=600,H=190,p=30,min=opt.min,max=opt.max;
-    const x=i=>history.length<=1?W/2:p+i*(W-2*p)/(history.length-1),y=v=>H-p-(v-min)*(H-2*p)/(max-min);
-    const grid=[min,(min+max)/2,max].map(v=>`<line class="chart-grid" x1="${p}" x2="${W-p}" y1="${y(v)}" y2="${y(v)}"/><text class="chart-axis" x="2" y="${y(v)+3}">${v.toFixed(2)}</text>`).join('');
-    const refs=opt.lines.map(l=>`<line x1="${p}" x2="${W-p}" y1="${y(l.v)}" y2="${y(l.v)}" stroke="${l.color}" stroke-width="2" stroke-dasharray="7 6"/>`).join('');
+    const W=700,H=230;
+    const left=48,right=20,top=18,bottom=38;
+    const min=opt.min,max=opt.max;
+    const plotWidth=W-left-right;
+    const plotHeight=H-top-bottom;
+    const x=i=>history.length<=1
+      ? left+plotWidth/2
+      : left+i*plotWidth/(history.length-1);
+    const y=v=>top+(max-v)*plotHeight/(max-min);
+
+    const tickCount=4;
+    const ticks=Array.from({length:tickCount},(_,i)=>min+(max-min)*i/(tickCount-1));
+    const grid=ticks.map(v=>`
+      <line class="chart-grid" x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}"/>
+      <text class="chart-axis chart-axis-y" x="${left-8}" y="${y(v)+4}" text-anchor="end">${v.toFixed(2)}</text>
+    `).join('');
+
+    const refs=(opt.lines||[]).map(l=>`
+      <line
+        class="chart-reference ${esc(l.className||'')}"
+        x1="${left}" x2="${W-right}"
+        y1="${y(l.v)}" y2="${y(l.v)}"
+        stroke="${l.color}"
+        stroke-width="2.5"
+        stroke-dasharray="${l.dash||'8 6'}"
+      />
+    `).join('');
+
     const pts=history.map((v,i)=>`${x(i)},${y(v[opt.key])}`).join(' ');
-    const labels=history.map((v,i)=>i%2===0||i===history.length-1?`<text class="chart-axis" text-anchor="middle" x="${x(i)}" y="${H-8}">${esc(v.time)}</text>`:'').join('');
-    const dots=history.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v[opt.key])}" r="${i===history.length-1?4:2}" fill="${opt.color}"/>`).join('');
-    svg.innerHTML=`${grid}${refs}<polyline class="chart-line" stroke="${opt.color}" points="${pts}"/>${dots}${labels}`;
+    const labelStep=Math.max(1,Math.ceil(history.length/7));
+    const labels=history.map((v,i)=>
+      i%labelStep===0||i===history.length-1
+        ? `<text class="chart-axis chart-axis-x" text-anchor="middle" x="${x(i)}" y="${H-11}">${esc(v.time)}</text>`
+        : ''
+    ).join('');
+
+    const dots=history.map((v,i)=>`
+      <circle
+        cx="${x(i)}"
+        cy="${y(v[opt.key])}"
+        r="${i===history.length-1?5:2.5}"
+        fill="${opt.color}"
+      />
+    `).join('');
+
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML=`
+      ${grid}
+      ${refs}
+      <polyline class="chart-line" stroke="${opt.color}" points="${pts}"/>
+      ${dots}
+      ${labels}
+    `;
   }
+
   function damChart(svg,h){
     const W=800,H=220,p=40,max=Math.max(3300,...h.flatMap(v=>[v.inflow,v.outflow])),min=0,x=i=>p+i*(W-2*p)/(h.length-1),y=v=>H-p-(v-min)*(H-2*p)/(max-min);
     const grid=[0,1000,2000,3000].map(v=>`<line class="chart-grid" x1="${p}" x2="${W-p}" y1="${y(v)}" y2="${y(v)}"/><text class="chart-axis" x="2" y="${y(v)+3}">${v}</text>`).join('');
