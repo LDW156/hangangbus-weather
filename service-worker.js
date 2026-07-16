@@ -1,12 +1,13 @@
-const CACHE='hangangbus-hybrid-v3';
+const CACHE='hangangbus-shared-hrfco-v41';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=32',
-  './config.js?v=32',
-  './hrfco.js?v=32',
-  './app.js?v=32',
-  './data/demo-data.js?v=32',
+  './styles.css?v=41',
+  './shared-config.js?v=41',
+  './config.js?v=41',
+  './hrfco.js?v=41',
+  './app.js?v=41',
+  './data/demo-data.js?v=41',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'

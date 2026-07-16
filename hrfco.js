@@ -4,9 +4,35 @@
   const cfg = window.HANGANG_CONFIG;
   const STORAGE_KEY = cfg.HRFCO?.STORAGE_KEY || 'hangangbus_hrfco_urls_v1';
 
+  function isValidHttpUrl(value) {
+    return /^https?:\/\//i.test(String(value || '').trim());
+  }
+
+  function getSharedSettings() {
+    const shared = window.HANGANG_SHARED_CONFIG?.HRFCO || {};
+    const settings = {
+      paldangUrl: String(shared.PALDANG_URL || '').trim(),
+      jamsuUrl: String(shared.JAMSU_URL || '').trim(),
+      hangangUrl: String(shared.HANGANG_URL || '').trim()
+    };
+
+    return (
+      shared.ENABLED !== false &&
+      isValidHttpUrl(settings.paldangUrl) &&
+      isValidHttpUrl(settings.jamsuUrl) &&
+      isValidHttpUrl(settings.hangangUrl)
+    ) ? settings : null;
+  }
+
   function getSettings() {
+    const shared = getSharedSettings();
+    if (shared) return { ...shared, source: 'shared' };
+
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      return {
+        ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'),
+        source: 'local'
+      };
     } catch (_) {
       return {};
     }
@@ -22,7 +48,15 @@
 
   function isConfigured() {
     const s = getSettings();
-    return Boolean(s.paldangUrl && s.jamsuUrl && s.hangangUrl);
+    return Boolean(
+      isValidHttpUrl(s.paldangUrl) &&
+      isValidHttpUrl(s.jamsuUrl) &&
+      isValidHttpUrl(s.hangangUrl)
+    );
+  }
+
+  function isSharedConfigured() {
+    return Boolean(getSharedSettings());
   }
 
   function kstParts(date = new Date()) {
@@ -205,8 +239,25 @@
     return parseWaterLevel(doc, type === 'jamsu' ? '잠수교 수위' : '한강대교 수위');
   }
 
+  function applySharedUiState() {
+    if (!isSharedConfigured()) return;
+
+    const shared = window.HANGANG_SHARED_CONFIG?.HRFCO || {};
+    const button = document.getElementById('hydrologySettingsBtn');
+
+    if (button && shared.SHOW_SETTINGS_BUTTON === false) {
+      button.hidden = true;
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applySharedUiState);
+  } else {
+    applySharedUiState();
+  }
+
   window.HRFCO = {
-    getSettings, saveSettings, clearSettings, isConfigured,
+    getSettings, saveSettings, clearSettings, isConfigured, isSharedConfigured,
     loadHydrology, testUrl, updateTimeWindow
   };
 })();
