@@ -4,7 +4,6 @@
   const cfg = window.HANGANG_CONFIG;
   const KMA_CFG = cfg.KMA || {};
   const STORAGE_KEY = KMA_CFG.STORAGE_KEY || 'hangangbus_kma_settings_v1';
-  const API_BASE = 'https://apihub.kma.go.kr/api/typ02/openApi';
 
   const STATIONS = [
     { name: '마곡', sector: 'west', nx: 57, ny: 127 },
@@ -19,14 +18,13 @@
 
   function getSharedSettings() {
     const shared = window.HANGANG_WEATHER_CONFIG || {};
-    const authKey = String(shared.AUTH_KEY || '').trim();
+    const proxyBase = String(shared.PROXY_BASE || '').trim().replace(/\/$/, '');
 
     if (
       shared.ENABLED !== false &&
-      authKey &&
-      authKey !== 'PASTE_KMA_AUTH_KEY_HERE'
+      /^https:\/\//i.test(proxyBase)
     ) {
-      return { authKey, source: 'shared' };
+      return { proxyBase, source: 'shared' };
     }
 
     return null;
@@ -36,27 +34,15 @@
     const shared = getSharedSettings();
     if (shared) return shared;
 
-    try {
-      return {
-        ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'),
-        source: 'local'
-      };
-    } catch (_) {
-      return {};
-    }
+    return {};
   }
 
-  function saveSettings(settings) {
-    const clean = { authKey: String(settings?.authKey || '').trim() };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
-  }
+  function saveSettings() {}
 
-  function clearSettings() {
-    localStorage.removeItem(STORAGE_KEY);
-  }
+  function clearSettings() {}
 
   function isConfigured() {
-    return Boolean(getSettings().authKey);
+    return Boolean(getSettings().proxyBase);
   }
 
   function kstParts(date = new Date()) {
@@ -111,20 +97,26 @@
     return { date: baseDate, time: `${String(baseHour).padStart(2,'0')}00` };
   }
 
-  function endpoint(path, params, authKey) {
-    const url = new URL(`${API_BASE}/${path}`);
+  function endpoint(path, params, proxyBase) {
+    const url = new URL(`${proxyBase}/kma`);
+    url.searchParams.set('apiPath', path);
     Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-    url.searchParams.set('authKey', authKey);
     return url.toString();
   }
 
-  async function fetchJson(path, params, authKey) {
-    const url = endpoint(path, { pageNo: 1, numOfRows: 1000, dataType: 'JSON', ...params }, authKey);
+  async function fetchJson(path, params, proxyBase) {
+    const url = endpoint(
+      path,
+      { pageNo: 1, numOfRows: 1000, dataType: 'JSON', ...params },
+      proxyBase
+    );
+
     let res;
+
     try {
       res = await fetch(url, { method: 'GET', cache: 'no-store' });
     } catch (error) {
-      throw new Error(`기상청 직접 호출 실패(CORS 또는 네트워크): ${error.message}`);
+      throw new Error(`기상청 중계 호출 실패: ${error.message}`);
     }
     if (!res.ok) throw new Error(`기상청 HTTP ${res.status}`);
     const text = await res.text();
@@ -206,11 +198,11 @@
     }, null)?.item || null;
   }
 
-  async function fetchNowcastForGrid(grid, authKey, offsetHours = 0) {
+  async function fetchNowcastForGrid(grid, proxyBase, offsetHours = 0) {
     const base = getUltraNowBase(offsetHours);
     const body = await fetchJson('VilageFcstInfoService_2.0/getUltraSrtNcst', {
       base_date: base.date, base_time: base.time, nx: grid.nx, ny: grid.ny
-    }, authKey);
+    }, proxyBase);
     const list = items(body);
     if (!list.length) throw new Error(`초단기실황 자료 없음 (${grid.nx},${grid.ny})`);
     const map = categoryMap(list, 'obsrValue');
@@ -228,30 +220,30 @@
     };
   }
 
-  async function fetchUltraForecastForGrid(grid, authKey) {
+  async function fetchUltraForecastForGrid(grid, proxyBase) {
     const base = getUltraForecastBase();
     const body = await fetchJson('VilageFcstInfoService_2.0/getUltraSrtFcst', {
       base_date: base.date, base_time: base.time, nx: grid.nx, ny: grid.ny
-    }, authKey);
+    }, proxyBase);
     const list = forecastGroups(items(body));
     if (!list.length) throw new Error(`초단기예보 자료 없음 (${grid.nx},${grid.ny})`);
     return { issuedAt: isoFromKma(base.date, base.time), timeline: list };
   }
 
-  async function fetchShortForecastForGrid(grid, authKey) {
+  async function fetchShortForecastForGrid(grid, proxyBase) {
     const base = getShortForecastBase();
     const body = await fetchJson('VilageFcstInfoService_2.0/getVilageFcst', {
       base_date: base.date, base_time: base.time, nx: grid.nx, ny: grid.ny
-    }, authKey);
+    }, proxyBase);
     const list = forecastGroups(items(body));
     if (!list.length) throw new Error(`단기예보 자료 없음 (${grid.nx},${grid.ny})`);
     return { issuedAt: isoFromKma(base.date, base.time), timeline: list };
   }
 
-  async function fetchSituation(authKey) {
+  async function fetchSituation(proxyBase) {
     const body = await fetchJson('VilageFcstMsgService/getWthrSituation', {
       pageNo: 1, numOfRows: 10, dataType: 'JSON', stnId: 109
-    }, authKey);
+    }, proxyBase);
     const list = items(body);
     if (!list.length) return { issuedAt: null, alerts: [] };
     const latest = [...list].sort((a,b) => String(b.tmFc || '').localeCompare(String(a.tmFc || '')))[0];
@@ -301,13 +293,13 @@
   }
 
   async function loadWeather() {
-    const { authKey } = getSettings();
-    if (!authKey) throw new Error('기상청 인증키가 등록되지 않았습니다.');
+    const { proxyBase } = getSettings();
+    if (!proxyBase) throw new Error('기상청 중계 Worker 주소가 설정되지 않았습니다.');
 
     const unique = [...new Map(STATIONS.map(s => [`${s.nx},${s.ny}`, { nx:s.nx, ny:s.ny }])).values()];
-    const currentEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g, authKey, 0)]));
-    const previousEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g, authKey, 1)]));
-    const ultraEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchUltraForecastForGrid(g, authKey)]));
+    const currentEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g, proxyBase, 0)]));
+    const previousEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g, proxyBase, 1)]));
+    const ultraEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchUltraForecastForGrid(g, proxyBase)]));
     const currentMap = Object.fromEntries(currentEntries);
     const previousMap = Object.fromEntries(previousEntries);
     const ultraMap = Object.fromEntries(ultraEntries);
@@ -356,13 +348,13 @@
     };
     const rainEntries = await Promise.all(Object.entries(reps).map(async ([sector, grid]) => {
       const key = `${grid.nx},${grid.ny}`;
-      const current = currentMap[key] || await fetchNowcastForGrid(grid, authKey, 0);
-      const previous = previousMap[key] || await fetchNowcastForGrid(grid, authKey, 1);
-      const short = await fetchShortForecastForGrid(grid, authKey);
+      const current = currentMap[key] || await fetchNowcastForGrid(grid, proxyBase, 0);
+      const previous = previousMap[key] || await fetchNowcastForGrid(grid, proxyBase, 1);
+      const short = await fetchShortForecastForGrid(grid, proxyBase);
       return [sector, buildRainfall(current, previous, short)];
     }));
 
-    const situation = await fetchSituation(authKey);
+    const situation = await fetchSituation(proxyBase);
     const observedTimes = windStations.map(x => new Date(x.observedAt).getTime()).filter(Number.isFinite);
     const observedAt = observedTimes.length ? new Date(Math.max(...observedTimes)).toISOString() : new Date().toISOString();
     const forecastIssuedAt = rainEntries.map(([,r]) => r.forecastIssuedAt).filter(Boolean)[0] || new Date().toISOString();
@@ -412,11 +404,11 @@
     return d.toLocaleTimeString('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit', hour12:false });
   }
 
-  async function testConnection(authKey) {
-    const key = String(authKey || '').trim();
-    if (!key) throw new Error('기상청 인증키를 입력하십시오.');
-    const test = await fetchNowcastForGrid({ nx: 60, ny: 127 }, key, 0);
-    const situation = await fetchSituation(key);
+  async function testConnection() {
+    const { proxyBase } = getSettings();
+    if (!proxyBase) throw new Error('기상청 중계 Worker 주소가 없습니다.');
+    const test = await fetchNowcastForGrid({ nx: 60, ny: 127 }, proxyBase, 0);
+    const situation = await fetchSituation(proxyBase);
     return {
       ok: true,
       observedAt: test.observedAt,
