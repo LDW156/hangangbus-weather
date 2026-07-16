@@ -25,6 +25,10 @@
     const d=toDate(v); if(!d || Number.isNaN(d.getTime())) return '-';
     return d.toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
   };
+  const dateOnlyText = (v) => {
+    const d=toDate(v); if(!d || Number.isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',weekday:'short'});
+  };
   const signed = (n,d=1,unit='') => `${n>0?'+':''}${fmt(n,d)}${unit}`;
   const deltaClass = (n, inverse=false) => {
     const bad = inverse ? n<0 : n>0;
@@ -997,6 +1001,87 @@
     observeResponsiveChart(svg,()=>tideChart(svg,t));
   }
 
+  function monthlyEventText(events){
+    if(!Array.isArray(events)||!events.length)return '-';
+    return events.map(event=>
+      `${timeText(event.time)} ${fmt(event.heightCm,0)}cm`
+    ).join('<br>');
+  }
+
+  function renderMonthlyTide(t){
+    const monthly=t.monthly;
+    const daily=monthly?.daily||[];
+    const summary=monthly?.summary||{};
+
+    if(!daily.length){
+      $('tideMonthlySummary').innerHTML=
+        `<div class="monthly-summary-card warning">
+          <span>30일 전망</span>
+          <b>자료 확인</b>
+          <em>${esc(t.monthlyError||'월간 조석자료를 불러오지 못했습니다.')}</em>
+        </div>`;
+      $('tideMonthlyBody').innerHTML=
+        '<tr><td colspan="6">월간 조석자료 없음</td></tr>';
+      return;
+    }
+
+    const firstSpring=daily.find(day=>day.cycleClass==='대조기권');
+    const firstNeap=daily.find(day=>day.cycleClass==='소조기권');
+    const highest=summary.highestHigh;
+    const maxRange=summary.maxRangeDay;
+
+    $('tideMonthlySummary').innerHTML=[
+      {
+        label:'30일 최대조차',
+        value:maxRange?`${fmt(maxRange.rangeCm,0)}cm`:'-',
+        sub:maxRange?dateOnlyText(`${maxRange.date}T00:00:00+09:00`):'-',
+        cls:'spring'
+      },
+      {
+        label:'다음 대조기권',
+        value:firstSpring?dateOnlyText(`${firstSpring.date}T00:00:00+09:00`):'-',
+        sub:firstSpring?`일 조차 ${fmt(firstSpring.rangeCm,0)}cm`:'조차 기준 추정',
+        cls:'spring'
+      },
+      {
+        label:'다음 소조기권',
+        value:firstNeap?dateOnlyText(`${firstNeap.date}T00:00:00+09:00`):'-',
+        sub:firstNeap?`일 조차 ${fmt(firstNeap.rangeCm,0)}cm`:'조차 기준 추정',
+        cls:'neap'
+      },
+      {
+        label:'가장 높은 만조',
+        value:highest?`${fmt(highest.heightCm,0)}cm`:'-',
+        sub:highest?`${dateOnlyText(highest.time)} ${timeText(highest.time)}`:'-',
+        cls:'high'
+      }
+    ].map(card=>
+      `<div class="monthly-summary-card ${card.cls}">
+        <span>${card.label}</span>
+        <b>${card.value}</b>
+        <em>${card.sub}</em>
+      </div>`
+    ).join('');
+
+    $('tideMonthlyBody').innerHTML=daily.map(day=>{
+      const cycleClass=
+        day.cycleClass==='대조기권'
+          ? 'spring'
+          : day.cycleClass==='소조기권'
+            ? 'neap'
+            : 'middle';
+
+      return `<tr>
+        <td>${dateOnlyText(`${day.date}T00:00:00+09:00`)}</td>
+        <td><span class="cycle-badge ${cycleClass}">${esc(day.cycleClass||'-')}</span></td>
+        <td>${monthlyEventText(day.highs)}</td>
+        <td>${monthlyEventText(day.lows)}</td>
+        <td><b>${day.rangeCm===null||day.rangeCm===undefined?'-':`${fmt(day.rangeCm,0)}cm`}</b></td>
+        <td>${day.rangeCm>=800?'조석 영향 큼':day.rangeCm<=450?'조석 영향 감소':'일반'}</td>
+      </tr>`;
+    }).join('');
+  }
+
   function renderTide(){
     const t=data.tide;
     const current=t.currentObserved;
@@ -1092,6 +1177,7 @@
     }).join('');
 
     tideChart($('tideChart'),t);
+    renderMonthlyTide(t);
   }
 
   function renderHealth(){

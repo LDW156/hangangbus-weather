@@ -2977,3 +2977,135 @@ footer strong {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* =========================================================
+   v69 향후 30일 조석 전망
+========================================================= */
+
+.monthly-summary-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin:10px 0;
+}
+
+.monthly-summary-card {
+  min-height:88px;
+  padding:13px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f8fbfd;
+}
+
+.monthly-summary-card span {
+  display:block;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+}
+
+.monthly-summary-card b {
+  display:block;
+  margin-top:7px;
+  color:#173e55;
+  font-size:20px;
+  line-height:1.1;
+}
+
+.monthly-summary-card em {
+  display:block;
+  margin-top:7px;
+  color:#557385;
+  font-size:9px;
+  font-style:normal;
+  font-weight:700;
+}
+
+.monthly-summary-card.spring {
+  border-color:#e2a0a6;
+  background:#fff4f5;
+}
+
+.monthly-summary-card.spring b,
+.monthly-summary-card.high b {
+  color:#bd2734;
+}
+
+.monthly-summary-card.neap {
+  border-color:#8abbd2;
+  background:#f0f8fc;
+}
+
+.monthly-summary-card.neap b {
+  color:#126b9c;
+}
+
+.monthly-summary-card.warning {
+  grid-column:1/-1;
+  border-color:#e0b76b;
+  background:#fff8e8;
+}
+
+.monthly-method-note {
+  margin:7px 0 10px;
+  padding:8px 10px;
+  border-left:3px solid #4f8fac;
+  background:#f3f8fa;
+  color:#4f6f80;
+  font-size:9px;
+  font-weight:750;
+}
+
+.monthly-table-scroll {
+  max-height:520px;
+}
+
+.monthly-tide-table {
+  min-width:860px;
+}
+
+.monthly-tide-table td {
+  vertical-align:top;
+  line-height:1.55;
+}
+
+.cycle-badge {
+  display:inline-block;
+  min-width:58px;
+  padding:4px 7px;
+  border-radius:999px;
+  text-align:center;
+  font-size:8px;
+  font-weight:900;
+}
+
+.cycle-badge.spring {
+  color:#b52230;
+  background:#ffe9eb;
+  border:1px solid #e6a1a7;
+}
+
+.cycle-badge.neap {
+  color:#12678f;
+  background:#e8f5fb;
+  border:1px solid #91bed5;
+}
+
+.cycle-badge.middle {
+  color:#536d7a;
+  background:#eef3f5;
+  border:1px solid #ccd8de;
+}
+
+@media (max-width:900px) {
+  .monthly-summary-grid {
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media (max-width:560px) {
+  .monthly-summary-grid {
+    grid-template-columns:1fr;
+  }
+}

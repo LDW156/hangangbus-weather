@@ -8,7 +8,7 @@
   <title>한강버스 기상·수문 모니터링</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=68">
+  <link rel="stylesheet" href="styles.css?v=69">
   <script>
     // 새 배포 파일을 즉시 받도록 이전 한강버스 캐시를 정리합니다.
     if ('caches' in window) {
@@ -123,6 +123,32 @@
         <div class="panel-title"><h3>조석 전후 시각 비교</h3><span>이전·현재·다음 이벤트</span></div>
         <div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>조위</th><th>비교</th></tr></thead><tbody id="tideComparisonBody"></tbody></table></div>
       </article>
+      <article class="panel table-panel top-gap monthly-tide-panel">
+        <div class="panel-title">
+          <h3>향후 30일 조석 전망</h3>
+          <span>reqDate 일별조회 · 조차 기준 대조기권·소조기권 추정</span>
+        </div>
+        <div id="tideMonthlySummary" class="monthly-summary-grid"></div>
+        <div class="monthly-method-note">
+          대조기권·소조기권은 향후 30일 일 조차의 상대범위로 추정한 운항 참고값입니다.
+        </div>
+        <div class="table-scroll monthly-table-scroll">
+          <table class="data-table monthly-tide-table">
+            <thead>
+              <tr>
+                <th>날짜</th>
+                <th>조석구간</th>
+                <th>만조 시각·조위</th>
+                <th>간조 시각·조위</th>
+                <th>최대조차</th>
+                <th>운항 참고</th>
+              </tr>
+            </thead>
+            <tbody id="tideMonthlyBody"></tbody>
+          </table>
+        </div>
+      </article>
+
     </section>
 
     <section class="section data-state">
@@ -141,7 +167,7 @@
   <script src="data/demo-data.js?v=62"></script>
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=62"></script>
-  <script src="ocean.js?v=67"></script>
-  <script src="app.js?v=68"></script>
+  <script src="ocean.js?v=69"></script>
+  <script src="app.js?v=69"></script>
 </body>
 </html>

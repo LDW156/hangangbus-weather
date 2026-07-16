@@ -1,16 +1,16 @@
-const CACHE='hangangbus-tide-visibility-health-v68';
+const CACHE='hangangbus-tide-monthly-v69';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=68',
+  './styles.css?v=69',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
   './kma.js?v=62',
-  './ocean.js?v=67',
-  './app.js?v=68',
+  './ocean.js?v=69',
+  './app.js?v=69',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

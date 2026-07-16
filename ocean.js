@@ -53,10 +53,16 @@
     return xml;
   }
 
-  async function fetchXml(kind) {
+  async function fetchXml(kind, params = {}) {
     const s = settings();
     const url = new URL(`${s.proxyBase}/tide/${kind}`);
     url.searchParams.set('obsCode', s.obsCode);
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
 
     let response;
     try {
@@ -75,6 +81,70 @@
       throw new Error(`조석 중계 HTTP ${response.status} · ${String(detail).replace(/\s+/g,' ').slice(0,180)}`);
     }
     return parseXml(text);
+  }
+
+  async function fetchJson(path, params = {}) {
+    const s = settings();
+    const url = new URL(`${s.proxyBase}${path}`);
+    url.searchParams.set('obsCode', s.obsCode);
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+
+    let response;
+    try {
+      response = await fetch(url.toString(), { cache: 'no-store' });
+    } catch (error) {
+      throw new Error(`조석 월간자료 호출 실패: ${error.message}`);
+    }
+
+    const text = await response.text();
+    if (!response.ok) {
+      let detail = text;
+      try {
+        const parsed = JSON.parse(text);
+        detail = parsed.error || parsed.resultMsg || text;
+      } catch (_) {}
+      throw new Error(
+        `조석 월간자료 HTTP ${response.status} · ${
+          String(detail).replace(/\s+/g, ' ').slice(0, 180)
+        }`
+      );
+    }
+
+    const parsed = JSON.parse(text);
+    if (parsed.ok === false) {
+      throw new Error(parsed.error || parsed.resultMsg || '조석 월간자료 오류');
+    }
+    return parsed;
+  }
+
+  function kstDateKey(date) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+
+    const values = Object.fromEntries(
+      parts.map(part => [part.type, part.value])
+    );
+
+    return `${values.year}${values.month}${values.day}`;
+  }
+
+  function addKstDays(date, offset) {
+    const shifted = new Date(date.getTime() + offset * 86400000);
+    return kstDateKey(shifted);
+  }
+
+  function localDateKey(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : kstDateKey(date);
   }
 
   function parseHighLow(xml) {
@@ -202,16 +272,51 @@
 
   async function loadTide() {
     const fetchedAt = new Date();
-    const [highLowXml, predictionXml, surveyXml] = await Promise.all([
-      fetchXml('highlow'),
+    const yesterdayKey = addKstDays(fetchedAt, -1);
+    const todayKey = addKstDays(fetchedAt, 0);
+    const tomorrowKey = addKstDays(fetchedAt, 1);
+
+    const monthlyPromise = fetchJson('/tide/monthly', {
+      startDate: todayKey,
+      days: 30
+    }).catch(error => ({
+      ok: false,
+      error: error.message,
+      daily: [],
+      summary: null
+    }));
+
+    const [
+      yesterdayXml,
+      todayXml,
+      tomorrowXml,
+      predictionXml,
+      surveyXml,
+      monthly
+    ] = await Promise.all([
+      fetchXml('highlow', { reqDate: yesterdayKey }),
+      fetchXml('highlow', { reqDate: todayKey }),
+      fetchXml('highlow', { reqDate: tomorrowKey }),
       fetchXml('timeseries'),
-      fetchXml('survey')
+      fetchXml('survey'),
+      monthlyPromise
     ]);
 
-    const events = parseHighLow(highLowXml);
+    const allEvents = [
+      ...parseHighLow(yesterdayXml),
+      ...parseHighLow(todayXml),
+      ...parseHighLow(tomorrowXml)
+    ].sort((a, b) => new Date(a.time) - new Date(b.time));
+
+    const events = allEvents.filter(
+      event => localDateKey(event.time) === todayKey
+    );
+
     const prediction = parsePrediction(predictionXml);
     const survey = parseSurvey(surveyXml);
-    if (!prediction.length) throw new Error('인천 조석예보 시계열 자료 없음');
+    if (!prediction.length) {
+      throw new Error('인천 조석예보 시계열 자료 없음');
+    }
 
     const currentObserved = latestValidObserved(survey, fetchedAt);
     const currentPredicted = nearest(prediction, fetchedAt, 'heightCm');
@@ -224,13 +329,32 @@
           )
         )
       : null;
-    const previousHigh = eventAround(events, fetchedAt, 'high', 'previous');
-    const previousLow = eventAround(events, fetchedAt, 'low', 'previous');
-    const nextHigh = eventAround(events, fetchedAt, 'high', 'next');
-    const nextLow = eventAround(events, fetchedAt, 'low', 'next');
-    const highs = events.filter(e => e.type === 'high').map(e => e.heightCm);
-    const lows = events.filter(e => e.type === 'low').map(e => e.heightCm);
-    const rangeCm = highs.length && lows.length ? Math.max(...highs) - Math.min(...lows) : null;
+
+    const previousHigh = eventAround(
+      allEvents,
+      fetchedAt,
+      'high',
+      'previous'
+    );
+    const previousLow = eventAround(
+      allEvents,
+      fetchedAt,
+      'low',
+      'previous'
+    );
+    const nextHigh = eventAround(allEvents, fetchedAt, 'high', 'next');
+    const nextLow = eventAround(allEvents, fetchedAt, 'low', 'next');
+
+    const highs = events
+      .filter(event => event.type === 'high')
+      .map(event => event.heightCm);
+    const lows = events
+      .filter(event => event.type === 'low')
+      .map(event => event.heightCm);
+
+    const rangeCm = highs.length && lows.length
+      ? Math.max(...highs) - Math.min(...lows)
+      : null;
 
     return {
       referenceAt: fetchedAt.toISOString(),
@@ -247,9 +371,11 @@
         time: currentObserved.time,
         heightCm: currentObserved.observedCm,
         predictedCm: currentObserved.predictedCm,
-        deviationCm: currentObserved.observedCm - currentObserved.predictedCm,
+        deviationCm:
+          currentObserved.observedCm - currentObserved.predictedCm,
         ageMinutes: observedAgeMinutes,
-        isCurrent: observedAgeMinutes !== null && observedAgeMinutes <= 30
+        isCurrent:
+          observedAgeMinutes !== null && observedAgeMinutes <= 30
       } : null,
       observedStatus: currentObserved
         ? (observedAgeMinutes <= 30 ? 'current' : 'delayed')
@@ -263,9 +389,13 @@
       nextHigh,
       nextLow,
       events,
+      allEvents,
       timeline: tenMinuteTimeline(prediction),
+      monthly,
+      monthlyError: monthly?.ok === false ? monthly.error : null,
       intervalMinutes: 1,
-      sourceLabel: '바다누리·공공데이터포털 인천 조석'
+      sourceLabel:
+        '바다누리·공공데이터포털 인천 조석'
     };
   }
 
