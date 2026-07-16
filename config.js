@@ -10,6 +10,12 @@ window.HANGANG_CONFIG = {
     HISTORY_MINUTES: 130,
     INTERVAL_MINUTES: 10
   },
+  KMA: {
+    ENABLED: true,
+    STORAGE_KEY: 'hangangbus_kma_settings_v1',
+    OBSERVATION_INTERVAL_MINUTES: 60,
+    FORECAST_INTERVAL_MINUTES: 60
+  },
   THRESHOLDS: {
     jamsu: {
       cautionLevelM: 4.10,

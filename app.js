@@ -44,11 +44,12 @@
   async function loadData(){
     data = structuredClone(window.HANGANG_DEMO_DATA[scenario]);
 
-    if(cfg.DATA_MODE === 'hybrid' && cfg.HRFCO?.ENABLED){
-      if(!window.HRFCO?.isConfigured()){
-        $('modeBadge').textContent='SETUP';
-        setBanner('demo','수문 실데이터 연결 전입니다. 상단의 “수문 연결”에서 팔당댐·잠수교·한강대교 URL을 등록하십시오. 기상·조석은 데모 데이터입니다.');
-      }else{
+    const liveSources=[];
+    const setupSources=[];
+    const errors=[];
+
+    if(cfg.HRFCO?.ENABLED){
+      if(window.HRFCO?.isConfigured()){
         try{
           const live = await window.HRFCO.loadHydrology();
           data.hydrology = {
@@ -56,36 +57,61 @@
             jamsuBridge: live.jamsuBridge,
             hangangBridge: live.hangangBridge
           };
-          data.meta.generatedAt = live.fetchedAt;
-          data.meta.mode = 'hybrid';
           data.meta.dataTimes.hydrology = live.fetchedAt;
           data.health = (data.health || []).filter(x => !['한강수위','팔당댐'].includes(x.name));
           data.health.unshift(
             {name:'한강수위',status:'normal',updatedAt:live.jamsuBridge.observedAt,intervalMinutes:10},
             {name:'팔당댐',status:'normal',updatedAt:live.paldang.observedAt,intervalMinutes:10}
           );
-          $('modeBadge').textContent='HYBRID';
-          setBanner('live','팔당댐·잠수교·한강대교는 HRFCO 실데이터입니다. 기상·특보·조석은 현재 데모 데이터입니다.');
+          liveSources.push('수문');
         }catch(err){
-          $('modeBadge').textContent='ERROR';
-          setBanner('error',`수문 실데이터 수집 실패: ${err.message} · 현재 수문값은 데모이므로 운항판단에 사용하지 마십시오.`);
+          errors.push(`수문: ${err.message}`);
         }
+      }else{
+        setupSources.push('수문');
       }
-    }else if(cfg.DATA_MODE === 'live' && cfg.API_URL){
-      try{
-        const res = await fetch(cfg.API_URL,{cache:'no-store'});
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        data = await res.json();
-        $('modeBadge').textContent='LIVE';
-        setBanner('live','실시간 API 데이터로 표시 중입니다. 각 카드의 관측·예보 시각을 확인하십시오.');
-      }catch(err){
-        $('modeBadge').textContent='ERROR';
-        setBanner('error',`실시간 API 연결 실패: ${err.message} · 운항판단에 사용하지 마십시오.`);
-      }
-    }else{
-      $('modeBadge').textContent='DEMO';
-      setBanner('demo','현재 데모 데이터로 표시 중입니다. 수문은 10분, 기상예보는 1시간 단위 비교값을 표시합니다.');
     }
+
+    if(cfg.KMA?.ENABLED){
+      if(window.KMA?.isConfigured()){
+        try{
+          const live = await window.KMA.loadWeather();
+          data.weather = live.weather;
+          data.alerts = live.alerts;
+          data.meta.dataTimes.weatherObservation = live.observedAt;
+          data.meta.dataTimes.weatherForecastIssued = live.forecastIssuedAt;
+          data.health = (data.health || []).filter(x => !['기상관측','기상예보','기상특보'].includes(x.name));
+          data.health.push(
+            {name:'기상관측',status:'normal',updatedAt:live.observedAt,intervalMinutes:60},
+            {name:'기상예보',status:'normal',updatedAt:live.forecastIssuedAt,intervalMinutes:60},
+            {name:'기상특보',status:'normal',updatedAt:live.fetchedAt,intervalMinutes:10}
+          );
+          liveSources.push('기상');
+        }catch(err){
+          errors.push(`기상: ${err.message}`);
+        }
+      }else{
+        setupSources.push('기상');
+      }
+    }
+
+    data.meta.generatedAt = new Date().toISOString();
+    data.meta.mode = liveSources.length ? 'hybrid' : 'demo';
+
+    if(liveSources.length){
+      $('modeBadge').textContent='HYBRID';
+      const liveText=`실데이터: ${liveSources.join('·')}`;
+      const demoText=`데모 유지: ${['수문','기상','조석'].filter(x=>!liveSources.includes(x)).join('·')}`;
+      if(errors.length) setBanner('error',`${liveText} / ${demoText} / 오류 ${errors.join(' | ')}`);
+      else setBanner('live',`${liveText} / ${demoText}. 각 카드의 관측·예보 시각을 확인하십시오.`);
+    }else if(errors.length){
+      $('modeBadge').textContent='ERROR';
+      setBanner('error',`${errors.join(' | ')} · 현재 표시값은 데모이므로 운항판단에 사용하지 마십시오.`);
+    }else{
+      $('modeBadge').textContent=setupSources.length?'SETUP':'DEMO';
+      setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. GitHub 공용 설정파일을 확인하십시오. 조석은 데모 데이터입니다.`);
+    }
+
     render();
   }
 
@@ -104,7 +130,12 @@
     const winds=data.weather.windStations;
     const eastW=winds.filter(x=>x.sector==='east');
     const westW=winds.filter(x=>x.sector==='west');
-    const max=(arr,key)=>arr.length?Math.max(...arr.map(x=>Number(x[key])||0)):0;
+    const max=(arr,key)=>{
+      const values=arr.map(x=>x[key]).filter(v=>v!==null&&v!==undefined&&v!=='').map(Number).filter(Number.isFinite);
+      return values.length?Math.max(...values):null;
+    };
+    const windStats=(arr)=>({speed:max(arr,'speed')??0,gust:max(arr,'gust')});
+    const eastStats=windStats(eastW), westStats=windStats(westW);
     const officialWarning=data.alerts.some(a=>a.source==='official'&&a.level==='warning');
     const officialAdvisory=data.alerts.some(a=>a.source==='official'&&a.level==='advisory');
 
@@ -126,13 +157,19 @@
     else if(out>=t.paldang.westCautionCms){west='caution';westReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 접근`)}
     else westReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 기준 미만`);
 
-    if(max(eastW,'gust')>=t.wind.gustStopMs||max(eastW,'speed')>=t.wind.stopMs){east='stop';eastReasons.push(`동부 ${timeText(eastW[0]?.observedAt)} · 순간 ${fmt(max(eastW,'gust'),1)}m/s`)}
-    else if(max(eastW,'gust')>=t.wind.gustCautionMs||max(eastW,'speed')>=t.wind.cautionMs){if(east==='normal')east='caution';eastReasons.push(`동부 ${timeText(eastW[0]?.observedAt)} · 순간 ${fmt(max(eastW,'gust'),1)}m/s`)}
-    else eastReasons.push(`동부 ${timeText(eastW[0]?.observedAt)} · 순간 ${fmt(max(eastW,'gust'),1)}m/s`);
+    const eastStopWind=eastStats.speed>=t.wind.stopMs||(eastStats.gust!==null&&eastStats.gust>=t.wind.gustStopMs);
+    const eastCautionWind=eastStats.speed>=t.wind.cautionMs||(eastStats.gust!==null&&eastStats.gust>=t.wind.gustCautionMs);
+    const eastWindText=eastStats.gust===null?`동부 ${timeText(eastW[0]?.observedAt)} · 풍속 ${fmt(eastStats.speed,1)}m/s`:`동부 ${timeText(eastW[0]?.observedAt)} · 순간 ${fmt(eastStats.gust,1)}m/s`;
+    if(eastStopWind){east='stop';eastReasons.push(eastWindText)}
+    else if(eastCautionWind){if(east==='normal')east='caution';eastReasons.push(eastWindText)}
+    else eastReasons.push(eastWindText);
 
-    if(max(westW,'gust')>=t.wind.gustStopMs||max(westW,'speed')>=t.wind.stopMs){west='stop';westReasons.push(`서부 ${timeText(westW[0]?.observedAt)} · 순간 ${fmt(max(westW,'gust'),1)}m/s`)}
-    else if(max(westW,'gust')>=t.wind.gustCautionMs||max(westW,'speed')>=t.wind.cautionMs){if(west==='normal')west='caution';westReasons.push(`서부 ${timeText(westW[0]?.observedAt)} · 순간 ${fmt(max(westW,'gust'),1)}m/s`)}
-    else westReasons.push(`서부 ${timeText(westW[0]?.observedAt)} · 순간 ${fmt(max(westW,'gust'),1)}m/s`);
+    const westStopWind=westStats.speed>=t.wind.stopMs||(westStats.gust!==null&&westStats.gust>=t.wind.gustStopMs);
+    const westCautionWind=westStats.speed>=t.wind.cautionMs||(westStats.gust!==null&&westStats.gust>=t.wind.gustCautionMs);
+    const westWindText=westStats.gust===null?`서부 ${timeText(westW[0]?.observedAt)} · 풍속 ${fmt(westStats.speed,1)}m/s`:`서부 ${timeText(westW[0]?.observedAt)} · 순간 ${fmt(westStats.gust,1)}m/s`;
+    if(westStopWind){west='stop';westReasons.push(westWindText)}
+    else if(westCautionWind){if(west==='normal')west='caution';westReasons.push(westWindText)}
+    else westReasons.push(westWindText);
 
     if(officialWarning){east='stop';west='stop'}
     else if(officialAdvisory){if(east==='normal')east='caution';if(west==='normal')west='caution'}
@@ -184,8 +221,6 @@
       </div>`;
     $('jamsuChartMeta').textContent=`${timeText(h[0].timestamp)}~${timeText(last(h).timestamp)} · 10분 간격`;
 
-    // 실제 수위가 3.50m 아래이거나 4.70m 위여도 그래프가 잘리지 않도록
-    // 관측값과 주의·불가 기준선을 모두 포함해 Y축을 자동 계산합니다.
     const chartValues = h
       .map(row => Number(row.value))
       .filter(Number.isFinite);
@@ -250,13 +285,26 @@
     }).join('');
   }
 
-  function windLevel(w){const t=cfg.THRESHOLDS.wind;if(w.speed>=t.stopMs||w.gust>=t.gustStopMs)return'danger';if(w.speed>=t.cautionMs||w.gust>=t.gustCautionMs)return'warn';return'good'}
+  function windLevel(w){
+    const t=cfg.THRESHOLDS.wind;
+    const hasGust=w.gust!==null&&w.gust!==undefined&&w.gust!=='';
+    const gust=hasGust?Number(w.gust):null;
+    if(w.speed>=t.stopMs||(gust!==null&&Number.isFinite(gust)&&gust>=t.gustStopMs))return'danger';
+    if(w.speed>=t.cautionMs||(gust!==null&&Number.isFinite(gust)&&gust>=t.gustCautionMs))return'warn';
+    return'good';
+  }
   function windCompare(label,x,current){
-    const d=x.speed-current.speed;
-    return `<div class="wind-compare"><span>${label} · ${timeText(x.time)}</span><b>${esc(x.direction)} ${fmt(x.speed,1)}m/s</b><em>순간 ${fmt(x.gust,1)} · ${signed(d,1,'m/s')}</em></div>`;
+    if(!x) return `<div class="wind-compare unavailable"><span>${label}</span><b>자료 없음</b><em>별도 AWS 관측 연결 예정</em></div>`;
+    const d=Number(x.speed)-Number(current.speed);
+    const gustText=(x.gust!==null&&x.gust!==undefined&&x.gust!==''&&Number.isFinite(Number(x.gust)))?`순간 ${fmt(x.gust,1)} · `:'';
+    return `<div class="wind-compare"><span>${label} · ${timeText(x.time)}</span><b>${esc(x.direction)} ${fmt(x.speed,1)}m/s</b><em>${gustText}${signed(d,1,'m/s')}</em></div>`;
   }
   function renderWind(){
-    $('windGrid').innerHTML=data.weather.windStations.map(w=>`<article class="station-card"><div class="data-time">관측 ${dateTimeText(w.observedAt)} · 관측 10분 / 예보 1시간</div><div class="station-head"><h3>${esc(w.name)}</h3><span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span></div><div class="wind-main ${windLevel(w)}">${fmt(w.speed,1)}m/s</div><div class="wind-sub">${timeText(w.observedAt)} ${esc(w.direction)} · 순간 ${fmt(w.gust,1)}m/s</div><div class="wind-compare-grid">${windCompare('10분 전 관측',w.previous10m,w)}${windCompare('1시간 전 관측',w.previous1h,w)}${windCompare('1시간 후 예보',w.forecast1h,w)}${windCompare('3시간 후 예보',w.forecast3h,w)}</div></article>`).join('');
+    $('windGrid').innerHTML=data.weather.windStations.map(w=>{
+      const gustText=(w.gust!==null&&w.gust!==undefined&&w.gust!==''&&Number.isFinite(Number(w.gust)))?`순간 ${fmt(w.gust,1)}m/s`:'순간풍속 미연결';
+      const interval=w.sourceLabel?.includes('초단기')?'실황 1시간 / 예보 1시간':'관측 10분 / 예보 1시간';
+      return `<article class="station-card"><div class="data-time">관측 ${dateTimeText(w.observedAt)} · ${interval}</div><div class="station-head"><h3>${esc(w.name)}</h3><span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span></div><div class="wind-main ${windLevel(w)}">${fmt(w.speed,1)}m/s</div><div class="wind-sub">${timeText(w.observedAt)} ${esc(w.direction)} · ${gustText}</div><div class="wind-compare-grid">${windCompare('10분 전 관측',w.previous10m,w)}${windCompare('1시간 전 실황',w.previous1h,w)}${windCompare('1시간 후 예보',w.forecast1h,w)}${windCompare('3시간 후 예보',w.forecast3h,w)}</div></article>`;
+    }).join('');
   }
 
   function riverMetric(name,obj){
@@ -300,6 +348,46 @@
     svg.innerHTML=`${grid}${ref}<polyline class="chart-line" stroke="#f29a52" points="${inflow}"/><polyline class="chart-line" stroke="#55b7ec" points="${outflow}"/>${dots}${labels}`;
   }
 
+
+  function openWeatherSettings(){
+    const s=window.KMA?.getSettings?.()||{};
+    $('kmaAuthKeyInput').value=s.authKey||'';
+    $('weatherTestResult').className='settings-result';
+    $('weatherTestResult').textContent='인증키를 입력한 뒤 연결 테스트를 실행하십시오.';
+    $('weatherModal').hidden=false;
+    document.body.classList.add('modal-open');
+  }
+  function closeWeatherSettings(){
+    $('weatherModal').hidden=true;
+    document.body.classList.remove('modal-open');
+  }
+  async function testWeatherSettings(){
+    const key=$('kmaAuthKeyInput').value.trim(),result=$('weatherTestResult');
+    if(!key){result.className='settings-result error';result.textContent='기상청 인증키를 입력하십시오.';return;}
+    result.className='settings-result loading';result.textContent='기상청 초단기실황·특보사항 연결 확인 중...';
+    try{
+      const test=await window.KMA.testConnection(key);
+      result.className='settings-result success';
+      result.textContent=`연결 성공 · ${timeText(test.observedAt)} ${test.direction} ${fmt(test.speed,1)}m/s · 1시간 강수 ${fmt(test.rain1h,1)}mm · 특보 ${test.alertCount}건`;
+    }catch(err){
+      result.className='settings-result error';result.textContent=`연결 실패: ${err.message}`;
+    }
+  }
+  function bindWeatherSettings(){
+    $('weatherSettingsBtn')?.addEventListener('click',openWeatherSettings);
+    document.querySelectorAll('[data-close-weather]').forEach(x=>x.addEventListener('click',closeWeatherSettings));
+    $('showKmaKey')?.addEventListener('change',e=>{$('kmaAuthKeyInput').type=e.target.checked?'text':'password';});
+    $('testWeatherBtn')?.addEventListener('click',testWeatherSettings);
+    $('saveWeatherBtn')?.addEventListener('click',async()=>{
+      const authKey=$('kmaAuthKeyInput').value.trim();
+      if(!authKey){$('weatherTestResult').className='settings-result error';$('weatherTestResult').textContent='기상청 인증키를 입력하십시오.';return;}
+      window.KMA.saveSettings({authKey});closeWeatherSettings();await loadData();
+    });
+    $('clearWeatherBtn')?.addEventListener('click',()=>{
+      window.KMA.clearSettings();$('kmaAuthKeyInput').value='';
+      $('weatherTestResult').className='settings-result';$('weatherTestResult').textContent='저장값을 삭제했습니다.';
+    });
+  }
 
   function openHydrologySettings(){
     const s=window.HRFCO?.getSettings?.()||{};
@@ -360,6 +448,7 @@
   }
   document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData();});
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
+  bindWeatherSettings();
   bindHydrologySettings();
   loadData();
   setInterval(()=>{if(cfg.DATA_MODE==='live'||cfg.DATA_MODE==='hybrid')loadData()},cfg.REFRESH_MS);
