@@ -108,16 +108,51 @@
     rows.forEach(row=>{ if(row?.timestamp) byTime.set(row.timestamp,row); });
     return [...byTime.values()].sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
   }
+
+  /*
+   * HRFCO는 새로운 10분 구간이 생성되는 순간 값이 아직 확정되지 않아
+   * 0으로 채워진 최신 행을 잠시 반환할 수 있습니다. 직전 행이 정상값인데
+   * 최신 행만 0이면 미확정 자료로 보고 제외합니다.
+   */
+  function removeTrailingProvisionalRows(history, isProvisional){
+    const confirmed=[...history];
+    const ignored=[];
+
+    while(confirmed.length>=2){
+      const latest=confirmed.at(-1);
+      const previous=confirmed.at(-2);
+      if(!isProvisional(latest,previous)) break;
+      ignored.unshift(confirmed.pop());
+    }
+
+    return {confirmed,ignored};
+  }
   function parseWaterLevel(doc,sourceLabel){
     const rows=contentRecords(doc).map(node=>{
       const timestamp=parseApiTimestamp(nodeText(node,['ymdhm','obstm','tm','time']));
       const value=num(nodeText(node,['wl','waterlevel','wlev','wlvalue','value']));
       return timestamp&&value!==null?{timestamp,time:timeLabel(timestamp),value}:null;
     }).filter(Boolean);
-    const history=cleanHistory(rows);
+
+    const cleaned=cleanHistory(rows);
+    const filtered=removeTrailingProvisionalRows(
+      cleaned,
+      (latest,previous)=>latest.value===0&&previous.value>0
+    );
+    const history=filtered.confirmed;
+
     if(!history.length) throw new Error(`${sourceLabel} 수위 필드를 찾지 못했습니다.`);
     const latest=history.at(-1);
-    return {waterLevelM:latest.value,observedAt:latest.timestamp,intervalMinutes:10,history,sourceLabel,live:true};
+
+    return {
+      waterLevelM:latest.value,
+      observedAt:latest.timestamp,
+      intervalMinutes:10,
+      history,
+      sourceLabel,
+      live:true,
+      provisionalIgnored:filtered.ignored
+    };
   }
   function parseDam(doc){
     const rows=contentRecords(doc).map(node=>{
@@ -126,10 +161,30 @@
       const outflow=num(nodeText(node,['tototf','outflow','totoutf','totot']));
       return timestamp&&inflow!==null&&outflow!==null?{timestamp,time:timeLabel(timestamp),inflow,outflow}:null;
     }).filter(Boolean);
-    const history=cleanHistory(rows);
+
+    const cleaned=cleanHistory(rows);
+    const filtered=removeTrailingProvisionalRows(
+      cleaned,
+      (latest,previous)=>
+        latest.inflow===0&&
+        latest.outflow===0&&
+        (previous.inflow>0||previous.outflow>0)
+    );
+    const history=filtered.confirmed;
+
     if(!history.length) throw new Error('팔당댐 유입·방류 필드를 찾지 못했습니다.');
     const latest=history.at(-1);
-    return {inflowCms:latest.inflow,outflowCms:latest.outflow,observedAt:latest.timestamp,intervalMinutes:10,history,sourceLabel:'팔당댐 수문자료',live:true};
+
+    return {
+      inflowCms:latest.inflow,
+      outflowCms:latest.outflow,
+      observedAt:latest.timestamp,
+      intervalMinutes:10,
+      history,
+      sourceLabel:'팔당댐 수문자료',
+      live:true,
+      provisionalIgnored:filtered.ignored
+    };
   }
   async function loadHydrology(){
     const s=getSettings();
@@ -137,10 +192,35 @@
     const [paldangDoc,jamsuDoc,hangangDoc]=await Promise.all([
       fetchXml(s.paldangUrl),fetchXml(s.jamsuUrl),fetchXml(s.hangangUrl)
     ]);
+    const paldang=parseDam(paldangDoc);
+    const jamsuBridge=parseWaterLevel(jamsuDoc,'잠수교 수위');
+    const hangangBridge=parseWaterLevel(hangangDoc,'한강대교 수위');
+    const warnings=[];
+
+    if(paldang.provisionalIgnored?.length){
+      const ignored=paldang.provisionalIgnored.at(-1);
+      warnings.push(
+        `팔당댐 ${timeLabel(ignored.timestamp)} 미확정 0값 제외 · ${timeLabel(paldang.observedAt)} 확정자료 유지`
+      );
+    }
+    if(jamsuBridge.provisionalIgnored?.length){
+      const ignored=jamsuBridge.provisionalIgnored.at(-1);
+      warnings.push(
+        `잠수교 ${timeLabel(ignored.timestamp)} 미확정 0값 제외 · ${timeLabel(jamsuBridge.observedAt)} 확정자료 유지`
+      );
+    }
+    if(hangangBridge.provisionalIgnored?.length){
+      const ignored=hangangBridge.provisionalIgnored.at(-1);
+      warnings.push(
+        `한강대교 ${timeLabel(ignored.timestamp)} 미확정 0값 제외 · ${timeLabel(hangangBridge.observedAt)} 확정자료 유지`
+      );
+    }
+
     return {
-      paldang:parseDam(paldangDoc),
-      jamsuBridge:parseWaterLevel(jamsuDoc,'잠수교 수위'),
-      hangangBridge:parseWaterLevel(hangangDoc,'한강대교 수위'),
+      paldang,
+      jamsuBridge,
+      hangangBridge,
+      warnings,
       fetchedAt:new Date().toISOString()
     };
   }

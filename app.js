@@ -50,7 +50,10 @@
     isLoading=true;
     lastRefreshStartedAt=new Date();
     setRefreshState('loading');
-    data = structuredClone(window.HANGANG_DEMO_DATA[scenario]);
+
+    // 갱신 실패나 미확정 응답이 발생해도 직전 정상 실데이터를 보존합니다.
+    const previousData=data?structuredClone(data):null;
+    data=structuredClone(window.HANGANG_DEMO_DATA[scenario]);
 
     const liveSources=[];
     const setupSources=[];
@@ -72,9 +75,22 @@
             {name:'한강수위',status:'normal',updatedAt:live.jamsuBridge.observedAt,intervalMinutes:10},
             {name:'팔당댐',status:'normal',updatedAt:live.paldang.observedAt,intervalMinutes:10}
           );
+          if(live.warnings?.length){
+            notes.push(...live.warnings.map(x=>`수문 참고: ${x}`));
+          }
           liveSources.push('수문');
         }catch(err){
-          errors.push(`수문: ${err.message}`);
+          if(previousData?.hydrology){
+            data.hydrology=previousData.hydrology;
+            data.meta.dataTimes.hydrology=previousData.meta?.dataTimes?.hydrology;
+            data.health=(data.health||[]).filter(x=>!['한강수위','팔당댐'].includes(x.name));
+            const previousHealth=(previousData.health||[]).filter(x=>['한강수위','팔당댐'].includes(x.name));
+            data.health.unshift(...previousHealth);
+            notes.push(`수문 갱신 실패 · 직전 정상값 유지 (${err.message})`);
+            liveSources.push('수문(직전값)');
+          }else{
+            errors.push(`수문: ${err.message}`);
+          }
         }
       }else{
         setupSources.push('수문');
@@ -99,7 +115,20 @@
           if(live.warnings?.length) notes.push(...live.warnings.map(x=>`기상 참고: ${x}`));
           liveSources.push('기상');
         }catch(err){
-          errors.push(`기상: ${err.message}`);
+          if(previousData?.weather){
+            data.weather=previousData.weather;
+            data.alerts=previousData.alerts||[];
+            data.alertStatus=previousData.alertStatus;
+            data.meta.dataTimes.weatherObservation=previousData.meta?.dataTimes?.weatherObservation;
+            data.meta.dataTimes.weatherForecastIssued=previousData.meta?.dataTimes?.weatherForecastIssued;
+            data.health=(data.health||[]).filter(x=>!['기상관측','기상예보','기상특보'].includes(x.name));
+            const previousHealth=(previousData.health||[]).filter(x=>['기상관측','기상예보','기상특보'].includes(x.name));
+            data.health.push(...previousHealth);
+            notes.push(`기상 갱신 실패 · 직전 정상값 유지 (${err.message})`);
+            liveSources.push('기상(직전값)');
+          }else{
+            errors.push(`기상: ${err.message}`);
+          }
         }
       }else{
         setupSources.push('기상');
