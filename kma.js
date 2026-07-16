@@ -5,6 +5,8 @@
   const KMA_CFG = cfg.KMA || {};
   const STORAGE_KEY = KMA_CFG.STORAGE_KEY || 'hangangbus_kma_settings_v1';
 
+  const ASOS_REFERENCE = { stn: 108, name: '서울 ASOS(108)' };
+
   const STATIONS = [
     { name: '마곡', sector: 'west', nx: 57, ny: 127 },
     { name: '망원', sector: 'west', nx: 58, ny: 126 },
@@ -72,29 +74,51 @@
     return `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${t.slice(0,2)}:${t.slice(2,4)}:00+09:00`;
   }
 
-  function getUltraNowBase(offsetHours = 0) {
-    const d = new Date(Date.now() - (50 + offsetHours * 60) * 60000);
-    return { date: formatDate(d), time: formatTime(d, 0), dateObj: d };
+  function floorHour(date = new Date()) {
+    return new Date(Math.floor(date.getTime() / 3600000) * 3600000);
   }
 
-  function getUltraForecastBase() {
-    const d = new Date(Date.now() - 45 * 60000);
-    return { date: formatDate(d), time: formatTime(d, 30), dateObj: d };
+  function ceilHour(date = new Date()) {
+    return new Date(Math.ceil(date.getTime() / 3600000) * 3600000);
   }
 
-  function getShortForecastBase() {
-    const safe = new Date(Date.now() - 20 * 60000);
-    const p = kstParts(safe);
-    const hours = [2,5,8,11,14,17,20,23];
-    const currentHour = Number(p.hour);
-    let baseHour = [...hours].reverse().find(h => h <= currentHour);
-    let baseDate = formatDate(safe);
-    if (baseHour === undefined) {
-      const prev = new Date(safe.getTime() - 24 * 3600000);
-      baseDate = formatDate(prev);
-      baseHour = 23;
+  function hourlyCandidates(offsetHours = 0, count = 3) {
+    const anchor = floorHour(new Date(Date.now() - offsetHours * 3600000));
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(anchor.getTime() - i * 3600000);
+      return { date: formatDate(d), time: formatTime(d, 0), dateObj: d };
+    });
+  }
+
+  function halfHourlyCandidates(count = 6) {
+    const anchor = new Date(Math.floor(Date.now() / 1800000) * 1800000);
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(anchor.getTime() - i * 1800000);
+      const minute = kstParts(d).minute < '30' ? 0 : 30;
+      return { date: formatDate(d), time: formatTime(d, minute), dateObj: d };
+    });
+  }
+
+  function shortForecastCandidates(count = 4) {
+    const cycles = [2,5,8,11,14,17,20,23];
+    const now = new Date();
+    const p = kstParts(now);
+    const dateText = `${p.year}-${p.month}-${p.day}`;
+    const candidates = [];
+
+    for (let dayOffset = 0; candidates.length < count && dayOffset < 2; dayOffset++) {
+      const day = new Date(`${dateText}T00:00:00+09:00`);
+      day.setTime(day.getTime() - dayOffset * 86400000);
+      const limitHour = dayOffset === 0 ? Number(p.hour) : 24;
+
+      [...cycles].reverse().forEach(hour => {
+        if (candidates.length >= count || hour > limitHour) return;
+        const d = new Date(day.getTime() + hour * 3600000);
+        candidates.push({ date: formatDate(d), time: `${String(hour).padStart(2,'0')}00` });
+      });
     }
-    return { date: baseDate, time: `${String(baseHour).padStart(2,'0')}00` };
+
+    return candidates;
   }
 
   function endpoint(path, params, proxyBase) {
@@ -156,6 +180,54 @@
     return response?.body || {};
   }
 
+
+  async function fetchTextUrl(path, params, proxyBase) {
+    const url = new URL(`${proxyBase}/${path}`);
+    Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+    url.searchParams.set('_ts', Date.now());
+    const res = await fetch(url, { method:'GET', cache:'no-store' });
+    if (!res.ok) {
+      const detail = (await res.text()).replace(/\s+/g,' ').slice(0,180);
+      throw new Error(`${path} HTTP ${res.status}${detail ? ` · ${detail}` : ''}`);
+    }
+    return res.text();
+  }
+
+  function compactIso(value) {
+    const s = String(value || '').replace(/\D/g,'');
+    if (s.length < 12) return null;
+    return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(8,10)}:${s.slice(10,12)}:00+09:00`;
+  }
+
+  function validObs(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > -8 ? n : null;
+  }
+
+  function parseAsosCurrent(text) {
+    const lines = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const line = lines.find(x => !x.startsWith('#') && /^\d{12,14}\s+\d+\s+/.test(x));
+    if (!line) throw new Error('ASOS 관측 행을 찾지 못했습니다. 지상관측 시간자료 API 활용신청을 확인하십시오.');
+    const c = line.split(/\s+/);
+    const observedAt = compactIso(c[0]);
+    const station = Number(c[1]);
+    const windDirectionDeg = validObs(c[2]) === null ? null : Number(c[2]) * 10;
+    const windSpeed = validObs(c[3]);
+    const gustDirectionDeg = validObs(c[4]) === null ? null : Number(c[4]) * 10;
+    const gust = validObs(c[5]);
+    const gustTime = String(c[6] || '');
+    return {
+      observedAt, station, windDirectionDeg, windSpeed,
+      gustDirectionDeg, gust, gustTime,
+      sourceLabel: ASOS_REFERENCE.name
+    };
+  }
+
+  async function fetchAsosCurrent(proxyBase) {
+    const text = await fetchTextUrl('asos', { stn: ASOS_REFERENCE.stn }, proxyBase);
+    return parseAsosCurrent(text);
+  }
+
   function items(body) {
     const value = body?.items?.item;
     if (!value) return [];
@@ -212,54 +284,68 @@
     return names[Math.round((((n % 360) + 360) % 360) / 22.5) % 16];
   }
 
-  function nearestForecast(list, targetMs) {
-    if (!list.length) return null;
-    return list.reduce((best, x) => {
-      const diff = Math.abs(new Date(x.time).getTime() - targetMs);
-      return !best || diff < best.diff ? { item: x, diff } : best;
+  function forecastForHour(list, hourOffset) {
+    if (!Array.isArray(list) || !list.length) return null;
+    const firstHour = ceilHour(new Date());
+    const target = firstHour.getTime() + (hourOffset - 1) * 3600000;
+    const future = list.filter(x => new Date(x.time).getTime() >= firstHour.getTime() - 60000);
+    if (!future.length) return null;
+    return future.reduce((best, x) => {
+      const diff = Math.abs(new Date(x.time).getTime() - target);
+      return !best || diff < best.diff ? { item:x, diff } : best;
     }, null)?.item || null;
   }
 
   async function fetchNowcastForGrid(grid, proxyBase, offsetHours = 0) {
-    const base = getUltraNowBase(offsetHours);
-    const body = await fetchJson('VilageFcstInfoService_2.0/getUltraSrtNcst', {
-      base_date: base.date, base_time: base.time, nx: grid.nx, ny: grid.ny
-    }, proxyBase);
-    const list = items(body);
-    if (!list.length) throw new Error(`초단기실황 자료 없음 (${grid.nx},${grid.ny})`);
-    const map = categoryMap(list, 'obsrValue');
-    const sample = list[0];
-    return {
-      observedAt: isoFromKma(sample.baseDate || base.date, sample.baseTime || base.time),
-      speed: num(map.WSD),
-      directionDeg: num(map.VEC),
-      direction: direction16(map.VEC),
-      rain1h: parseRain(map.RN1),
-      humidity: num(map.REH),
-      temperature: num(map.T1H),
-      precipitationType: map.PTY,
-      raw: map
-    };
+    let lastError = null;
+    for (const base of hourlyCandidates(offsetHours, 3)) {
+      try {
+        const body = await fetchJson('VilageFcstInfoService_2.0/getUltraSrtNcst', {
+          base_date:base.date, base_time:base.time, nx:grid.nx, ny:grid.ny
+        }, proxyBase);
+        const list = items(body);
+        if (!list.length) continue;
+        const map = categoryMap(list,'obsrValue');
+        const sample = list[0];
+        return {
+          observedAt:isoFromKma(sample.baseDate||base.date,sample.baseTime||base.time),
+          speed:num(map.WSD), directionDeg:num(map.VEC), direction:direction16(map.VEC),
+          rain1h:parseRain(map.RN1), humidity:num(map.REH), temperature:num(map.T1H),
+          precipitationType:map.PTY, raw:map
+        };
+      } catch (error) { lastError = error; }
+    }
+    throw lastError || new Error(`초단기실황 자료 없음 (${grid.nx},${grid.ny})`);
   }
 
   async function fetchUltraForecastForGrid(grid, proxyBase) {
-    const base = getUltraForecastBase();
-    const body = await fetchJson('VilageFcstInfoService_2.0/getUltraSrtFcst', {
-      base_date: base.date, base_time: base.time, nx: grid.nx, ny: grid.ny
-    }, proxyBase);
-    const list = forecastGroups(items(body));
-    if (!list.length) throw new Error(`초단기예보 자료 없음 (${grid.nx},${grid.ny})`);
-    return { issuedAt: isoFromKma(base.date, base.time), timeline: list };
+    let lastError = null;
+    for (const base of halfHourlyCandidates(6)) {
+      try {
+        const body = await fetchJson('VilageFcstInfoService_2.0/getUltraSrtFcst', {
+          base_date:base.date, base_time:base.time, nx:grid.nx, ny:grid.ny
+        }, proxyBase);
+        const list = forecastGroups(items(body));
+        if (!list.length) continue;
+        return { issuedAt:isoFromKma(base.date,base.time), timeline:list };
+      } catch (error) { lastError = error; }
+    }
+    throw lastError || new Error(`초단기예보 자료 없음 (${grid.nx},${grid.ny})`);
   }
 
   async function fetchShortForecastForGrid(grid, proxyBase) {
-    const base = getShortForecastBase();
-    const body = await fetchJson('VilageFcstInfoService_2.0/getVilageFcst', {
-      base_date: base.date, base_time: base.time, nx: grid.nx, ny: grid.ny
-    }, proxyBase);
-    const list = forecastGroups(items(body));
-    if (!list.length) throw new Error(`단기예보 자료 없음 (${grid.nx},${grid.ny})`);
-    return { issuedAt: isoFromKma(base.date, base.time), timeline: list };
+    let lastError = null;
+    for (const base of shortForecastCandidates(4)) {
+      try {
+        const body = await fetchJson('VilageFcstInfoService_2.0/getVilageFcst', {
+          base_date:base.date, base_time:base.time, nx:grid.nx, ny:grid.ny
+        }, proxyBase);
+        const list = forecastGroups(items(body));
+        if (!list.length) continue;
+        return { issuedAt:isoFromKma(base.date,base.time), timeline:list };
+      } catch (error) { lastError = error; }
+    }
+    throw lastError || new Error(`단기예보 자료 없음 (${grid.nx},${grid.ny})`);
   }
 
   const WEATHER_ALERT_TYPES = [
@@ -419,86 +505,58 @@
     const { proxyBase } = getSettings();
     if (!proxyBase) throw new Error('기상청 중계 Worker 주소가 설정되지 않았습니다.');
 
-    const unique = [...new Map(STATIONS.map(s => [`${s.nx},${s.ny}`, { nx:s.nx, ny:s.ny }])).values()];
-    const currentEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g, proxyBase, 0)]));
-    const previousEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g, proxyBase, 1)]));
-    const ultraEntries = await Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchUltraForecastForGrid(g, proxyBase)]));
-    const currentMap = Object.fromEntries(currentEntries);
-    const previousMap = Object.fromEntries(previousEntries);
-    const ultraMap = Object.fromEntries(ultraEntries);
+    const unique = [...new Map(STATIONS.map(s => [`${s.nx},${s.ny}`, {nx:s.nx,ny:s.ny}])).values()];
+    const [currentEntries, ultraEntries, shortEntries, asosResult] = await Promise.all([
+      Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g,proxyBase,0)])),
+      Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchUltraForecastForGrid(g,proxyBase)])),
+      Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchShortForecastForGrid(g,proxyBase)])),
+      fetchAsosCurrent(proxyBase).catch(error => ({ error:error.message }))
+    ]);
 
-    const now = Date.now();
-    const windStations = STATIONS.map(st => {
-      const key = `${st.nx},${st.ny}`;
-      const current = currentMap[key];
-      const previous = previousMap[key];
-      const ultra = ultraMap[key];
-      const f1 = nearestForecast(ultra.timeline, now + 1 * 3600000) || ultra.timeline[0];
-      const f3 = nearestForecast(ultra.timeline, now + 3 * 3600000) || ultra.timeline[ultra.timeline.length - 1];
+    const currentMap=Object.fromEntries(currentEntries);
+    const ultraMap=Object.fromEntries(ultraEntries);
+    const shortMap=Object.fromEntries(shortEntries);
+    const gustObservation=asosResult?.error?null:asosResult;
+
+    const windStations=STATIONS.map(st=>{
+      const key=`${st.nx},${st.ny}`;
+      const current=currentMap[key];
+      const ultra=ultraMap[key];
+      const forecasts=[1,2,3,4].map(hour=>{
+        const f=forecastForHour(ultra.timeline,hour);
+        return f?{
+          hour, time:f.time, direction:direction16(f.VEC), directionDeg:num(f.VEC), speed:num(f.WSD)
+        }:null;
+      }).filter(Boolean);
       return {
-        name: st.name,
-        sector: st.sector,
-        observedAt: current.observedAt,
-        direction: current.direction,
-        speed: current.speed,
-        gust: null,
-        sourceLabel: '기상청 초단기실황 격자',
-        previous10m: null,
-        previous1h: {
-          time: previous.observedAt,
-          direction: previous.direction,
-          speed: previous.speed,
-          gust: null
-        },
-        forecast1h: {
-          time: f1.time,
-          direction: direction16(f1.VEC),
-          speed: num(f1.WSD),
-          gust: null
-        },
-        forecast3h: {
-          time: f3.time,
-          direction: direction16(f3.VEC),
-          speed: num(f3.WSD),
-          gust: null
-        }
+        name:st.name, sector:st.sector, observedAt:current.observedAt,
+        direction:current.direction, directionDeg:current.directionDeg, speed:current.speed,
+        gust:gustObservation?.gust??null,
+        gustObservedAt:gustObservation?.observedAt??null,
+        gustDirectionDeg:gustObservation?.gustDirectionDeg??null,
+        gustSource:gustObservation?.sourceLabel||'지상관측 시간자료 API 연결 대기',
+        gustOperational:false,
+        sourceLabel:'기상청 초단기실황 격자',
+        forecasts
       };
     });
 
-    // 노선별 강수량은 단일 지점이 아니라 노선 내 모든 대표 격자의
-    // 시간대별 최대값을 사용합니다. 운항 참고용으로 보수적으로 계산합니다.
-    const shortEntries = await Promise.all(
-      unique.map(async g => [
-        `${g.nx},${g.ny}`,
-        await fetchShortForecastForGrid(g, proxyBase)
-      ])
-    );
-    const shortMap = Object.fromEntries(shortEntries);
+    const rainEntries=['west','east'].map(sector=>[
+      sector,
+      buildRouteRainfall(STATIONS.filter(st=>st.sector===sector),currentMap,shortMap)
+    ]);
 
-    const rainEntries = ['west', 'east'].map(sector => {
-      const stations = STATIONS.filter(st => st.sector === sector);
-      return [
-        sector,
-        buildRouteRainfall(stations, currentMap, previousMap, shortMap)
-      ];
-    });
-
-    const situation = await fetchSituation(proxyBase);
-    const observedTimes = windStations.map(x => new Date(x.observedAt).getTime()).filter(Number.isFinite);
-    const observedAt = observedTimes.length ? new Date(Math.max(...observedTimes)).toISOString() : new Date().toISOString();
-    const forecastIssuedAt = rainEntries.map(([,r]) => r.forecastIssuedAt).filter(Boolean)[0] || new Date().toISOString();
+    const situation=await fetchSituation(proxyBase);
+    const observedTimes=windStations.map(x=>new Date(x.observedAt).getTime()).filter(Number.isFinite);
+    const observedAt=observedTimes.length?new Date(Math.max(...observedTimes)).toISOString():null;
+    const forecastIssuedAt=rainEntries.map(([,r])=>r.forecastIssuedAt).filter(Boolean).sort().at(-1)||null;
 
     return {
-      weather: {
-        windStations,
-        rainfall: Object.fromEntries(rainEntries)
-      },
-      alerts: situation.alerts,
-      alertStatus: situation.status,
-      observedAt,
-      forecastIssuedAt,
-      fetchedAt: new Date().toISOString(),
-      sourceLabel: '기상청 API허브'
+      weather:{windStations,rainfall:Object.fromEntries(rainEntries),gustReference:gustObservation},
+      alerts:situation.alerts, alertStatus:situation.status,
+      observedAt, forecastIssuedAt, fetchedAt:new Date().toISOString(),
+      sourceLabel:'기상청 API허브',
+      warnings:asosResult?.error?[`순간풍속: ${asosResult.error}`]:[]
     };
   }
 
@@ -549,172 +607,66 @@
     };
   }
 
-  function buildRouteRainfall(stations, currentMap, previousMap, shortMap) {
-    const groups = uniqueGridGroups(stations);
-
-    const currentCandidates = groups.map(group => {
-      const value = currentMap[group.key];
-
-      return {
-        names: group.names,
-        amount: Number(value?.rain1h ?? 0),
-        observedAt: value?.observedAt || null
-      };
+  function buildRouteRainfall(stations,currentMap,shortMap) {
+    const groups=uniqueGridGroups(stations);
+    const currentCandidates=groups.map(group=>{
+      const value=currentMap[group.key];
+      return {names:group.names,amount:Number(value?.rain1h),observedAt:value?.observedAt||null};
     });
+    const currentMax=maxCandidate(currentCandidates,'amount');
+    const forecastByTime=new Map();
+    const firstForecast=ceilHour(new Date()).getTime();
 
-    const previousCandidates = groups.map(group => {
-      const value = previousMap[group.key];
-
-      return {
-        names: group.names,
-        amount: Number(value?.rain1h ?? 0),
-        observedAt: value?.observedAt || null
-      };
-    });
-
-    const currentMax = maxCandidate(currentCandidates, 'amount');
-    const previousMax = maxCandidate(previousCandidates, 'amount');
-    const forecastByTime = new Map();
-    const cutoff = Date.now() - 30 * 60000;
-
-    groups.forEach(group => {
-      const short = shortMap[group.key];
-
-      (short?.timeline || [])
-        .filter(row => new Date(row.time).getTime() >= cutoff)
-        .forEach(row => {
-          const amount = parseRain(row.PCP);
-          const probability = num(row.POP, 0);
-          const existing = forecastByTime.get(row.time) || {
-            time: row.time,
-            amount: -1,
-            probability: -1,
-            amountSource: '',
-            probabilitySource: ''
+    groups.forEach(group=>{
+      const short=shortMap[group.key];
+      (short?.timeline||[])
+        .filter(row=>new Date(row.time).getTime()>=firstForecast-60000)
+        .forEach(row=>{
+          const amount=parseRain(row.PCP), probability=num(row.POP,0);
+          const existing=forecastByTime.get(row.time)||{
+            time:row.time,amount:-1,probability:-1,amountSource:'',probabilitySource:''
           };
-
-          if (amount > existing.amount) {
-            existing.amount = amount;
-            existing.amountSource = group.names.join('·');
-          }
-
-          if (probability > existing.probability) {
-            existing.probability = probability;
-            existing.probabilitySource = group.names.join('·');
-          }
-
-          forecastByTime.set(row.time, existing);
+          if(amount>existing.amount){ existing.amount=amount; existing.amountSource=group.names.join('·'); }
+          if(probability>existing.probability){ existing.probability=probability; existing.probabilitySource=group.names.join('·'); }
+          forecastByTime.set(row.time,existing);
         });
     });
 
-    const future = [...forecastByTime.values()]
-      .sort((a,b) => new Date(a.time) - new Date(b.time))
-      .slice(0, 24)
-      .map(row => ({
-        time: row.time,
-        label: labelTime(row.time),
-        amount: Math.max(0, row.amount),
-        probability: Math.max(0, row.probability),
-        source: row.amountSource || row.probabilitySource || '노선 대표격자',
-        type: 'forecast'
+    const future=[...forecastByTime.values()]
+      .sort((a,b)=>new Date(a.time)-new Date(b.time))
+      .slice(0,24)
+      .map(row=>({
+        time:row.time,label:labelTime(row.time),amount:Math.max(0,row.amount),
+        probability:Math.max(0,row.probability),
+        source:row.amountSource||row.probabilitySource||'노선 대표격자',type:'forecast'
       }));
 
-    const horizon = hours => {
-      const rows = future.slice(0, hours);
-
+    const horizon=hours=>{
+      const rows=future.slice(0,hours);
       return {
-        amount: rows.reduce((sum, row) => sum + num(row.amount), 0),
-        probability: rows.length
-          ? Math.max(...rows.map(row => num(row.probability)))
-          : 0
+        amount:rows.reduce((sum,row)=>sum+num(row.amount),0),
+        probability:rows.length?Math.max(...rows.map(row=>num(row.probability))):0
       };
     };
-
-    const h3 = horizon(3);
-    const h6 = horizon(6);
-    const h12 = horizon(12);
-    const h24 = horizon(24);
-
-    const observedAt = currentCandidates
-      .map(x => new Date(x.observedAt).getTime())
-      .filter(Number.isFinite);
-
-    const previousAt = previousCandidates
-      .map(x => new Date(x.observedAt).getTime())
-      .filter(Number.isFinite);
-
-    const forecastIssuedAt = groups
-      .map(group => shortMap[group.key]?.issuedAt)
-      .filter(Boolean)
-      .sort()
-      .at(-1) || null;
-
-    const basisLabel = groups
-      .map(group => `${group.names.join('·')}(${group.nx},${group.ny})`)
-      .join(' / ');
-
-    const timeline = [
-      {
-        time: previousAt.length
-          ? new Date(Math.max(...previousAt)).toISOString()
-          : null,
-        label: previousAt.length
-          ? labelTime(new Date(Math.max(...previousAt)).toISOString())
-          : '-',
-        amount: previousMax.value,
-        probability: null,
-        source: previousMax.source,
-        type: 'observed'
-      },
-      {
-        time: observedAt.length
-          ? new Date(Math.max(...observedAt)).toISOString()
-          : null,
-        label: observedAt.length
-          ? labelTime(new Date(Math.max(...observedAt)).toISOString())
-          : '-',
-        amount: currentMax.value,
-        probability: null,
-        source: currentMax.source,
-        type: 'current'
-      },
-      ...future.slice(0, 9)
-    ];
-
-    const dataAvailable = currentMax.available && future.length > 0;
-    const allDry =
-      dataAvailable &&
-      currentMax.value === 0 &&
-      future.every(row => row.amount === 0);
+    const h3=horizon(3),h6=horizon(6),h12=horizon(12),h24=horizon(24);
+    const observedAt=currentCandidates.map(x=>new Date(x.observedAt).getTime()).filter(Number.isFinite);
+    const forecastIssuedAt=groups.map(group=>shortMap[group.key]?.issuedAt).filter(Boolean).sort().at(-1)||null;
+    const basisLabel=groups.map(group=>`${group.names.join('·')}(${group.nx},${group.ny})`).join(' / ');
+    const dataAvailable=currentMax.available&&future.length>0;
+    const allDry=dataAvailable&&currentMax.value===0&&future.every(row=>row.amount===0);
 
     return {
-      observedAt: observedAt.length
-        ? new Date(Math.max(...observedAt)).toISOString()
-        : null,
-      forecastIssuedAt,
-      currentRate: currentMax.value,
-      currentSource: currentMax.source,
-      next3h: h3.amount,
-      next6h: h6.amount,
-      next12h: h12.amount,
-      next24h: h24.amount,
-      next3hProbability: h3.probability,
-      next6hProbability: h6.probability,
-      next12hProbability: h12.probability,
-      next24hProbability: h24.probability,
-      basisLabel,
-      aggregationLabel: '노선 내 대표격자별 시간당 최대 강수량 합계',
-      dataAvailable,
-      allDry,
-      dryMessage: allDry
-        ? '현재 및 예보 PCP가 전 대표격자에서 강수없음으로 응답했습니다.'
-        : dataAvailable
-          ? ''
-          : '강수 실황 또는 예보 자료가 누락되어 0mm로 판단하지 않습니다.',
-      timeline,
-      observationIntervalMinutes: 60,
-      forecastIntervalMinutes: 60,
-      sourceLabel: '기상청 초단기실황 RN1·단기예보 PCP·POP'
+      observedAt:observedAt.length?new Date(Math.max(...observedAt)).toISOString():null,
+      forecastIssuedAt, forecastStartAt:future[0]?.time||null,
+      currentRate:currentMax.value,currentSource:currentMax.source,
+      next3h:h3.amount,next6h:h6.amount,next12h:h12.amount,next24h:h24.amount,
+      next3hProbability:h3.probability,next6hProbability:h6.probability,
+      next12hProbability:h12.probability,next24hProbability:h24.probability,
+      basisLabel,aggregationLabel:'각 시간대 노선 대표격자 중 최대 강수량을 누적',
+      allDry,dataAvailable,
+      dryMessage:!dataAvailable?'실황 또는 단기예보 응답이 부족합니다.':allDry?'현재 실황과 향후 예보가 모든 대표격자에서 강수없음입니다.':'',
+      timeline:future.slice(0,8),observationIntervalMinutes:60,forecastIntervalMinutes:60,
+      sourceLabel:'기상청 초단기실황 RN1 · 단기예보 PCP·POP'
     };
   }
 
@@ -725,18 +677,12 @@
   }
 
   async function testConnection() {
-    const { proxyBase } = getSettings();
-    if (!proxyBase) throw new Error('기상청 중계 Worker 주소가 없습니다.');
-    const test = await fetchNowcastForGrid({ nx: 60, ny: 127 }, proxyBase, 0);
-    const situation = await fetchSituation(proxyBase);
-    return {
-      ok: true,
-      observedAt: test.observedAt,
-      speed: test.speed,
-      direction: test.direction,
-      rain1h: test.rain1h,
-      alertCount: situation.alerts.length
-    };
+    const {proxyBase}=getSettings();
+    if(!proxyBase) throw new Error('기상청 중계 Worker 주소가 없습니다.');
+    const test=await fetchNowcastForGrid({nx:60,ny:127},proxyBase,0);
+    const situation=await fetchSituation(proxyBase);
+    const asos=await fetchAsosCurrent(proxyBase).catch(()=>null);
+    return {ok:true,observedAt:test.observedAt,speed:test.speed,direction:test.direction,rain1h:test.rain1h,alertCount:situation.alerts.length,gust:asos?.gust??null};
   }
 
   window.KMA = {

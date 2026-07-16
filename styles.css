@@ -1535,3 +1535,104 @@ footer strong {
 .rain-dry-note.data-missing b {
   color: var(--red);
 }
+
+
+/* =========================================================
+   v54 갱신버튼·강수·풍향풍속 시인성 개선
+========================================================= */
+.refresh-control{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.refresh-control small{color:var(--muted);font-size:8px}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:8px 11px;color:#fff;background:var(--primary);border:1px solid var(--primary-dark);border-radius:9px;box-shadow:var(--shadow-sm);cursor:pointer;font-size:10px;font-weight:850}
+.refresh-btn:hover{background:var(--primary-dark)}
+.refresh-btn:disabled{cursor:wait;opacity:.75}
+.refresh-icon{display:inline-block;font-size:15px;line-height:1}
+.refresh-btn.loading .refresh-icon{animation:refresh-spin .8s linear infinite}
+@keyframes refresh-spin{to{transform:rotate(360deg)}}
+.route-card-time{line-height:1.5}
+
+.rain-card-v54{padding:14px}
+.rain-current-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.rain-current-row>div{padding:10px 12px;background:#f5f9fc;border:1px solid var(--line);border-radius:10px}
+.rain-current-row span,.rain-current-row b,.rain-current-row em{display:block}
+.rain-current-row span{color:var(--muted);font-size:10px;font-weight:750}
+.rain-current-row b{margin:4px 0;color:var(--primary-dark);font-size:20px}
+.rain-current-row em{color:var(--text-sub);font-size:9px;font-style:normal;line-height:1.45}
+.rain-state{display:flex;gap:8px;align-items:center;margin-top:9px;padding:9px 11px;border-radius:9px;font-size:9px}
+.rain-state.dry{color:#0f6942;background:var(--green-soft);border:1px solid #91c9aa}
+.rain-state.missing{color:#a62831;background:var(--red-soft);border:1px solid #dda0a5}
+.rain-state span{color:inherit}
+.rain-summary-v54{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
+.rain-summary-v54 .rain-item{padding:11px 8px;text-align:left}
+.rain-summary-v54 .rain-item>span{font-size:9px;font-weight:750}
+.rain-summary-v54 .rain-item>b{margin:5px 0;font-size:20px}
+.rain-summary-v54 .rain-item>b small{font-size:10px;margin-left:2px}
+.rain-summary-v54 .rain-item em{font-size:9px;line-height:1.4}
+.rain-summary-v54 .rain-item strong{color:var(--primary-dark);font-size:11px}
+.rain-card-v54 .rain-basis{font-size:9px;padding:9px 10px}
+.rain-hour-scroll{display:grid;grid-template-columns:repeat(4,minmax(105px,1fr));gap:7px;margin-top:10px;overflow-x:auto;padding-bottom:3px}
+.rain-hour-card{min-width:105px;padding:10px;background:var(--surface-soft);border:1px solid var(--line);border-radius:10px}
+.rain-hour-time{color:var(--primary-dark);font-size:11px;font-weight:850}
+.rain-hour-amount{margin:5px 0;color:var(--text);font-size:20px;font-weight:900}
+.rain-hour-amount small{margin-left:2px;font-size:9px}
+.rain-hour-prob{color:var(--text-sub);font-size:10px}
+.rain-hour-prob b{color:#1478aa;font-size:12px}
+.rain-hour-source{margin-top:5px;color:var(--muted);font-size:8px;line-height:1.4}
+.empty-message{grid-column:1/-1;padding:14px;text-align:center;color:var(--muted);background:var(--surface-soft);border:1px dashed var(--line-strong);border-radius:9px;font-size:10px}
+
+.wind-card-v54{padding:13px}
+.wind-current-layout{display:grid;grid-template-columns:105px 1fr;gap:12px;align-items:center;margin-top:10px;padding:10px;background:#f8fbfd;border:1px solid var(--line);border-radius:12px}
+.wind-compass{--wind-deg:0deg;--wind-color:#16865a;position:relative;width:96px;height:96px;border:2px solid #b6cbd7;border-radius:50%;background:radial-gradient(circle at center,#fff 0 42%,#edf5f9 43% 100%);box-shadow:inset 0 0 0 5px #fff}
+.wind-compass.small{width:47px;height:47px;border-width:1px;box-shadow:inset 0 0 0 2px #fff}
+.wind-compass>span:not(.wind-arrow):not(.compass-center){position:absolute;color:#537080;font-size:8px;font-weight:900;z-index:2}
+.wind-compass.small>span:not(.wind-arrow):not(.compass-center){font-size:5px}
+.wind-compass .north{top:4px;left:50%;transform:translateX(-50%);color:#bd3139!important}
+.wind-compass .south{bottom:4px;left:50%;transform:translateX(-50%)}
+.wind-compass .east{right:5px;top:50%;transform:translateY(-50%)}
+.wind-compass .west{left:5px;top:50%;transform:translateY(-50%)}
+.wind-arrow{position:absolute;inset:11px;transform:rotate(var(--wind-deg));transform-origin:center;z-index:3}
+.wind-arrow:before{content:'';position:absolute;left:50%;top:4px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:15px solid var(--wind-color);transform:translateX(-50%)}
+.wind-arrow i{position:absolute;left:50%;top:17px;width:5px;height:29px;background:var(--wind-color);border-radius:4px;transform:translateX(-50%)}
+.wind-compass.small .wind-arrow{inset:5px}
+.wind-compass.small .wind-arrow:before{top:2px;border-left-width:4px;border-right-width:4px;border-bottom-width:9px}
+.wind-compass.small .wind-arrow i{top:10px;width:3px;height:14px}
+.compass-center{position:absolute!important;left:50%;top:50%;width:10px;height:10px;background:#fff;border:3px solid var(--wind-color);border-radius:50%;transform:translate(-50%,-50%);z-index:4}
+.wind-compass.small .compass-center{width:6px;height:6px;border-width:2px}
+.wind-reading>span,.wind-reading>b,.wind-reading>em{display:block}
+.wind-reading>span{color:var(--muted);font-size:9px;font-weight:750}
+.wind-reading>b{margin:2px 0;color:var(--green);font-size:28px;font-weight:950}
+.wind-reading>b.warn{color:#b77400}.wind-reading>b.danger{color:var(--red)}
+.wind-reading>b small{font-size:11px;margin-left:3px}
+.wind-reading>em{color:var(--text-sub);font-size:10px;font-style:normal}
+.gust-reading{margin-top:8px;padding-top:7px;border-top:1px solid var(--line)}
+.gust-reading span,.gust-reading strong,.gust-reading small{display:block}
+.gust-reading span{color:var(--muted);font-size:8px}
+.gust-reading strong{margin:2px 0;color:#825000;font-size:14px}
+.gust-reading small{color:var(--muted);font-size:7.5px;line-height:1.35}
+.wind-direction-note{margin:5px 0 8px;color:var(--muted);font-size:8px;text-align:center}
+.wind-forecast-grid-v54{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.wind-forecast-card{padding:7px;background:var(--surface-soft);border:1px solid var(--line);border-radius:9px}
+.wind-forecast-head{display:flex;justify-content:space-between;gap:4px;color:var(--muted);font-size:8px}
+.wind-forecast-head b{color:var(--primary-dark)}
+.wind-forecast-body{display:flex;align-items:center;gap:7px;margin-top:6px}
+.wind-forecast-body strong,.wind-forecast-body em{display:block}
+.wind-forecast-body strong{color:var(--text);font-size:12px}
+.wind-forecast-body em{color:var(--muted);font-size:8px;font-style:normal}
+.wind-forecast-card.unavailable{display:grid;place-items:center;min-height:70px;color:var(--muted);border-style:dashed;font-size:9px}
+.health-card.stale{background:var(--red-soft);border-color:#dda0a5}
+.health-card .bad{color:var(--red)}
+
+@media(max-width:850px){
+  .rain-hour-scroll{grid-template-columns:repeat(4,minmax(115px,1fr))}
+  .wind-forecast-grid-v54{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .header-right{width:100%;align-items:center;justify-content:space-between}
+  .refresh-control{align-items:flex-start;order:3;width:100%}
+  .refresh-btn{width:100%;justify-content:center;font-size:11px;padding:10px}
+  .rain-current-row{grid-template-columns:1fr}
+  .rain-summary-v54{grid-template-columns:repeat(2,1fr)}
+  .rain-hour-scroll{display:flex;overflow-x:auto}
+  .rain-hour-card{flex:0 0 118px}
+  .wind-current-layout{grid-template-columns:94px 1fr;gap:8px}
+  .wind-compass{width:86px;height:86px}
+}

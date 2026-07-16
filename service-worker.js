@@ -1,15 +1,15 @@
-const CACHE='hangangbus-weather-display-v53';
+const CACHE='hangangbus-dashboard-v54';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=53',
-  './shared-config.js?v=53',
-  './weather-config.js?v=53',
-  './config.js?v=53',
-  './hrfco.js?v=53',
-  './kma.js?v=53',
-  './app.js?v=53',
-  './data/demo-data.js?v=53',
+  './styles.css?v=54',
+  './shared-config.js?v=54',
+  './weather-config.js?v=54',
+  './config.js?v=54',
+  './hrfco.js?v=54',
+  './kma.js?v=54',
+  './app.js?v=54',
+  './data/demo-data.js?v=54',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'

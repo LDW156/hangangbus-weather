@@ -3,6 +3,8 @@
   const cfg = window.HANGANG_CONFIG;
   let data = null;
   let scenario = 'normal';
+  let isLoading = false;
+  let lastRefreshStartedAt = null;
   const $ = (id) => document.getElementById(id);
   const fmt = (n, d=0) => Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -29,6 +31,8 @@
     const good = inverse ? n>0 : n<0;
     return bad?'warn':good?'good':'';
   };
+  const historyPoint = (history, steps=0) => history[Math.max(0, history.length-1-steps)] || history[0] || {};
+  const ageMinutes = (v) => { const d=toDate(v); return d?Math.max(0,Math.round((Date.now()-d.getTime())/60000)):null; };
   const historyValue = (history, steps, key='value') => {
     const idx=Math.max(0,history.length-1-steps);
     return Number(history[idx]?.[key]);
@@ -41,12 +45,17 @@
     return `${sign}${h?`${h}시간 `:''}${m}분`;
   };
 
-  async function loadData(){
+  async function loadData(trigger='auto'){
+    if(isLoading) return;
+    isLoading=true;
+    lastRefreshStartedAt=new Date();
+    setRefreshState('loading');
     data = structuredClone(window.HANGANG_DEMO_DATA[scenario]);
 
     const liveSources=[];
     const setupSources=[];
     const errors=[];
+    const notes=[];
 
     if(cfg.HRFCO?.ENABLED){
       if(window.HRFCO?.isConfigured()){
@@ -87,6 +96,7 @@
             {name:'기상예보',status:'normal',updatedAt:live.forecastIssuedAt,intervalMinutes:60},
             {name:'기상특보',status:'normal',updatedAt:live.fetchedAt,intervalMinutes:10}
           );
+          if(live.warnings?.length) notes.push(...live.warnings.map(x=>`기상 참고: ${x}`));
           liveSources.push('기상');
         }catch(err){
           errors.push(`기상: ${err.message}`);
@@ -104,6 +114,7 @@
       const liveText=`실데이터: ${liveSources.join('·')}`;
       const demoText=`데모 유지: ${['수문','기상','조석'].filter(x=>!liveSources.includes(x)).join('·')}`;
       if(errors.length) setBanner('error',`${liveText} / ${demoText} / 오류 ${errors.join(' | ')}`);
+      else if(notes.length) setBanner('live',`${liveText} / ${demoText} / ${notes.join(' | ')}`);
       else setBanner('live',`${liveText} / ${demoText}. 각 카드의 관측·예보 시각을 확인하십시오.`);
     }else if(errors.length){
       $('modeBadge').textContent='ERROR';
@@ -114,6 +125,19 @@
     }
 
     render();
+    isLoading=false;
+    setRefreshState(errors.length?'warning':'done');
+  }
+
+  function setRefreshState(state){
+    const btn=$('refreshBtn'), note=$('refreshNote');
+    if(!btn||!note)return;
+    btn.disabled=state==='loading';
+    btn.classList.toggle('loading',state==='loading');
+    btn.innerHTML=state==='loading'?'<span class="refresh-icon">↻</span> 불러오는 중':'<span class="refresh-icon">↻</span> 최신 데이터 업데이트';
+    if(state==='loading') note.textContent='수문·기상 최신자료 조회 중';
+    else if(state==='warning') note.textContent=`갱신 완료 · 일부 참고자료 확인 필요 · ${timeText(new Date())}`;
+    else note.textContent=`갱신 완료 ${timeText(new Date())} · 자동 5분`;
   }
 
   function setBanner(type,text){
@@ -135,7 +159,10 @@
       const values=arr.map(x=>x[key]).filter(v=>v!==null&&v!==undefined&&v!=='').map(Number).filter(Number.isFinite);
       return values.length?Math.max(...values):null;
     };
-    const windStats=(arr)=>({speed:max(arr,'speed')??0,gust:max(arr,'gust')});
+    const windStats=(arr)=>({
+      speed:max(arr,'speed')??0,
+      gust:max(arr.filter(x=>x.gustOperational===true),'gust')
+    });
     const eastStats=windStats(eastW), westStats=windStats(westW);
     const officialWarning=data.alerts.some(a=>a.source==='official'&&a.level==='warning');
     const officialAdvisory=data.alerts.some(a=>a.source==='official'&&a.level==='advisory');
@@ -177,13 +204,13 @@
 
     if(eastRain){
       eastReasons.push(
-        `강수 노선격자 최대값 · 3시간 ${fmt(eastRain.next3h,1)}mm · 확률 최대 ${fmt(eastRain.next3hProbability)}%`
+        `강수 노선격자 최대값 · 3시간 ${fmt(eastRain.next3h,1)}mm · 강수확률 최대 ${fmt(eastRain.next3hProbability)}%`
       );
     }
 
     if(westRain){
       westReasons.push(
-        `강수 노선격자 최대값 · 3시간 ${fmt(westRain.next3h,1)}mm · 확률 최대 ${fmt(westRain.next3hProbability)}%`
+        `강수 노선격자 최대값 · 3시간 ${fmt(westRain.next3h,1)}mm · 강수확률 최대 ${fmt(westRain.next3hProbability)}%`
       );
     }
 
@@ -196,15 +223,17 @@
   function render(){
     const calc=compute();
     renderRoutes(calc);renderJamsu(calc);renderDam(calc);renderAlerts();renderRain();renderWind();renderRiver();renderTide();renderHealth();
-    $('updatedAt').textContent=`판단 기준 ${dateTimeText(data.meta.generatedAt)}`;
+    $('updatedAt').textContent=`화면 갱신 ${dateTimeText(data.meta.generatedAt)}`;
   }
 
-  function routeCard(name,status,reasons){
-    return `<div class="route-card-time">판단시각 ${dateTimeText(data.meta.generatedAt)}</div><div class="route-name">${esc(name)}</div><div class="route-status">${statusText[status]}</div><ul class="route-reasons">${reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
+  function routeCard(name,status,reasons,basis){
+    return `<div class="route-card-time">판단 산출 ${dateTimeText(data.meta.generatedAt)} · ${esc(basis)}</div><div class="route-name">${esc(name)}</div><div class="route-status">${statusText[status]}</div><ul class="route-reasons">${reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
   }
   function renderRoutes(c){
-    $('eastRoute').className=`route-card ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons);
-    $('westRoute').className=`route-card ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons);
+    const eastBasis=`자료기준 잠수교 ${timeText(data.hydrology.jamsuBridge.observedAt)} · 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)}`;
+    const westBasis=`자료기준 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)} · 조석 ${timeText(data.tide.referenceAt)}`;
+    $('eastRoute').className=`route-card ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons,eastBasis);
+    $('westRoute').className=`route-card ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons,westBasis);
     if(cfg.SHOW_DEMO_CONTROLS&&cfg.DATA_MODE==='demo'){$('demoControls').hidden=false;document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.toggle('active',b.dataset.scenario===scenario));}
   }
 
@@ -231,9 +260,9 @@
         <div class="detail"><span>불가 기준</span><b>7.30m</b></div>
       </div>
       <div class="comparison-grid">
-        ${comparisonCell('10분 전',timeText(h[h.length-2].timestamp),cur,historyValue(h,1),2,'m')}
-        ${comparisonCell('30분 전',timeText(h[h.length-4].timestamp),cur,historyValue(h,3),2,'m')}
-        ${comparisonCell('1시간 전',timeText(h[h.length-7].timestamp),cur,historyValue(h,6),2,'m')}
+        ${comparisonCell('10분 전',timeText(historyPoint(h,1).timestamp),cur,historyValue(h,1),2,'m')}
+        ${comparisonCell('30분 전',timeText(historyPoint(h,3).timestamp),cur,historyValue(h,3),2,'m')}
+        ${comparisonCell('1시간 전',timeText(historyPoint(h,6).timestamp),cur,historyValue(h,6),2,'m')}
       </div>`;
     $('jamsuChartMeta').textContent=`${timeText(h[0].timestamp)}~${timeText(last(h).timestamp)} · 10분 간격`;
 
@@ -341,101 +370,90 @@
 
   function renderRain(){
     const names={west:'서부선',east:'동부선'};
-
     $('rainCards').innerHTML=['west','east'].map(k=>{
       const r=data.weather.rainfall[k];
-      const max=Math.max(1,...r.timeline.map(x=>Number(x.amount)||0));
-
-      const bars=r.timeline.map(x=>`
-        <div class="bar-wrap ${x.type}">
-          <span class="bar-value">${fmt(x.amount,x.type==='current'?1:0)}</span>
-          <div
-            class="bar"
-            style="height:${Math.max(2,(Number(x.amount)||0)/max*100)}%"
-            title="${esc(x.label)} ${fmt(x.amount,1)}mm${x.probability===null||x.probability===undefined?'':` · 강수확률 ${fmt(x.probability)}%`} · 기준 ${esc(x.source||'-')}"
-          ></div>
-          <small>${esc(x.label)}</small>
-        </div>`).join('');
-
-      const rows=r.timeline.map(x=>{
-        const probability=x.probability===null||x.probability===undefined
-          ? ''
-          : ` · ${fmt(x.probability)}%`;
-        const type=x.type==='forecast'?'예보':x.type==='current'?'현재':'관측';
-
-        return `<div class="hour-cell ${x.type}">
-          <span>${esc(x.label)}</span>
-          <b>${fmt(x.amount,x.type==='current'?1:0)}mm</b>
-          <em>${type}${probability}<br>${esc(x.source||'-')}</em>
-        </div>`;
-      }).join('');
-
       const summaries=[
-        ['3시간',r.next3h,r.next3hProbability],
-        ['6시간',r.next6h,r.next6hProbability],
-        ['12시간',r.next12h,r.next12hProbability],
-        ['24시간',r.next24h,r.next24hProbability],
-        ['최근 1시간',r.currentRate,null]
+        ['향후 3시간',r.next3h,r.next3hProbability],
+        ['향후 6시간',r.next6h,r.next6hProbability],
+        ['향후 12시간',r.next12h,r.next12hProbability],
+        ['향후 24시간',r.next24h,r.next24hProbability]
       ];
-
-      const dryNote=r.allDry
-        ? `<div class="rain-dry-note"><b>강수 없음 예보</b><span>${esc(r.dryMessage)}</span></div>`
-        : r.dataAvailable===false
-          ? `<div class="rain-dry-note data-missing"><b>강수 자료 확인</b><span>${esc(r.dryMessage)}</span></div>`
-          : '';
-
-      return `<article class="sector-card">
-        <div class="data-time">현재 관측 ${dateTimeText(r.observedAt)} · 예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 1시간 간격</div>
-        <div class="sector-title">
-          <h3>${names[k]}</h3>
-          <span>${timeText(r.observedAt)} 최근 1시간 ${fmt(r.currentRate,1)}mm · 최대지점 ${esc(r.currentSource||'-')}</span>
+      const rows=(r.timeline||[]).map(x=>`<div class="rain-hour-card">
+        <div class="rain-hour-time">${esc(x.label)}</div>
+        <div class="rain-hour-amount">${fmt(x.amount,1)}<small>mm</small></div>
+        <div class="rain-hour-prob">강수확률 <b>${fmt(x.probability)}%</b></div>
+        <div class="rain-hour-source">최대값 기준 ${esc(x.source||'-')}</div>
+      </div>`).join('');
+      const notice=!r.dataAvailable
+        ? `<div class="rain-state missing"><b>강수자료 확인 필요</b><span>${esc(r.dryMessage)}</span></div>`
+        : r.allDry
+          ? `<div class="rain-state dry"><b>강수 없음 예보</b><span>${esc(r.dryMessage)}</span></div>`:'';
+      return `<article class="sector-card rain-card-v54">
+        <div class="data-time">최근 실황 ${dateTimeText(r.observedAt)} · 단기예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 첫 예보 ${dateTimeText(r.forecastStartAt)}</div>
+        <div class="sector-title"><h3>${names[k]}</h3><span>노선 대표격자 최대값 기준</span></div>
+        <div class="rain-current-row">
+          <div><span>최근 1시간 실황</span><b>${fmt(r.currentRate,1)}mm</b><em>${esc(r.currentSource||'-')} · ${timeText(r.observedAt)} 관측</em></div>
+          <div><span>예보 산정범위</span><b>${timeText(r.forecastStartAt)}부터</b><em>${esc(r.aggregationLabel)}</em></div>
         </div>
-        <div class="rain-basis">
-          <b>산정 기준</b>
-          <span>${esc(r.basisLabel)}</span>
-          <em>${esc(r.aggregationLabel)}</em>
-        </div>
-        ${dryNote}
-        <div class="rain-summary">
-          ${summaries.map(x=>`
-            <div class="rain-item">
-              <b>${fmt(x[1],x[0]==='최근 1시간'?1:1)}</b>
-              <span>${x[0]} mm</span>
-              <em>${x[2]===null?'실황 RN1':`확률 최대 ${fmt(x[2])}%`}</em>
-            </div>`).join('')}
-        </div>
-        <div class="bars">${bars}</div>
-        <div class="bar-legend"><span class="obs-dot"></span>관측 <span class="current-dot"></span>현재 <span class="forecast-dot"></span>예보</div>
-        <div class="hour-grid">${rows}</div>
+        ${notice}
+        <div class="rain-summary rain-summary-v54">${summaries.map(x=>`<div class="rain-item">
+          <span>${x[0]} 누적</span><b>${fmt(x[1],1)}<small>mm</small></b><em>강수확률 최대 <strong>${fmt(x[2])}%</strong></em>
+        </div>`).join('')}</div>
+        <div class="rain-basis"><b>적용 격자</b><span>${esc(r.basisLabel)}</span></div>
+        <div class="rain-hour-scroll">${rows||'<div class="empty-message">향후 시간별 강수예보 자료 없음</div>'}</div>
       </article>`;
     }).join('');
   }
 
   function windLevel(w){
     const t=cfg.THRESHOLDS.wind;
-    const hasGust=w.gust!==null&&w.gust!==undefined&&w.gust!=='';
-    const gust=hasGust?Number(w.gust):null;
-    if(w.speed>=t.stopMs||(gust!==null&&Number.isFinite(gust)&&gust>=t.gustStopMs))return'danger';
-    if(w.speed>=t.cautionMs||(gust!==null&&Number.isFinite(gust)&&gust>=t.gustCautionMs))return'warn';
+    const gust=Number.isFinite(Number(w.gust))?Number(w.gust):null;
+    if(w.speed>=t.stopMs||(gust!==null&&gust>=t.gustStopMs))return'danger';
+    if(w.speed>=t.cautionMs||(gust!==null&&gust>=t.gustCautionMs))return'warn';
     return'good';
   }
-  function windCompare(label,x,current){
-    if(!x) return `<div class="wind-compare unavailable"><span>${label}</span><b>자료 없음</b><em>별도 AWS 관측 연결 예정</em></div>`;
-    const d=Number(x.speed)-Number(current.speed);
-    const gustText=(x.gust!==null&&x.gust!==undefined&&x.gust!==''&&Number.isFinite(Number(x.gust)))?`순간 ${fmt(x.gust,1)} · `:'';
-    return `<div class="wind-compare"><span>${label} · ${timeText(x.time)}</span><b>${esc(x.direction)} ${fmt(x.speed,1)}m/s</b><em>${gustText}${signed(d,1,'m/s')}</em></div>`;
+  function windColor(speed){
+    const t=cfg.THRESHOLDS.wind;
+    return speed>=t.stopMs?'#d43942':speed>=t.cautionMs?'#d28b11':'#16865a';
+  }
+  function compass(deg,speed,small=false){
+    const d=Number.isFinite(Number(deg))?Number(deg):0;
+    return `<div class="wind-compass ${small?'small':''}" style="--wind-deg:${d}deg;--wind-color:${windColor(Number(speed)||0)}">
+      <span class="north">N</span><span class="east">E</span><span class="south">S</span><span class="west">W</span>
+      <span class="wind-arrow"><i></i></span><span class="compass-center"></span>
+    </div>`;
+  }
+  function forecastWindCard(x){
+    if(!x)return `<div class="wind-forecast-card unavailable"><span>자료 없음</span></div>`;
+    return `<div class="wind-forecast-card">
+      <div class="wind-forecast-head"><span>${x.hour}시간 후</span><b>${timeText(x.time)}</b></div>
+      <div class="wind-forecast-body">${compass(x.directionDeg,x.speed,true)}<div><strong>${fmt(x.speed,1)}m/s</strong><em>${esc(x.direction)}</em></div></div>
+    </div>`;
   }
   function renderWind(){
     $('windGrid').innerHTML=data.weather.windStations.map(w=>{
-      const gustText=(w.gust!==null&&w.gust!==undefined&&w.gust!==''&&Number.isFinite(Number(w.gust)))?`순간 ${fmt(w.gust,1)}m/s`:'순간풍속 미연결';
-      const interval=w.sourceLabel?.includes('초단기')?'실황 1시간 / 예보 1시간':'관측 10분 / 예보 1시간';
-      return `<article class="station-card"><div class="data-time">관측 ${dateTimeText(w.observedAt)} · ${interval}</div><div class="station-head"><h3>${esc(w.name)}</h3><span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span></div><div class="wind-main ${windLevel(w)}">${fmt(w.speed,1)}m/s</div><div class="wind-sub">${timeText(w.observedAt)} ${esc(w.direction)} · ${gustText}</div><div class="wind-compare-grid">${windCompare('10분 전 관측',w.previous10m,w)}${windCompare('1시간 전 실황',w.previous1h,w)}${windCompare('1시간 후 예보',w.forecast1h,w)}${windCompare('3시간 후 예보',w.forecast3h,w)}</div></article>`;
+      const gust=Number.isFinite(Number(w.gust))?`${fmt(w.gust,1)}m/s`:'연결 대기';
+      const gustTime=w.gustObservedAt?` · ${timeText(w.gustObservedAt)}`:'';
+      return `<article class="station-card wind-card-v54">
+        <div class="data-time">최근 실황 ${dateTimeText(w.observedAt)} · 초단기예보 1시간 간격</div>
+        <div class="station-head"><h3>${esc(w.name)}</h3><span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span></div>
+        <div class="wind-current-layout">
+          ${compass(w.directionDeg,w.speed)}
+          <div class="wind-reading">
+            <span>현재 풍속</span><b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
+            <em>${esc(w.direction)} · ${fmt(w.directionDeg)}°</em>
+            <div class="gust-reading"><span>순간풍속 참고</span><strong>${gust}</strong><small>${esc(w.gustSource)}${gustTime}</small></div>
+          </div>
+        </div>
+        <div class="wind-direction-note">화살표는 바람이 불어오는 방향</div>
+        <div class="wind-forecast-grid-v54">${[1,2,3,4].map(h=>forecastWindCard(w.forecasts?.find(x=>x.hour===h))).join('')}</div>
+      </article>`;
     }).join('');
   }
 
   function riverMetric(name,obj){
     const h=obj.history,cur=obj.waterLevelM,d10=historyDelta(h,1),d30=historyDelta(h,3),d60=historyDelta(h,6);
-    return `<article class="metric river-metric"><div class="data-time">관측 ${fullDateTimeText(obj.observedAt)} · ${obj.intervalMinutes}분 간격</div><div class="metric-label">${name}</div><div class="metric-value">${fmt(cur,2)}m</div><div class="comparison-list"><div><span>10분 전 ${timeText(h[h.length-2].timestamp)}</span><b>${fmt(historyValue(h,1),2)}m</b><em class="${deltaClass(d10)}">${signed(d10,2,'m')}</em></div><div><span>30분 전 ${timeText(h[h.length-4].timestamp)}</span><b>${fmt(historyValue(h,3),2)}m</b><em class="${deltaClass(d30)}">${signed(d30,2,'m')}</em></div><div><span>1시간 전 ${timeText(h[h.length-7].timestamp)}</span><b>${fmt(historyValue(h,6),2)}m</b><em class="${deltaClass(d60)}">${signed(d60,2,'m')}</em></div></div></article>`;
+    return `<article class="metric river-metric"><div class="data-time">관측 ${fullDateTimeText(obj.observedAt)} · ${obj.intervalMinutes}분 간격</div><div class="metric-label">${name}</div><div class="metric-value">${fmt(cur,2)}m</div><div class="comparison-list"><div><span>10분 전 ${timeText(historyPoint(h,1).timestamp)}</span><b>${fmt(historyValue(h,1),2)}m</b><em class="${deltaClass(d10)}">${signed(d10,2,'m')}</em></div><div><span>30분 전 ${timeText(historyPoint(h,3).timestamp)}</span><b>${fmt(historyValue(h,3),2)}m</b><em class="${deltaClass(d30)}">${signed(d30,2,'m')}</em></div><div><span>1시간 전 ${timeText(historyPoint(h,6).timestamp)}</span><b>${fmt(historyValue(h,6),2)}m</b><em class="${deltaClass(d60)}">${signed(d60,2,'m')}</em></div></div></article>`;
   }
   function renderRiver(){$('riverGrid').innerHTML=riverMetric('잠수교 수위',data.hydrology.jamsuBridge)+riverMetric('한강대교 수위',data.hydrology.hangangBridge)}
 
@@ -451,12 +469,18 @@
 
   function renderHealth(){
     const items=data.health||[];
-    $('healthGrid').innerHTML=items.map(x=>`<div class="health-card"><span>${esc(x.name)}</span><b class="good">${x.status==='normal'?'정상':'확인'}</b><em>${dateTimeText(x.updatedAt)} · ${x.intervalMinutes}분 주기</em></div>`).join('');
+    const limits={한강수위:25,팔당댐:25,기상관측:110,기상예보:240,기상특보:30,조석:720};
+    $('healthGrid').innerHTML=items.map(x=>{
+      const age=ageMinutes(x.updatedAt), limit=limits[x.name]??Math.max(30,x.intervalMinutes*2);
+      const stale=age===null||age>limit;
+      return `<div class="health-card ${stale?'stale':''}"><span>${esc(x.name)}</span><b class="${stale?'bad':'good'}">${stale?'갱신 확인':'정상'}</b><em>${dateTimeText(x.updatedAt)} · ${age===null?'-':`${age}분 전`} · 기준 ${limit}분</em></div>`;
+    }).join('');
   }
+
 
   function lineChart(svg,history,opt){
     const W=600,H=190,p=30,min=opt.min,max=opt.max;
-    const x=i=>p+i*(W-2*p)/(history.length-1),y=v=>H-p-(v-min)*(H-2*p)/(max-min);
+    const x=i=>history.length<=1?W/2:p+i*(W-2*p)/(history.length-1),y=v=>H-p-(v-min)*(H-2*p)/(max-min);
     const grid=[min,(min+max)/2,max].map(v=>`<line class="chart-grid" x1="${p}" x2="${W-p}" y1="${y(v)}" y2="${y(v)}"/><text class="chart-axis" x="2" y="${y(v)+3}">${v.toFixed(2)}</text>`).join('');
     const refs=opt.lines.map(l=>`<line x1="${p}" x2="${W-p}" y1="${y(l.v)}" y2="${y(l.v)}" stroke="${l.color}" stroke-width="2" stroke-dasharray="7 6"/>`).join('');
     const pts=history.map((v,i)=>`${x(i)},${y(v[opt.key])}`).join(' ');
@@ -572,10 +596,12 @@
       $('hydrologyTestResult').className='settings-result';$('hydrologyTestResult').textContent='저장값을 삭제했습니다.';
     });
   }
-  document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData();});
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData('scenario');});
+  $('refreshBtn')?.addEventListener('click',()=>loadData('manual'));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastRefreshStartedAt&&Date.now()-lastRefreshStartedAt.getTime()>cfg.REFRESH_MS)loadData('resume');});
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
   bindWeatherSettings();
   bindHydrologySettings();
-  loadData();
-  setInterval(()=>{if(cfg.DATA_MODE==='live'||cfg.DATA_MODE==='hybrid')loadData()},cfg.REFRESH_MS);
+  loadData('initial');
+  setInterval(()=>{if(cfg.DATA_MODE==='live'||cfg.DATA_MODE==='hybrid')loadData('auto')},cfg.REFRESH_MS);
 })();
