@@ -9,5 +9,5 @@
  */
 window.HANGANG_WEATHER_CONFIG = {
   ENABLED: true,
-  AUTH_KEY: "PASTE_KMA_AUTH_KEY_HERE"
+  AUTH_KEY: "cMuymg-NRJ-LspoPjQSf_A"
 };
