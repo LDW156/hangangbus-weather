@@ -12,9 +12,9 @@ window.HANGANG_SHARED_CONFIG = {
     ENABLED: true,
 
     // 한강홍수통제소 API 호출 화면에서 생성한 전체 URL을 각각 붙여넣으십시오.
-    PALDANG_URL: "PASTE_PALDANG_URL_HERE",
-    JAMSU_URL: "PASTE_JAMSU_URL_HERE",
-    HANGANG_URL: "PASTE_HANGANG_URL_HERE",
+    PALDANG_URL: "https://api.hrfco.go.kr/52832662-D130-4239-9C5F-730AD3BE6BC6/dam/list/10M/1017310/202607141440/202607151630.xml",
+    JAMSU_URL: "https://api.hrfco.go.kr/52832662-D130-4239-9C5F-730AD3BE6BC6/waterlevel/list/10M/1018680/202607141440/202607151630.xml",
+    HANGANG_URL: "https://api.hrfco.go.kr/52832662-D130-4239-9C5F-730AD3BE6BC6/waterlevel/list/10M/1018683/202607151430/202607151630.xml",
 
     // 공용 URL 설정이 완료되면 일반 사용자 화면에서 설정 버튼을 숨깁니다.
     SHOW_SETTINGS_BUTTON: false
