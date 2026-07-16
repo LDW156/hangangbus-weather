@@ -2856,3 +2856,124 @@ footer strong {
 .health-card .warn {
   color:#a85f00;
 }
+
+
+/* =========================================================
+   v68 조석 그래프 시인성·데이터 상태 정리
+========================================================= */
+
+.tide-chart-panel svg {
+  min-height: 310px !important;
+  height: 310px !important;
+  overflow: visible;
+}
+
+.tide-event-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(145px,1fr));
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.tide-event-chip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fbfd;
+}
+
+.tide-event-chip span {
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.tide-event-chip b {
+  color: #173e55;
+  font-size: 13px;
+}
+
+.tide-event-chip em {
+  font-size: 11px;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.tide-event-chip.high {
+  border-color: #e1a1a7;
+  background: #fff4f5;
+}
+.tide-event-chip.high span,
+.tide-event-chip.high em {
+  color: #bd2734;
+}
+
+.tide-event-chip.low {
+  border-color: #91bed5;
+  background: #f0f8fc;
+}
+.tide-event-chip.low span,
+.tide-event-chip.low em {
+  color: #126b9c;
+}
+
+.tide-event-chip.empty {
+  display: block;
+  color: var(--muted);
+  text-align: center;
+}
+
+.tide-grid-line {
+  stroke: #c6d5dd !important;
+  stroke-width: 1 !important;
+}
+
+.tide-main-line {
+  fill: none;
+  stroke-width: 4 !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tide-axis-y,
+.tide-axis-x,
+.tide-unit-label {
+  fill: #294f64 !important;
+  font-weight: 850 !important;
+}
+
+.tide-unit-label {
+  font-size: 9px;
+}
+
+.tide-event-line.high {
+  filter: drop-shadow(0 0 1px rgba(201,47,59,.25));
+}
+
+.tide-event-line.low {
+  filter: drop-shadow(0 0 1px rgba(18,107,156,.25));
+}
+
+.health-card.source-delay {
+  background: #fff8e8;
+  border-color: #e3bf72;
+}
+
+.health-card .warn {
+  color: #a85f00;
+}
+
+@media (max-width:760px) {
+  .tide-chart-panel svg {
+    min-height: 285px !important;
+    height: 285px !important;
+  }
+
+  .tide-event-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+}

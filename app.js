@@ -70,7 +70,9 @@
             hangangBridge: live.hangangBridge
           };
           data.meta.dataTimes.hydrology = live.fetchedAt;
-          data.health = (data.health || []).filter(x => !['한강수위','팔당댐'].includes(x.name));
+          data.health = (data.health || []).filter(
+            x => !['한강수위','팔당댐','수문정보'].includes(x.name)
+          );
           data.health.unshift(
             {name:'한강수위',status:'normal',updatedAt:live.jamsuBridge.observedAt,checkedAt:live.fetchedAt,intervalMinutes:10},
             {name:'팔당댐',status:'normal',updatedAt:live.paldang.observedAt,checkedAt:live.fetchedAt,intervalMinutes:10}
@@ -83,8 +85,16 @@
           if(previousData?.hydrology){
             data.hydrology=previousData.hydrology;
             data.meta.dataTimes.hydrology=previousData.meta?.dataTimes?.hydrology;
-            data.health=(data.health||[]).filter(x=>!['한강수위','팔당댐'].includes(x.name));
-            const previousHealth=(previousData.health||[]).filter(x=>['한강수위','팔당댐'].includes(x.name));
+            data.health=(data.health||[]).filter(
+              x=>!['한강수위','팔당댐','수문정보'].includes(x.name)
+            );
+            const previousHealth=(previousData.health||[])
+              .filter(x=>['한강수위','팔당댐'].includes(x.name))
+              .map(x=>({
+                ...x,
+                status:'cached',
+                lastAttemptAt:new Date().toISOString()
+              }));
             data.health.unshift(...previousHealth);
             notes.push(`수문 갱신 실패 · 직전 정상값 유지 (${err.message})`);
             liveSources.push('수문(직전값)');
@@ -108,9 +118,9 @@
           data.meta.dataTimes.weatherForecastIssued = live.forecastIssuedAt;
           data.health = (data.health || []).filter(x => !['기상관측','기상예보','기상특보'].includes(x.name));
           data.health.push(
-            {name:'기상관측',status:'normal',updatedAt:live.observedAt,intervalMinutes:60},
-            {name:'기상예보',status:'normal',updatedAt:live.forecastIssuedAt,intervalMinutes:60},
-            {name:'기상특보',status:'normal',updatedAt:live.fetchedAt,intervalMinutes:10}
+            {name:'기상관측',status:'normal',updatedAt:live.observedAt,checkedAt:live.fetchedAt,intervalMinutes:60},
+            {name:'기상예보',status:'normal',updatedAt:live.forecastIssuedAt,checkedAt:live.fetchedAt,intervalMinutes:60},
+            {name:'기상특보',status:'normal',updatedAt:live.fetchedAt,checkedAt:live.fetchedAt,intervalMinutes:10}
           );
           if(live.warnings?.length) notes.push(...live.warnings.map(x=>`기상 참고: ${x}`));
           liveSources.push('기상');
@@ -122,7 +132,13 @@
             data.meta.dataTimes.weatherObservation=previousData.meta?.dataTimes?.weatherObservation;
             data.meta.dataTimes.weatherForecastIssued=previousData.meta?.dataTimes?.weatherForecastIssued;
             data.health=(data.health||[]).filter(x=>!['기상관측','기상예보','기상특보'].includes(x.name));
-            const previousHealth=(previousData.health||[]).filter(x=>['기상관측','기상예보','기상특보'].includes(x.name));
+            const previousHealth=(previousData.health||[])
+              .filter(x=>['기상관측','기상예보','기상특보'].includes(x.name))
+              .map(x=>({
+                ...x,
+                status:'cached',
+                lastAttemptAt:new Date().toISOString()
+              }));
             data.health.push(...previousHealth);
             notes.push(`기상 갱신 실패 · 직전 정상값 유지 (${err.message})`);
             liveSources.push('기상(직전값)');
@@ -150,7 +166,13 @@
             data.tide=previousData.tide;
             data.meta.dataTimes.tide=previousData.meta?.dataTimes?.tide;
             data.health=(data.health||[]).filter(x=>!['조석','조석정보'].includes(x.name));
-            const previousHealth=(previousData.health||[]).filter(x=>['조석','조석정보'].includes(x.name));
+            const previousHealth=(previousData.health||[])
+              .filter(x=>['조석','조석정보'].includes(x.name))
+              .map(x=>({
+                ...x,
+                status:'cached',
+                lastAttemptAt:new Date().toISOString()
+              }));
             data.health.push(...previousHealth);
             notes.push(`조석 갱신 실패 · 직전 정상값 유지 (${err.message})`);
             liveSources.push('조석(직전값)');
@@ -823,33 +845,155 @@
   function tideChart(svg,t){
     const history=t.timeline||[];
     if(!history.length){svg.innerHTML='';return;}
-    const H=230,W=responsiveChartWidth(svg,H),left=52,right=20,top=20,bottom=38;
-    const plotWidth=W-left-right,plotHeight=H-top-bottom;
+
+    const H=300;
+    const W=responsiveChartWidth(svg,H);
+    const left=60,right=28,top=68,bottom=44;
+    const plotWidth=W-left-right;
+    const plotHeight=H-top-bottom;
+
     const values=history.map(x=>Number(x.heightCm)).filter(Number.isFinite);
-    const min=Math.floor((Math.min(...values)-30)/50)*50;
-    const max=Math.ceil((Math.max(...values)+30)/50)*50;
-    const x=i=>history.length<=1?left+plotWidth/2:left+i*plotWidth/(history.length-1);
+    const min=Math.floor((Math.min(...values)-40)/50)*50;
+    const max=Math.ceil((Math.max(...values)+40)/50)*50;
+
+    const x=i=>history.length<=1
+      ? left+plotWidth/2
+      : left+i*plotWidth/(history.length-1);
+
     const y=v=>top+(max-v)*plotHeight/Math.max(1,max-min);
+
     const ticks=Array.from({length:5},(_,i)=>min+(max-min)*i/4);
-    const grid=ticks.map(v=>`<line class="chart-grid" x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}"/><text class="chart-axis chart-axis-y" x="${left-8}" y="${y(v)+4}" text-anchor="end">${fmt(v,0)}</text>`).join('');
+    const grid=ticks.map(v=>
+      `<line class="chart-grid tide-grid-line" x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}"/>
+       <text class="chart-axis chart-axis-y tide-axis-y" x="${left-10}" y="${y(v)+4}" text-anchor="end">${fmt(v,0)}</text>`
+    ).join('');
+
     const points=history.map((row,i)=>`${x(i)},${y(row.heightCm)}`).join(' ');
+    const areaPoints=
+      `${left},${H-bottom} ${points} ${W-right},${H-bottom}`;
+
     const labelStep=Math.max(1,Math.ceil(history.length/8));
-    const labels=history.map((row,i)=>i%labelStep===0||i===history.length-1?`<text class="chart-axis chart-axis-x" text-anchor="middle" x="${x(i)}" y="${H-11}">${esc(row.label)}</text>`:'').join('');
-    const eventMarks=(t.events||[]).map(event=>{
-      const idx=history.reduce((best,row,i)=>Math.abs(new Date(row.time)-new Date(event.time))<Math.abs(new Date(history[best].time)-new Date(event.time))?i:best,0);
-      const color=event.type==='high'?'#d43942':'#176fa5';
-      const text=event.type==='high'?'만조':'간조';
-      return `<line x1="${x(idx)}" x2="${x(idx)}" y1="${top}" y2="${H-bottom}" stroke="${color}" stroke-width="2" stroke-dasharray="5 5"/><text x="${x(idx)}" y="${top+11}" text-anchor="middle" fill="${color}" font-size="9" font-weight="900">${text}</text>`;
-    }).join('');
-    const currentIndex=history.reduce((best,row,i)=>Math.abs(new Date(row.time)-Date.now())<Math.abs(new Date(history[best].time)-Date.now())?i:best,0);
+    const labels=history.map((row,i)=>
+      i%labelStep===0||i===history.length-1
+        ? `<text class="chart-axis chart-axis-x tide-axis-x" text-anchor="middle" x="${x(i)}" y="${H-13}">${esc(row.label)}</text>`
+        : ''
+    ).join('');
+
+    const eventLines=[];
+    const eventBadges=[];
+    const eventDots=[];
+
+    (t.events||[]).forEach((event,eventIndex)=>{
+      const idx=history.reduce((best,row,i)=>
+        Math.abs(new Date(row.time)-new Date(event.time)) <
+        Math.abs(new Date(history[best].time)-new Date(event.time))
+          ? i
+          : best
+      ,0);
+
+      const eventX=x(idx);
+      const eventY=y(event.heightCm);
+      const isHigh=event.type==='high';
+      const color=isHigh?'#c92f3b':'#126b9c';
+      const soft=isHigh?'#fff1f2':'#edf7fc';
+      const title=isHigh?'만조':'간조';
+      const badgeWidth=126;
+      const badgeHeight=42;
+      const badgeCenter=Math.max(
+        left+badgeWidth/2,
+        Math.min(W-right-badgeWidth/2,eventX)
+      );
+      const badgeX=badgeCenter-badgeWidth/2;
+      const badgeY=10;
+
+      eventLines.push(
+        `<line class="tide-event-line ${isHigh?'high':'low'}"
+          x1="${eventX}" x2="${eventX}"
+          y1="${top}" y2="${H-bottom}"
+          stroke="${color}" stroke-width="2.6"
+          stroke-dasharray="${isHigh?'8 5':'3 5'}"/>`
+      );
+
+      eventDots.push(
+        `<circle cx="${eventX}" cy="${eventY}" r="6.5"
+          fill="${color}" stroke="#fff" stroke-width="3"/>`
+      );
+
+      eventBadges.push(
+        `<g class="tide-event-badge">
+          <rect x="${badgeX}" y="${badgeY}"
+            width="${badgeWidth}" height="${badgeHeight}"
+            rx="8" fill="${soft}" stroke="${color}" stroke-width="1.5"/>
+          <text x="${badgeCenter}" y="${badgeY+16}"
+            text-anchor="middle" fill="${color}"
+            font-size="10" font-weight="900">${title} ${timeText(event.time)}</text>
+          <text x="${badgeCenter}" y="${badgeY+32}"
+            text-anchor="middle" fill="#183d52"
+            font-size="11" font-weight="900">${fmt(event.heightCm,0)}cm</text>
+        </g>`
+      );
+    });
+
+    const currentIndex=history.reduce((best,row,i)=>
+      Math.abs(new Date(row.time)-Date.now()) <
+      Math.abs(new Date(history[best].time)-Date.now())
+        ? i
+        : best
+    ,0);
+
+    const currentX=x(currentIndex);
+    const nowBadgeWidth=94;
+    const nowBadgeX=Math.max(
+      left,
+      Math.min(W-right-nowBadgeWidth,currentX-nowBadgeWidth/2)
+    );
+
+    const gradientId=`tide-area-${svg.id||'chart'}`;
+
     svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
     svg.setAttribute('tabindex','0');
-    svg.innerHTML=`${grid}${eventMarks}<polyline class="chart-line" stroke="#168dbd" points="${points}"/>${labels}<line x1="${x(currentIndex)}" x2="${x(currentIndex)}" y1="${top}" y2="${H-bottom}" stroke="#253f50" stroke-width="2.5"/><g class="chart-hover-layer" style="display:none"><line class="chart-hover-line"/><circle class="chart-hover-dot" r="6"/></g>`;
-    bindChartTooltip(svg,{history,left,plotWidth,top,bottomY:H-bottom,x,series:[{key:'heightCm',y,color:'#168dbd'}],format:(row,index)=>{
-      const prev=index>0?Number(history[index-1].heightCm):null;
-      const delta=prev===null?null:Number(row.heightCm)-prev;
-      return `<div class="chart-tooltip-time">${esc(dateTimeText(row.time))}</div><div class="chart-tooltip-row"><span>예측조위</span><b>${fmt(row.heightCm,1)}cm</b></div><div class="chart-tooltip-row"><span>10분 변화</span><b class="${delta===null?'':deltaClass(delta)}">${delta===null?'-':signed(delta,1,'cm')}</b></div>`;
-    }});
+    svg.innerHTML=`
+      <defs>
+        <linearGradient id="${gradientId}" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#62b8dc" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#62b8dc" stop-opacity="0.04"/>
+        </linearGradient>
+      </defs>
+      ${grid}
+      <text class="tide-unit-label" x="${left-42}" y="${top-10}">cm</text>
+      ${eventLines.join('')}
+      <polygon points="${areaPoints}" fill="url(#${gradientId})"/>
+      <polyline class="chart-line tide-main-line" stroke="#0e86bb" points="${points}"/>
+      ${eventDots.join('')}
+      ${labels}
+      <line class="tide-current-line"
+        x1="${currentX}" x2="${currentX}"
+        y1="${top}" y2="${H-bottom}"
+        stroke="#243e50" stroke-width="3"/>
+      <rect x="${nowBadgeX}" y="${top+6}"
+        width="${nowBadgeWidth}" height="24"
+        rx="7" fill="#243e50"/>
+      <text x="${nowBadgeX+nowBadgeWidth/2}" y="${top+22}"
+        text-anchor="middle" fill="#fff"
+        font-size="9" font-weight="900">현재 ${timeText(history[currentIndex].time)}</text>
+      ${eventBadges.join('')}
+      <g class="chart-hover-layer" style="display:none">
+        <line class="chart-hover-line"/>
+        <circle class="chart-hover-dot" r="6"/>
+      </g>`;
+
+    bindChartTooltip(svg,{
+      history,left,plotWidth,top,bottomY:H-bottom,x,
+      series:[{key:'heightCm',y,color:'#0e86bb'}],
+      format:(row,index)=>{
+        const prev=index>0?Number(history[index-1].heightCm):null;
+        const delta=prev===null?null:Number(row.heightCm)-prev;
+        return `<div class="chart-tooltip-time">${esc(dateTimeText(row.time))}</div>
+          <div class="chart-tooltip-row"><span>예측조위</span><b>${fmt(row.heightCm,1)}cm</b></div>
+          <div class="chart-tooltip-row"><span>10분 변화</span><b class="${delta===null?'':deltaClass(delta)}">${delta===null?'-':signed(delta,1,'cm')}</b></div>`;
+      }
+    });
+
     observeResponsiveChart(svg,()=>tideChart(svg,t));
   }
 
@@ -883,6 +1027,18 @@
         currentSub+=` · ${current.ageMinutes}분 전 실측`;
       }
     }
+
+    const tideEvents=(t.events||[]).map(event=>{
+      const isHigh=event.type==='high';
+      return `<div class="tide-event-chip ${isHigh?'high':'low'}">
+        <span>${isHigh?'만조':'간조'}</span>
+        <b>${timeText(event.time)}</b>
+        <em>${fmt(event.heightCm,0)}cm</em>
+      </div>`;
+    }).join('');
+
+    $('tideEventStrip').innerHTML=tideEvents ||
+      '<div class="tide-event-chip empty">당일 만·간조 자료 없음</div>';
 
     $('tideGrid').innerHTML=
       `<div class="metric tide-current-metric ${hasObserved?'':'metric-data-warning'}">
@@ -939,52 +1095,55 @@
   }
 
   function renderHealth(){
-    const items=data.health||[];
-    const limits={
-      한강수위:40,
-      팔당댐:40,
-      기상관측:110,
-      기상예보:240,
-      기상특보:30,
-      조석:40,
-      조석정보:40
+    const items=(data.health||[]).filter(x=>x.name!=='수문정보');
+
+    const sourceLabel={
+      한강수위:'관측',
+      팔당댐:'관측',
+      기상관측:'관측',
+      기상예보:'발표',
+      기상특보:'확인',
+      조석:'자료',
+      조석정보:'자료'
     };
 
     $('healthGrid').innerHTML=items.map(x=>{
       const sourceAge=ageMinutes(x.updatedAt);
-      const checkedAge=ageMinutes(x.checkedAt||x.updatedAt);
-      const limit=limits[x.name]??Math.max(40,x.intervalMinutes*3);
-
-      const connectionOk=checkedAge!==null&&checkedAge<=15;
-      const sourceDelayed=sourceAge===null||sourceAge>limit;
-      const severeDelay=sourceAge===null||sourceAge>90;
+      const isCached=x.status==='cached';
+      const isHydrology=['한강수위','팔당댐'].includes(x.name);
+      const hydrologyDelayed=isHydrology&&sourceAge!==null&&sourceAge>60;
 
       let state='정상';
       let stateClass='good';
       let cardClass='';
 
-      if(!connectionOk){
-        state='갱신 확인';
+      if(isCached){
+        state='갱신 실패·직전값';
         stateClass='bad';
         cardClass='stale';
-      }else if(severeDelay){
-        state='원자료 지연';
-        stateClass='bad';
-        cardClass='stale';
-      }else if(sourceDelayed){
+      }else if(hydrologyDelayed){
         state='원자료 지연';
         stateClass='warn';
         cardClass='source-delay';
       }
 
-      const checkedText=x.checkedAt
-        ? `조회 ${dateTimeText(x.checkedAt)} · `
+      const checkedAt=x.checkedAt||data.meta?.generatedAt;
+      const checkedText=checkedAt
+        ? `조회 ${dateTimeText(checkedAt)} · `
+        : '';
+
+      const ageText=sourceAge===null
+        ? '시각 없음'
+        : `${sourceAge}분 전`;
+
+      const attemptText=isCached&&x.lastAttemptAt
+        ? ` · 실패 ${dateTimeText(x.lastAttemptAt)}`
         : '';
 
       return `<div class="health-card ${cardClass}">
         <span>${esc(x.name)}</span>
         <b class="${stateClass}">${state}</b>
-        <em>${checkedText}원자료 ${dateTimeText(x.updatedAt)} · ${sourceAge===null?'-':`${sourceAge}분 전`} · 허용 ${limit}분</em>
+        <em>${checkedText}${sourceLabel[x.name]||'원자료'} ${dateTimeText(x.updatedAt)} · ${ageText}${attemptText}</em>
       </div>`;
     }).join('');
   }
