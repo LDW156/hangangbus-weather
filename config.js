@@ -31,9 +31,7 @@ window.HANGANG_CONFIG = {
     },
     wind: {
       cautionMs: 8,
-      stopMs: 12,
-      gustCautionMs: 14,
-      gustStopMs: 20
+      stopMs: 12
     },
     rainfall: {
       stop3hMm: 90,

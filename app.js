@@ -195,8 +195,7 @@
     };
 
     const windStats=(arr)=>({
-      speed:max(arr,'speed')??0,
-      gust:max(arr.filter(x=>x.gustOperational===true),'gust')
+      speed:max(arr,'speed')??0
     });
 
     const eastStats=windStats(eastW);
@@ -272,15 +271,13 @@
     }
 
     const evaluateWind=(routeName,stats,stations,reasons,currentStatus)=>{
-      const stop=stats.speed>=t.wind.stopMs ||
-        (stats.gust!==null&&stats.gust>=t.wind.gustStopMs);
-      const caution=stats.speed>=t.wind.cautionMs ||
-        (stats.gust!==null&&stats.gust>=t.wind.gustCautionMs);
+      const stop=stats.speed>=t.wind.stopMs;
+      const caution=stats.speed>=t.wind.cautionMs;
       const observationTime=timeText(stations[0]?.observedAt);
 
       if(stop){
         reasons.push(reason(
-          `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s${stats.gust===null?'':` · 순간최대 ${fmt(stats.gust,1)}m/s`}`,
+          `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s ≥ 운항중지 기준 ${fmt(t.wind.stopMs,1)}m/s`,
           'danger','운항중지'
         ));
         return 'stop';
@@ -288,7 +285,7 @@
 
       if(caution){
         reasons.push(reason(
-          `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s${stats.gust===null?'':` · 순간최대 ${fmt(stats.gust,1)}m/s`} · ${observationTime}`,
+          `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s · 주의 기준 ${fmt(t.wind.cautionMs,1)}m/s 이상 · ${observationTime}`,
           'warning','주의'
         ));
         return currentStatus==='normal'?'caution':currentStatus;
@@ -553,48 +550,152 @@
     }).join('');
   }
 
+  function compactRainSource(value){
+    const names=String(value||'-')
+      .split('·')
+      .map(x=>x.trim())
+      .filter(Boolean);
+
+    if(!names.length)return '-';
+    if(names.length===1)return names[0];
+
+    // 여러 선착장이 같은 기상청 격자를 공유하는 경우 카드 안에서는 짧게 표시합니다.
+    return `${names[0]}권역`;
+  }
+
+  function rainVisual(row){
+    const amount=Number(row?.amount)||0;
+    const probability=Number(row?.probability)||0;
+    const pty=Number(row?.pty)||0;
+    const sky=Number(row?.sky)||1;
+
+    if([1,4,5].includes(pty)||amount>0){
+      return {icon:'🌧️',label:'비',className:'rain-now'};
+    }
+
+    if([2,6].includes(pty)){
+      return {icon:'🌨️',label:'비·눈',className:'rain-now'};
+    }
+
+    if([3,7].includes(pty)){
+      return {icon:'❄️',label:'눈',className:'rain-now'};
+    }
+
+    if(probability>=60){
+      return {icon:'☔',label:'비 가능성 높음',className:'prob-high'};
+    }
+
+    if(probability>=30){
+      return {icon:'🌦️',label:'비 가능성 있음',className:'prob-mid'};
+    }
+
+    if(probability>=20){
+      return {icon:'🌂',label:'비 가능성 낮음',className:'prob-low'};
+    }
+
+    if(sky===4){
+      return {icon:'☁️',label:'흐림',className:'prob-none'};
+    }
+
+    if(sky===3){
+      return {icon:'🌥️',label:'구름 많음',className:'prob-none'};
+    }
+
+    return {icon:'☀️',label:'강수 가능성 낮음',className:'prob-none'};
+  }
+
   function renderRain(){
     const names={west:'서부선',east:'동부선'};
+
     $('rainCards').innerHTML=['west','east'].map(k=>{
       const r=data.weather.rainfall[k];
+
       const summaries=[
         ['향후 3시간',r.next3h,r.next3hProbability],
         ['향후 6시간',r.next6h,r.next6hProbability],
         ['향후 12시간',r.next12h,r.next12hProbability],
         ['향후 24시간',r.next24h,r.next24hProbability]
       ];
-      const rows=(r.timeline||[]).map(x=>`<div class="rain-hour-card">
-        <div class="rain-hour-time">${esc(x.label)}</div>
-        <div class="rain-hour-amount">${fmt(x.amount,1)}<small>mm</small></div>
-        <div class="rain-hour-prob">강수확률 <b>${fmt(x.probability)}%</b></div>
-        <div class="rain-hour-source">최대값 기준 ${esc(x.source||'-')}</div>
-      </div>`).join('');
+
+      const rows=(r.timeline||[]).map(x=>{
+        const visual=rainVisual(x);
+        const source=compactRainSource(x.source);
+
+        return `<div class="rain-hour-card ${visual.className}">
+          <div class="rain-hour-top">
+            <div class="rain-hour-time">${esc(x.label)}</div>
+            <div class="rain-weather-icon" aria-label="${esc(visual.label)}">${visual.icon}</div>
+          </div>
+          <div class="rain-weather-label">${esc(visual.label)}</div>
+          <div class="rain-hour-amount">${fmt(x.amount,1)}<small>mm</small></div>
+          <div class="rain-hour-probability">
+            <span>강수확률</span>
+            <b>${fmt(x.probability)}%</b>
+          </div>
+          <div class="rain-hour-source">최대값 기준 ${esc(source)}</div>
+        </div>`;
+      }).join('');
+
       const notice=!r.dataAvailable
         ? `<div class="rain-state missing"><b>강수자료 확인 필요</b><span>${esc(r.dryMessage)}</span></div>`
         : r.allDry
-          ? `<div class="rain-state dry"><b>강수 없음 예보</b><span>${esc(r.dryMessage)}</span></div>`:'';
-      return `<article class="sector-card rain-card-v54">
-        <div class="data-time">최근 실황 ${dateTimeText(r.observedAt)} · 단기예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 첫 예보 ${dateTimeText(r.forecastStartAt)}</div>
-        <div class="sector-title"><h3>${names[k]}</h3><span>노선 대표격자 최대값 기준</span></div>
-        <div class="rain-current-row">
-          <div><span>최근 1시간 실황</span><b>${fmt(r.currentRate,1)}mm</b><em>${esc(r.currentSource||'-')} · ${timeText(r.observedAt)} 관측</em></div>
-          <div><span>예보 산정범위</span><b>${timeText(r.forecastStartAt)}부터</b><em>${esc(r.aggregationLabel)}</em></div>
+          ? `<div class="rain-state dry"><b>현재 강수 없음</b><span>시간별 강수확률과 하늘상태는 아래 카드에서 확인하십시오.</span></div>`
+          : '';
+
+      return `<article class="sector-card rain-card-v57">
+        <div class="data-time">
+          실황 ${dateTimeText(r.observedAt)} · 예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 첫 예보 ${dateTimeText(r.forecastStartAt)}
         </div>
+
+        <div class="sector-title rain-sector-title">
+          <h3>${names[k]}</h3>
+          <span>노선 내 최대 강수량·강수확률 기준</span>
+        </div>
+
+        <div class="rain-current-row">
+          <div>
+            <span>최근 1시간 실황</span>
+            <b>${fmt(r.currentRate,1)}mm</b>
+            <em>최대값 기준 ${esc(compactRainSource(r.currentSource))} · ${timeText(r.observedAt)}</em>
+          </div>
+          <div>
+            <span>시간별 예보 시작</span>
+            <b>${timeText(r.forecastStartAt)}</b>
+            <em>강수량·강수확률·비 여부를 함께 표시</em>
+          </div>
+        </div>
+
         ${notice}
-        <div class="rain-summary rain-summary-v54">${summaries.map(x=>`<div class="rain-item">
-          <span>${x[0]} 누적</span><b>${fmt(x[1],1)}<small>mm</small></b><em>강수확률 최대 <strong>${fmt(x[2])}%</strong></em>
-        </div>`).join('')}</div>
-        <div class="rain-basis"><b>기상 기준좌표</b><span>${esc(r.basisLabel)}</span></div>
-        <div class="rain-hour-scroll">${rows||'<div class="empty-message">향후 시간별 강수예보 자료 없음</div>'}</div>
+
+        <div class="rain-summary rain-summary-v57">
+          ${summaries.map(x=>{
+            const probability=Number(x[2])||0;
+            const band=probability>=60?'high':probability>=30?'mid':probability>=20?'low':'none';
+
+            return `<div class="rain-item probability-${band}">
+              <span>${x[0]} 누적</span>
+              <b>${fmt(x[1],1)}<small>mm</small></b>
+              <em>강수확률 최대 <strong>${fmt(probability)}%</strong></em>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <div class="rain-basis">
+          <b>기상 기준좌표</b>
+          <span>${esc(r.basisLabel)}</span>
+        </div>
+
+        <div class="rain-hour-scroll rain-hour-scroll-v57">
+          ${rows||'<div class="empty-message">향후 시간별 강수예보 자료 없음</div>'}
+        </div>
       </article>`;
     }).join('');
   }
 
   function windLevel(w){
     const t=cfg.THRESHOLDS.wind;
-    const gust=Number.isFinite(Number(w.gust))?Number(w.gust):null;
-    if(w.speed>=t.stopMs||(gust!==null&&gust>=t.gustStopMs))return'danger';
-    if(w.speed>=t.cautionMs||(gust!==null&&gust>=t.gustCautionMs))return'warn';
+    if(w.speed>=t.stopMs)return'danger';
+    if(w.speed>=t.cautionMs)return'warn';
     return'good';
   }
   function windColor(speed){
@@ -617,52 +718,40 @@
   }
   function renderWind(){
     $('windGrid').innerHTML=data.weather.windStations.map(w=>{
-      const gustAvailable=Number.isFinite(Number(w.gust))&&Number(w.gust)>0;
-      const gustState=w.gustStatus?.state||'pending';
-      const gustValue=gustAvailable?`${fmt(w.gust,1)}m/s`:
-        gustState==='pending'?'승인 대기':'미관측';
-      const gustTime=gustAvailable&&w.gustObservedAt
-        ? ` · ${timeText(w.gustObservedAt)}`
-        : '';
       const coordinate=
         `${Number(w.lat).toFixed(5)}°N, ${Number(w.lon).toFixed(5)}°E`;
 
-      return `<article class="station-card wind-card-v55">
+      return `<article class="station-card wind-card-v57">
         <div class="station-head">
           <div>
             <h3>${esc(w.name)}</h3>
             <div class="station-coordinate">기상 기준좌표 ${esc(coordinate)}</div>
           </div>
-          <span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span>
+          <span class="sector-pill sector-pill-v57">${w.sector==='east'?'동부선':'서부선'}</span>
         </div>
 
         <div class="data-time wind-data-time">
           실황 ${dateTimeText(w.observedAt)} · 초단기예보 1시간 간격
         </div>
 
-        <div class="wind-current-layout">
+        <div class="wind-current-layout wind-current-layout-v57">
           <div class="wind-compass-column">
             ${compass(w.directionDeg,w.speed)}
             <strong>${esc(w.direction)}</strong>
             <small>${fmt(w.directionDeg)}°</small>
           </div>
 
-          <div class="wind-reading">
+          <div class="wind-reading wind-reading-v57">
             <span>현재 평균풍속</span>
             <b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
             <em>${esc(w.direction)}에서 불어오는 바람</em>
-
-            <div class="gust-reading ${esc(gustState)}">
-              <span>순간최대풍속 · 서울 ASOS 대표값</span>
-              <strong>${esc(gustValue)}</strong>
-              <small>${esc(w.gustStatus?.message||w.gustSource)}${gustTime}</small>
-            </div>
           </div>
         </div>
 
-        <div class="wind-direction-note">화살표 끝이 바람이 불어오는 방향을 표시합니다.</div>
-        <div class="wind-forecast-grid-v54">
-          ${[1,2,3,4].map(h=>forecastWindCard(w.forecasts?.find(x=>x.hour===h))).join('')}
+        <div class="wind-direction-note">화살표 끝이 바람이 불어오는 방향입니다.</div>
+
+        <div class="wind-forecast-grid-v57">
+          ${[1,2].map(h=>forecastWindCard(w.forecasts?.find(x=>x.hour===h))).join('')}
         </div>
       </article>`;
     }).join('');

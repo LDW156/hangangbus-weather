@@ -1830,3 +1830,269 @@ footer strong {
     height: 88px;
   }
 }
+
+
+/* =========================================================
+   v57 풍향·풍속 간소화 / 시간별 강수 직관화
+========================================================= */
+
+.sector-pill-v57 {
+  min-width: 58px;
+  padding: 6px 9px;
+  color: #075581;
+  background: #e7f5fd;
+  border: 1px solid #8fc6e4;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+}
+
+.wind-card-v57 {
+  padding: 14px;
+}
+
+.wind-current-layout-v57 {
+  grid-template-columns: 120px minmax(0,1fr);
+  min-height: 154px;
+}
+
+.wind-reading-v57 {
+  align-self: center;
+}
+
+.wind-reading-v57 > span {
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+.wind-reading-v57 > b {
+  font-size: 35px !important;
+}
+
+.wind-reading-v57 > em {
+  margin-top: 4px;
+  font-size: 12px !important;
+  font-weight: 750;
+}
+
+.wind-forecast-grid-v57 {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 9px;
+}
+
+.wind-forecast-grid-v57 .wind-forecast-card {
+  padding: 10px;
+}
+
+.wind-forecast-grid-v57 .wind-forecast-head {
+  font-size: 10px;
+}
+
+.wind-forecast-grid-v57 .wind-forecast-body strong {
+  font-size: 16px;
+}
+
+.wind-forecast-grid-v57 .wind-forecast-body em {
+  font-size: 10px;
+}
+
+.rain-card-v57 {
+  padding: 15px;
+}
+
+.rain-sector-title > h3 {
+  font-size: 16px;
+}
+
+.rain-sector-title > span {
+  color: #365f73;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rain-summary-v57 {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.rain-summary-v57 .rain-item {
+  border-width: 2px;
+}
+
+.rain-summary-v57 .rain-item.probability-none {
+  background: #f5f8fa;
+  border-color: #cdd9df;
+}
+
+.rain-summary-v57 .rain-item.probability-low {
+  background: #fff9df;
+  border-color: #efd36b;
+}
+
+.rain-summary-v57 .rain-item.probability-mid {
+  background: #eaf6ff;
+  border-color: #75bce8;
+}
+
+.rain-summary-v57 .rain-item.probability-high {
+  background: #dcedff;
+  border-color: #3c92d1;
+  box-shadow: inset 0 0 0 1px rgba(15,94,150,.08);
+}
+
+.rain-summary-v57 .rain-item > span {
+  color: #314f5e;
+  font-size: 10px;
+}
+
+.rain-summary-v57 .rain-item > b {
+  font-size: 22px;
+}
+
+.rain-summary-v57 .rain-item em {
+  color: #385969;
+  font-size: 10px;
+}
+
+.rain-summary-v57 .rain-item strong {
+  font-size: 13px;
+}
+
+.rain-hour-scroll-v57 {
+  grid-template-columns: repeat(4,minmax(135px,1fr));
+  gap: 9px;
+}
+
+.rain-hour-scroll-v57 .rain-hour-card {
+  min-width: 135px;
+  min-height: 164px;
+  padding: 12px;
+  border-width: 2px;
+  box-shadow: 0 3px 9px rgba(21,67,91,.05);
+}
+
+.rain-hour-card.prob-none {
+  background: #f6f8fa;
+  border-color: #cdd8de;
+}
+
+.rain-hour-card.prob-low {
+  background: #fff9df;
+  border-color: #edcc57;
+}
+
+.rain-hour-card.prob-mid {
+  background: #edf7ff;
+  border-color: #69b4e4;
+}
+
+.rain-hour-card.prob-high {
+  background: #dcefff;
+  border-color: #288bc9;
+}
+
+.rain-hour-card.rain-now {
+  color: #083f67;
+  background: #cfe9ff;
+  border-color: #0c78bd;
+  box-shadow: inset 4px 0 0 #0c78bd,0 3px 9px rgba(21,67,91,.08);
+}
+
+.rain-hour-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rain-hour-time {
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.rain-weather-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.rain-weather-label {
+  min-height: 21px;
+  margin-top: 5px;
+  color: #224e65;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.rain-hour-amount {
+  margin: 7px 0;
+  font-size: 24px;
+}
+
+.rain-hour-amount small {
+  font-size: 11px;
+}
+
+.rain-hour-probability {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 8px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(80,126,151,.22);
+  border-radius: 8px;
+}
+
+.rain-hour-probability span {
+  color: #3e5f70;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rain-hour-probability b {
+  color: #075f99;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.rain-hour-source {
+  margin-top: 7px;
+  color: #405e6e;
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+@media (max-width: 850px) {
+  .rain-summary-v57 {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .rain-hour-scroll-v57 {
+    grid-template-columns: repeat(2,minmax(135px,1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .wind-current-layout-v57 {
+    grid-template-columns: 96px minmax(0,1fr);
+    min-height: 132px;
+  }
+
+  .wind-reading-v57 > b {
+    font-size: 30px !important;
+  }
+
+  .rain-hour-scroll-v57 {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .rain-hour-scroll-v57 .rain-hour-card {
+    flex: 0 0 148px;
+  }
+}

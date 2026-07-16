@@ -511,50 +511,31 @@
     if (!proxyBase) throw new Error('기상청 중계 Worker 주소가 설정되지 않았습니다.');
 
     const unique = [...new Map(STATIONS.map(s => [`${s.nx},${s.ny}`, {nx:s.nx,ny:s.ny}])).values()];
-    const [currentEntries, ultraEntries, shortEntries, asosResult] = await Promise.all([
+    const [currentEntries, ultraEntries, shortEntries] = await Promise.all([
       Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchNowcastForGrid(g,proxyBase,0)])),
       Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchUltraForecastForGrid(g,proxyBase)])),
-      Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchShortForecastForGrid(g,proxyBase)])),
-      fetchAsosCurrent(proxyBase).catch(error => ({ error:error.message }))
+      Promise.all(unique.map(async g => [`${g.nx},${g.ny}`, await fetchShortForecastForGrid(g,proxyBase)]))
     ]);
 
     const currentMap=Object.fromEntries(currentEntries);
     const ultraMap=Object.fromEntries(ultraEntries);
     const shortMap=Object.fromEntries(shortEntries);
-    const gustObservation=asosResult?.error?null:asosResult;
 
     const windStations=STATIONS.map(st=>{
       const key=`${st.nx},${st.ny}`;
       const current=currentMap[key];
       const ultra=ultraMap[key];
-      const forecasts=[1,2,3,4].map(hour=>{
+      const forecasts=[1,2].map(hour=>{
         const f=forecastForHour(ultra.timeline,hour);
         return f?{
           hour, time:f.time, direction:direction16(f.VEC), directionDeg:num(f.VEC), speed:num(f.WSD)
         }:null;
       }).filter(Boolean);
-      const gustAvailable = Number.isFinite(Number(gustObservation?.gust)) && Number(gustObservation.gust) > 0;
-      const gustStatus = asosResult?.error
-        ? {
-            state:'pending',
-            message:/403|활용신청/.test(asosResult.error)
-              ? '지상관측 시간자료 API 활용승인 대기'
-              : '순간최대풍속 자료 연결 확인 필요'
-          }
-        : gustAvailable
-          ? {state:'available', message:'서울 ASOS 대표 순간최대풍속'}
-          : {state:'no-observation', message:'해당 관측시각 순간최대풍속 미관측'};
 
       return {
         name:st.name, sector:st.sector, lat:st.lat, lon:st.lon,
         observedAt:current.observedAt,
         direction:current.direction, directionDeg:current.directionDeg, speed:current.speed,
-        gust:gustAvailable ? Number(gustObservation.gust) : null,
-        gustObservedAt:gustAvailable ? gustObservation.observedAt : null,
-        gustDirectionDeg:gustAvailable ? gustObservation.gustDirectionDeg : null,
-        gustSource:gustObservation?.sourceLabel||'서울 ASOS(108)',
-        gustStatus,
-        gustOperational:false,
         sourceLabel:'기상청 초단기실황',
         forecasts
       };
@@ -571,7 +552,7 @@
     const forecastIssuedAt=rainEntries.map(([,r])=>r.forecastIssuedAt).filter(Boolean).sort().at(-1)||null;
 
     return {
-      weather:{windStations,rainfall:Object.fromEntries(rainEntries),gustReference:gustObservation},
+      weather:{windStations,rainfall:Object.fromEntries(rainEntries)},
       alerts:situation.alerts, alertStatus:situation.status,
       observedAt, forecastIssuedAt, fetchedAt:new Date().toISOString(),
       sourceLabel:'기상청 API허브',
@@ -645,10 +626,33 @@
         .forEach(row=>{
           const amount=parseRain(row.PCP), probability=num(row.POP,0);
           const existing=forecastByTime.get(row.time)||{
-            time:row.time,amount:-1,probability:-1,amountSource:'',probabilitySource:''
+            time:row.time,
+            amount:-1,
+            probability:-1,
+            amountSource:'',
+            probabilitySource:'',
+            pty:0,
+            sky:1
           };
-          if(amount>existing.amount){ existing.amount=amount; existing.amountSource=group.names.join('·'); }
-          if(probability>existing.probability){ existing.probability=probability; existing.probabilitySource=group.names.join('·'); }
+
+          if(amount>existing.amount){
+            existing.amount=amount;
+            existing.amountSource=group.names.join('·');
+            existing.pty=num(row.PTY,0);
+            existing.sky=num(row.SKY,1);
+          }
+
+          if(probability>existing.probability){
+            existing.probability=probability;
+            existing.probabilitySource=group.names.join('·');
+
+            // 강수량이 0일 때는 가장 높은 강수확률 지점의 하늘/강수형태를 사용합니다.
+            if(existing.amount<=0){
+              existing.pty=num(row.PTY,0);
+              existing.sky=num(row.SKY,1);
+            }
+          }
+
           forecastByTime.set(row.time,existing);
         });
     });
@@ -657,9 +661,14 @@
       .sort((a,b)=>new Date(a.time)-new Date(b.time))
       .slice(0,24)
       .map(row=>({
-        time:row.time,label:labelTime(row.time),amount:Math.max(0,row.amount),
+        time:row.time,
+        label:labelTime(row.time),
+        amount:Math.max(0,row.amount),
         probability:Math.max(0,row.probability),
-        source:row.amountSource||row.probabilitySource||'노선 대표격자',type:'forecast'
+        source:row.amountSource||row.probabilitySource||'노선 대표격자',
+        pty:num(row.pty,0),
+        sky:num(row.sky,1),
+        type:'forecast'
       }));
 
     const horizon=hours=>{
@@ -704,8 +713,14 @@
     if(!proxyBase) throw new Error('기상청 중계 Worker 주소가 없습니다.');
     const test=await fetchNowcastForGrid({nx:60,ny:127},proxyBase,0);
     const situation=await fetchSituation(proxyBase);
-    const asos=await fetchAsosCurrent(proxyBase).catch(()=>null);
-    return {ok:true,observedAt:test.observedAt,speed:test.speed,direction:test.direction,rain1h:test.rain1h,alertCount:situation.alerts.length,gust:asos?.gust??null};
+    return {
+      ok:true,
+      observedAt:test.observedAt,
+      speed:test.speed,
+      direction:test.direction,
+      rain1h:test.rain1h,
+      alertCount:situation.alerts.length
+    };
   }
 
   window.KMA = {

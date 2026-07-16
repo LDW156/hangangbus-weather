@@ -1,15 +1,15 @@
-const CACHE='hangangbus-manual-refresh-zero-fix-v56';
+const CACHE='hangangbus-compact-wind-rain-v57';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=56',
-  './shared-config.js?v=56',
-  './weather-config.js?v=56',
-  './config.js?v=56',
-  './hrfco.js?v=56',
-  './kma.js?v=56',
-  './app.js?v=56',
-  './data/demo-data.js?v=56',
+  './styles.css?v=57',
+  './shared-config.js?v=57',
+  './weather-config.js?v=57',
+  './config.js?v=57',
+  './hrfco.js?v=57',
+  './kma.js?v=57',
+  './app.js?v=57',
+  './data/demo-data.js?v=57',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'
