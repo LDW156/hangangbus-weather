@@ -871,8 +871,56 @@
     svg.onblur=hide;
   }
 
+  const chartResizeStates=new WeakMap();
+
+  function responsiveChartWidth(svg,logicalHeight){
+    const rect=svg.getBoundingClientRect();
+    const cssWidth=rect.width||700;
+    const cssHeight=rect.height||logicalHeight;
+
+    // 실제 표시 영역과 같은 가로세로 비율의 viewBox를 사용하여
+    // 그래프가 카드 내부 너비를 전부 사용하도록 합니다.
+    return Math.max(360,Math.round(cssWidth/cssHeight*logicalHeight));
+  }
+
+  function observeResponsiveChart(svg,redraw){
+    if(typeof ResizeObserver==='undefined')return;
+
+    let state=chartResizeStates.get(svg);
+
+    if(!state){
+      state={
+        redraw:null,
+        width:Math.round(svg.getBoundingClientRect().width),
+        frame:null,
+        observer:null
+      };
+
+      state.observer=new ResizeObserver(entries=>{
+        const width=Math.round(entries[0]?.contentRect?.width||0);
+
+        if(!width||Math.abs(width-state.width)<3)return;
+
+        state.width=width;
+
+        if(state.frame)cancelAnimationFrame(state.frame);
+        state.frame=requestAnimationFrame(()=>{
+          state.frame=null;
+          state.redraw?.();
+        });
+      });
+
+      state.observer.observe(svg);
+      chartResizeStates.set(svg,state);
+    }
+
+    state.redraw=redraw;
+    state.width=Math.round(svg.getBoundingClientRect().width);
+  }
+
   function lineChart(svg,history,opt){
-    const W=700,H=230;
+    const H=230;
+    const W=responsiveChartWidth(svg,H);
     const left=48,right=20,top=18,bottom=38;
     const min=opt.min,max=opt.max;
     const plotWidth=W-left-right;
@@ -946,10 +994,13 @@
           <div class="chart-tooltip-row"><span>10분 전 대비</span><b class="${delta===null?'':deltaClass(delta)}">${delta===null?'-':signed(delta,2,'m')}</b></div>`;
       }
     });
+
+    observeResponsiveChart(svg,()=>lineChart(svg,history,opt));
   }
 
   function damChart(svg,h){
-    const W=800,H=220;
+    const H=220;
+    const W=responsiveChartWidth(svg,H);
     const left=46,right=22,top=20,bottom=40;
     const plotWidth=W-left-right;
     const plotHeight=H-top-bottom;
@@ -1010,6 +1061,8 @@
           <div class="chart-tooltip-row"><span>10분 전 방류 대비</span><b class="${outflowDelta===null?'':deltaClass(outflowDelta)}">${outflowDelta===null?'-':signed(outflowDelta,0,'㎥/s')}</b></div>`;
       }
     });
+
+    observeResponsiveChart(svg,()=>damChart(svg,h));
   }
 
 
