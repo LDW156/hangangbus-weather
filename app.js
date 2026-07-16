@@ -155,69 +155,213 @@
     const winds=data.weather.windStations;
     const eastW=winds.filter(x=>x.sector==='east');
     const westW=winds.filter(x=>x.sector==='west');
+
     const max=(arr,key)=>{
-      const values=arr.map(x=>x[key]).filter(v=>v!==null&&v!==undefined&&v!=='').map(Number).filter(Number.isFinite);
+      const values=arr
+        .map(x=>x[key])
+        .filter(v=>v!==null&&v!==undefined&&v!=='')
+        .map(Number)
+        .filter(Number.isFinite);
       return values.length?Math.max(...values):null;
     };
+
     const windStats=(arr)=>({
       speed:max(arr,'speed')??0,
       gust:max(arr.filter(x=>x.gustOperational===true),'gust')
     });
-    const eastStats=windStats(eastW), westStats=windStats(westW);
-    const officialWarning=data.alerts.some(a=>a.source==='official'&&a.level==='warning');
-    const officialAdvisory=data.alerts.some(a=>a.source==='official'&&a.level==='advisory');
+
+    const eastStats=windStats(eastW);
+    const westStats=windStats(westW);
+    const reason=(text,state='normal',badge='정상')=>({text,state,badge});
+    const severity={danger:0,warning:1,normal:2,info:3};
+    const sortReasons=arr=>arr.sort((a,b)=>(severity[a.state]??9)-(severity[b.state]??9));
 
     let jamsu='normal';
     if(wl>=t.jamsu.stopLevelM || clearance<=t.jamsu.stopClearanceM) jamsu='stop';
     else if(wl>=t.jamsu.cautionLevelM || clearance<=t.jamsu.cautionClearanceM) jamsu='caution';
 
-    let east='normal',west='normal';
-    const eastReasons=[], westReasons=[];
-    if(jamsu==='stop'){east='stop';eastReasons.push(`잠수교 ${timeText(data.hydrology.jamsuBridge.observedAt)} · 통과높이 ${fmt(clearance,2)}m`)}
-    else if(jamsu==='caution'){east='caution';eastReasons.push(`잠수교 ${timeText(data.hydrology.jamsuBridge.observedAt)} · ${fmt(clearance,2)}m 주의`)}
-    else eastReasons.push(`잠수교 ${timeText(data.hydrology.jamsuBridge.observedAt)} · ${fmt(clearance,2)}m 정상`);
+    let east='normal';
+    let west='normal';
+    const eastReasons=[];
+    const westReasons=[];
 
-    if(out>=t.paldang.eastStopCms && rising){east='stop';eastReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 증가`)}
-    else if(out>=t.paldang.eastCautionCms){if(east==='normal')east='caution';eastReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 접근`)}
-    else eastReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s`);
+    if(jamsu==='stop'){
+      east='stop';
+      eastReasons.push(reason(
+        `잠수교 통과높이 ${fmt(clearance,2)}m ≤ 운항중지 기준 ${fmt(t.jamsu.stopClearanceM,2)}m`,
+        'danger','운항중지'
+      ));
+    }else if(jamsu==='caution'){
+      east='caution';
+      eastReasons.push(reason(
+        `잠수교 통과높이 ${fmt(clearance,2)}m · 주의 기준 ${fmt(t.jamsu.cautionClearanceM,2)}m 이하`,
+        'warning','주의'
+      ));
+    }else{
+      eastReasons.push(reason(
+        `잠수교 통과높이 ${fmt(clearance,2)}m · 운항중지 기준보다 ${fmt(clearance-t.jamsu.stopClearanceM,2)}m 여유`,
+        'normal','정상'
+      ));
+    }
 
-    if(out>=t.paldang.westStopCms){west='stop';westReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 초과`)}
-    else if(out>=t.paldang.westCautionCms){west='caution';westReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 접근`)}
-    else westReasons.push(`팔당 ${timeText(data.hydrology.paldang.observedAt)} · ${fmt(out)}㎥/s 기준 미만`);
+    if(out>=t.paldang.eastStopCms && rising){
+      east='stop';
+      eastReasons.push(reason(
+        `팔당댐 방류량 ${fmt(out)}㎥/s · ${fmt(t.paldang.eastStopCms)}㎥/s 이상이며 증가 추세`,
+        'danger','운항중지'
+      ));
+    }else if(out>=t.paldang.eastCautionCms){
+      if(east==='normal')east='caution';
+      eastReasons.push(reason(
+        `팔당댐 방류량 ${fmt(out)}㎥/s · 동부선 기준 접근`,
+        'warning','주의'
+      ));
+    }else{
+      eastReasons.push(reason(
+        `팔당댐 방류량 ${fmt(out)}㎥/s · 동부선 기준 미만`,
+        'normal','정상'
+      ));
+    }
 
-    const eastStopWind=eastStats.speed>=t.wind.stopMs||(eastStats.gust!==null&&eastStats.gust>=t.wind.gustStopMs);
-    const eastCautionWind=eastStats.speed>=t.wind.cautionMs||(eastStats.gust!==null&&eastStats.gust>=t.wind.gustCautionMs);
-    const eastWindText=eastStats.gust===null?`동부 ${timeText(eastW[0]?.observedAt)} · 풍속 ${fmt(eastStats.speed,1)}m/s`:`동부 ${timeText(eastW[0]?.observedAt)} · 순간 ${fmt(eastStats.gust,1)}m/s`;
-    if(eastStopWind){east='stop';eastReasons.push(eastWindText)}
-    else if(eastCautionWind){if(east==='normal')east='caution';eastReasons.push(eastWindText)}
-    else eastReasons.push(eastWindText);
+    if(out>=t.paldang.westStopCms){
+      west='stop';
+      westReasons.push(reason(
+        `팔당댐 방류량 ${fmt(out)}㎥/s ≥ 서부선 운항중지 기준 ${fmt(t.paldang.westStopCms)}㎥/s`,
+        'danger','운항중지'
+      ));
+    }else if(out>=t.paldang.westCautionCms){
+      west='caution';
+      westReasons.push(reason(
+        `팔당댐 방류량 ${fmt(out)}㎥/s · 서부선 기준 접근`,
+        'warning','주의'
+      ));
+    }else{
+      westReasons.push(reason(
+        `팔당댐 방류량 ${fmt(out)}㎥/s · 서부선 기준 미만`,
+        'normal','정상'
+      ));
+    }
 
-    const westStopWind=westStats.speed>=t.wind.stopMs||(westStats.gust!==null&&westStats.gust>=t.wind.gustStopMs);
-    const westCautionWind=westStats.speed>=t.wind.cautionMs||(westStats.gust!==null&&westStats.gust>=t.wind.gustCautionMs);
-    const westWindText=westStats.gust===null?`서부 ${timeText(westW[0]?.observedAt)} · 풍속 ${fmt(westStats.speed,1)}m/s`:`서부 ${timeText(westW[0]?.observedAt)} · 순간 ${fmt(westStats.gust,1)}m/s`;
-    if(westStopWind){west='stop';westReasons.push(westWindText)}
-    else if(westCautionWind){if(west==='normal')west='caution';westReasons.push(westWindText)}
-    else westReasons.push(westWindText);
+    const evaluateWind=(routeName,stats,stations,reasons,currentStatus)=>{
+      const stop=stats.speed>=t.wind.stopMs ||
+        (stats.gust!==null&&stats.gust>=t.wind.gustStopMs);
+      const caution=stats.speed>=t.wind.cautionMs ||
+        (stats.gust!==null&&stats.gust>=t.wind.gustCautionMs);
+      const observationTime=timeText(stations[0]?.observedAt);
+
+      if(stop){
+        reasons.push(reason(
+          `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s${stats.gust===null?'':` · 순간최대 ${fmt(stats.gust,1)}m/s`}`,
+          'danger','운항중지'
+        ));
+        return 'stop';
+      }
+
+      if(caution){
+        reasons.push(reason(
+          `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s${stats.gust===null?'':` · 순간최대 ${fmt(stats.gust,1)}m/s`} · ${observationTime}`,
+          'warning','주의'
+        ));
+        return currentStatus==='normal'?'caution':currentStatus;
+      }
+
+      reasons.push(reason(
+        `${routeName} 최대 평균풍속 ${fmt(stats.speed,1)}m/s · ${observationTime}`,
+        'normal','정상'
+      ));
+      return currentStatus;
+    };
+
+    east=evaluateWind('동부선',eastStats,eastW,eastReasons,east);
+    west=evaluateWind('서부선',westStats,westW,westReasons,west);
+
+    const rainThreshold=t.rainfall||{};
+    const stop3h=Number(rainThreshold.stop3hMm??90);
+    const stop12h=Number(rainThreshold.stop12hMm??180);
+
+    const evaluateRain=(routeName,r,reasons,currentStatus)=>{
+      if(!r){
+        reasons.push(reason(`${routeName} 강수자료 없음`,'warning','확인'));
+        return currentStatus==='normal'?'caution':currentStatus;
+      }
+
+      const by3=Number(r.next3h)>=stop3h;
+      const by12=Number(r.next12h)>=stop12h;
+
+      if(by3||by12){
+        const triggered=[
+          by3?`3시간 ${fmt(r.next3h,1)}mm ≥ ${fmt(stop3h)}mm`:null,
+          by12?`12시간 ${fmt(r.next12h,1)}mm ≥ ${fmt(stop12h)}mm`:null
+        ].filter(Boolean).join(' · ');
+
+        reasons.push(reason(
+          `호우 운항중지 기준 충족 · ${triggered}`,
+          'danger','운항중지'
+        ));
+        return 'stop';
+      }
+
+      reasons.push(reason(
+        `예상강수 3시간 ${fmt(r.next3h,1)}mm / 12시간 ${fmt(r.next12h,1)}mm · 강수확률 최대 ${fmt(Math.max(r.next3hProbability||0,r.next12hProbability||0))}%`,
+        'normal','정상'
+      ));
+      return currentStatus;
+    };
 
     const eastRain=data.weather.rainfall?.east;
     const westRain=data.weather.rainfall?.west;
+    east=evaluateRain('동부선',eastRain,eastReasons,east);
+    west=evaluateRain('서부선',westRain,westReasons,west);
 
-    if(eastRain){
-      eastReasons.push(
-        `강수 노선격자 최대값 · 3시간 ${fmt(eastRain.next3h,1)}mm · 강수확률 최대 ${fmt(eastRain.next3hProbability)}%`
+    const alertKeywords=t.alerts?.stopKeywords||[
+      '호우경보','강풍주의보','강풍경보','태풍주의보','태풍경보'
+    ];
+    const officialAlerts=data.alerts.filter(a=>a.source==='official');
+    const preliminaryAlerts=data.alerts.filter(a=>a.source==='preliminary');
+    const stopAlerts=officialAlerts.filter(a=>{
+      const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
+      return alertKeywords.some(keyword=>text.includes(String(keyword).replace(/\s+/g,'')));
+    });
+
+    if(stopAlerts.length){
+      const names=[...new Set(stopAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
+      east='stop';
+      west='stop';
+      const alertReason=reason(
+        `기상특보 운항중지 대상 발효 · ${names||'호우경보·강풍/태풍 주의보 이상'}`,
+        'danger','특보중지'
       );
+      eastReasons.push(alertReason);
+      westReasons.push({...alertReason});
+    }else if(officialAlerts.length){
+      const names=[...new Set(officialAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
+      if(east==='normal')east='caution';
+      if(west==='normal')west='caution';
+      eastReasons.push(reason(`기상특보 발표 중 · ${names}`,'warning','특보확인'));
+      westReasons.push(reason(`기상특보 발표 중 · ${names}`,'warning','특보확인'));
+    }else if(preliminaryAlerts.length){
+      if(east==='normal')east='caution';
+      if(west==='normal')west='caution';
+      const names=[...new Set(preliminaryAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
+      eastReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
+      westReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
+    }else{
+      eastReasons.push(reason('운항중지 대상 기상특보 없음','normal','정상'));
+      westReasons.push(reason('운항중지 대상 기상특보 없음','normal','정상'));
     }
 
-    if(westRain){
-      westReasons.push(
-        `강수 노선격자 최대값 · 3시간 ${fmt(westRain.next3h,1)}mm · 강수확률 최대 ${fmt(westRain.next3hProbability)}%`
-      );
-    }
+    westReasons.push(reason(
+      `조석 ${timeText(data.tide.referenceAt)} · ${data.tide.phase}, 중첩위험 ${data.tide.overlapRisk}`,
+      data.tide.overlapRisk==='높음'?'warning':'info',
+      data.tide.overlapRisk==='높음'?'주의':'참고'
+    ));
 
-    if(officialWarning){east='stop';west='stop'}
-    else if(officialAdvisory){if(east==='normal')east='caution';if(west==='normal')west='caution'}
-    westReasons.push(`조석 ${timeText(data.tide.referenceAt)} · ${data.tide.phase}, 위험 ${data.tide.overlapRisk}`);
-    return {jamsu,clearance,east,west,eastReasons:eastReasons.slice(0,4),westReasons:westReasons.slice(0,4),rising};
+    return {
+      jamsu,clearance,east,west,
+      eastReasons:sortReasons(eastReasons),
+      westReasons:sortReasons(westReasons),
+      rising
+    };
   }
 
   function render(){
@@ -227,8 +371,20 @@
   }
 
   function routeCard(name,status,reasons,basis){
-    return `<div class="route-card-time">판단 산출 ${dateTimeText(data.meta.generatedAt)} · ${esc(basis)}</div><div class="route-name">${esc(name)}</div><div class="route-status">${statusText[status]}</div><ul class="route-reasons">${reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
+    const reasonHtml=reasons.map(r=>{
+      const item=typeof r==='string'?{text:r,state:'info',badge:'참고'}:r;
+      return `<li class="route-reason ${esc(item.state||'info')}">
+        <span class="reason-badge">${esc(item.badge||'참고')}</span>
+        <span class="reason-text">${esc(item.text)}</span>
+      </li>`;
+    }).join('');
+
+    return `<div class="route-card-time">판단 산출 ${dateTimeText(data.meta.generatedAt)} · ${esc(basis)}</div>
+      <div class="route-name">${esc(name)}</div>
+      <div class="route-status">${statusText[status]}</div>
+      <ul class="route-reasons">${reasonHtml}</ul>`;
   }
+
   function renderRoutes(c){
     const eastBasis=`자료기준 잠수교 ${timeText(data.hydrology.jamsuBridge.observedAt)} · 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)}`;
     const westBasis=`자료기준 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)} · 조석 ${timeText(data.tide.referenceAt)}`;
@@ -399,7 +555,7 @@
         <div class="rain-summary rain-summary-v54">${summaries.map(x=>`<div class="rain-item">
           <span>${x[0]} 누적</span><b>${fmt(x[1],1)}<small>mm</small></b><em>강수확률 최대 <strong>${fmt(x[2])}%</strong></em>
         </div>`).join('')}</div>
-        <div class="rain-basis"><b>적용 격자</b><span>${esc(r.basisLabel)}</span></div>
+        <div class="rain-basis"><b>기상 기준좌표</b><span>${esc(r.basisLabel)}</span></div>
         <div class="rain-hour-scroll">${rows||'<div class="empty-message">향후 시간별 강수예보 자료 없음</div>'}</div>
       </article>`;
     }).join('');
@@ -432,21 +588,53 @@
   }
   function renderWind(){
     $('windGrid').innerHTML=data.weather.windStations.map(w=>{
-      const gust=Number.isFinite(Number(w.gust))?`${fmt(w.gust,1)}m/s`:'연결 대기';
-      const gustTime=w.gustObservedAt?` · ${timeText(w.gustObservedAt)}`:'';
-      return `<article class="station-card wind-card-v54">
-        <div class="data-time">최근 실황 ${dateTimeText(w.observedAt)} · 초단기예보 1시간 간격</div>
-        <div class="station-head"><h3>${esc(w.name)}</h3><span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span></div>
+      const gustAvailable=Number.isFinite(Number(w.gust))&&Number(w.gust)>0;
+      const gustState=w.gustStatus?.state||'pending';
+      const gustValue=gustAvailable?`${fmt(w.gust,1)}m/s`:
+        gustState==='pending'?'승인 대기':'미관측';
+      const gustTime=gustAvailable&&w.gustObservedAt
+        ? ` · ${timeText(w.gustObservedAt)}`
+        : '';
+      const coordinate=
+        `${Number(w.lat).toFixed(5)}°N, ${Number(w.lon).toFixed(5)}°E`;
+
+      return `<article class="station-card wind-card-v55">
+        <div class="station-head">
+          <div>
+            <h3>${esc(w.name)}</h3>
+            <div class="station-coordinate">기상 기준좌표 ${esc(coordinate)}</div>
+          </div>
+          <span class="sector-pill">${w.sector==='east'?'동부':'서부'}</span>
+        </div>
+
+        <div class="data-time wind-data-time">
+          실황 ${dateTimeText(w.observedAt)} · 초단기예보 1시간 간격
+        </div>
+
         <div class="wind-current-layout">
-          ${compass(w.directionDeg,w.speed)}
+          <div class="wind-compass-column">
+            ${compass(w.directionDeg,w.speed)}
+            <strong>${esc(w.direction)}</strong>
+            <small>${fmt(w.directionDeg)}°</small>
+          </div>
+
           <div class="wind-reading">
-            <span>현재 풍속</span><b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
-            <em>${esc(w.direction)} · ${fmt(w.directionDeg)}°</em>
-            <div class="gust-reading"><span>순간풍속 참고</span><strong>${gust}</strong><small>${esc(w.gustSource)}${gustTime}</small></div>
+            <span>현재 평균풍속</span>
+            <b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
+            <em>${esc(w.direction)}에서 불어오는 바람</em>
+
+            <div class="gust-reading ${esc(gustState)}">
+              <span>순간최대풍속 · 서울 ASOS 대표값</span>
+              <strong>${esc(gustValue)}</strong>
+              <small>${esc(w.gustStatus?.message||w.gustSource)}${gustTime}</small>
+            </div>
           </div>
         </div>
-        <div class="wind-direction-note">화살표는 바람이 불어오는 방향</div>
-        <div class="wind-forecast-grid-v54">${[1,2,3,4].map(h=>forecastWindCard(w.forecasts?.find(x=>x.hour===h))).join('')}</div>
+
+        <div class="wind-direction-note">화살표 끝이 바람이 불어오는 방향을 표시합니다.</div>
+        <div class="wind-forecast-grid-v54">
+          ${[1,2,3,4].map(h=>forecastWindCard(w.forecasts?.find(x=>x.hour===h))).join('')}
+        </div>
       </article>`;
     }).join('');
   }

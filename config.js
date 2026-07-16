@@ -1,6 +1,6 @@
 window.HANGANG_CONFIG = {
   APP_NAME: '한강버스 운항환경 통합 대시보드',
-  DATA_MODE: 'hybrid', // demo | hybrid | live
+  DATA_MODE: 'hybrid',
   REFRESH_MS: 300000,
   SHOW_DEMO_CONTROLS: false,
   STRUCTURE_HEIGHT_M: 11.76,
@@ -36,8 +36,17 @@ window.HANGANG_CONFIG = {
       gustStopMs: 20
     },
     rainfall: {
-      cautionHourlyMm: 20,
-      stopHourlyMm: 30
+      stop3hMm: 90,
+      stop12hMm: 180
+    },
+    alerts: {
+      stopKeywords: [
+        '호우경보',
+        '강풍주의보',
+        '강풍경보',
+        '태풍주의보',
+        '태풍경보'
+      ]
     },
     stale: {
       weatherMinutes: 30,

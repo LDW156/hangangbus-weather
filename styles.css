@@ -1636,3 +1636,197 @@ footer strong {
   .wind-current-layout{grid-template-columns:94px 1fr;gap:8px}
   .wind-compass{width:86px;height:86px}
 }
+
+
+/* =========================================================
+   v55 운항중지 근거·풍향풍속 배치·경위도
+========================================================= */
+
+.route-reasons { gap: 7px; }
+
+.route-reason {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 9px !important;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 10px !important;
+  line-height: 1.45;
+}
+
+.route-reason::before { display: none !important; }
+
+.route-reason.danger {
+  color: #a61f29;
+  background: #fff1f2;
+  border-color: #e39aa0;
+  box-shadow: inset 4px 0 0 #d43942;
+  font-weight: 850;
+}
+
+.route-reason.warning {
+  color: #7c4d00;
+  background: #fff8e6;
+  border-color: #e0bd70;
+  box-shadow: inset 4px 0 0 #d28b11;
+}
+
+.route-reason.normal {
+  color: #176442;
+  background: #f1faf5;
+  border-color: #a2cfb6;
+}
+
+.route-reason.info {
+  color: #435f70;
+  background: #f5f9fc;
+  border-color: #c9d8e1;
+}
+
+.reason-badge {
+  min-width: 49px;
+  padding: 3px 5px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 8px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.route-reason.danger .reason-badge { color: #fff; background: #d43942; }
+.route-reason.warning .reason-badge { color: #fff; background: #b87300; }
+.route-reason.normal .reason-badge { color: #fff; background: #16865a; }
+.route-reason.info .reason-badge { color: #fff; background: #5f7d8e; }
+
+.reason-text { min-width: 0; }
+
+.station-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 11px;
+}
+
+.station-card { min-width: 0; }
+
+.wind-card-v55 { padding: 15px; }
+
+.station-coordinate {
+  margin-top: 3px;
+  color: #486878;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .01em;
+}
+
+.wind-data-time {
+  margin-top: 7px;
+  margin-bottom: 0;
+}
+
+.wind-current-layout {
+  grid-template-columns: 125px minmax(0, 1fr);
+  gap: 15px;
+  padding: 13px;
+}
+
+.wind-compass-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wind-compass-column > strong {
+  margin-top: 6px;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.wind-compass-column > small {
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.wind-card-v55 .wind-compass:not(.small) {
+  width: 108px;
+  height: 108px;
+}
+
+.wind-card-v55 .wind-reading > span { font-size: 10px; }
+.wind-card-v55 .wind-reading > b { font-size: 32px; }
+.wind-card-v55 .wind-reading > em { font-size: 11px; }
+
+.gust-reading {
+  padding: 9px;
+  border: 1px solid #d4dee4;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.gust-reading.available {
+  background: #fff8e9;
+  border-color: #e0bd70;
+}
+
+.gust-reading.pending,
+.gust-reading.no-observation {
+  background: #f5f7f8;
+  border-color: #cbd6dc;
+}
+
+.gust-reading.pending strong,
+.gust-reading.no-observation strong {
+  color: #667d89;
+}
+
+.gust-reading span { font-size: 9px; font-weight: 800; }
+.gust-reading strong { font-size: 17px; }
+.gust-reading small { font-size: 8.5px; }
+
+.wind-direction-note { font-size: 9px; }
+
+.wind-forecast-grid-v54 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px;
+}
+
+.wind-forecast-card {
+  min-width: 0;
+  padding: 9px;
+}
+
+.wind-forecast-head { font-size: 9px; }
+.wind-forecast-body strong { font-size: 14px; }
+.wind-forecast-body em { font-size: 9px; }
+
+.rain-basis b { min-width: 86px; }
+
+@media (max-width: 760px) {
+  .station-grid { grid-template-columns: 1fr !important; }
+
+  .wind-current-layout {
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 430px) {
+  .route-reason {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .reason-badge { width: fit-content; }
+
+  .wind-current-layout {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .wind-card-v55 .wind-compass:not(.small) {
+    width: 88px;
+    height: 88px;
+  }
+}

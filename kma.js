@@ -7,15 +7,19 @@
 
   const ASOS_REFERENCE = { stn: 108, name: '서울 ASOS(108)' };
 
+  /*
+   * lat/lon은 기상청 격자 중심을 위·경도로 역변환한
+   * 실제 예보 기준좌표입니다. 화면에는 nx/ny 대신 이 좌표를 표시합니다.
+   */
   const STATIONS = [
-    { name: '마곡', sector: 'west', nx: 57, ny: 127 },
-    { name: '망원', sector: 'west', nx: 58, ny: 126 },
-    { name: '여의도', sector: 'west', nx: 59, ny: 126 },
-    { name: '압구정', sector: 'east', nx: 61, ny: 126 },
-    { name: '옥수', sector: 'east', nx: 61, ny: 126 },
-    { name: '서울숲', sector: 'east', nx: 61, ny: 126 },
-    { name: '뚝섬', sector: 'east', nx: 61, ny: 126 },
-    { name: '잠실', sector: 'east', nx: 62, ny: 126 }
+    { name: '마곡', sector: 'west', nx: 57, ny: 127, lat: 37.58143, lon: 126.81477 },
+    { name: '망원', sector: 'west', nx: 58, ny: 126, lat: 37.53483, lon: 126.87233 },
+    { name: '여의도', sector: 'west', nx: 59, ny: 126, lat: 37.53431, lon: 126.93048 },
+    { name: '압구정', sector: 'east', nx: 61, ny: 126, lat: 37.53317, lon: 127.04678 },
+    { name: '옥수', sector: 'east', nx: 61, ny: 126, lat: 37.53317, lon: 127.04678 },
+    { name: '서울숲', sector: 'east', nx: 61, ny: 126, lat: 37.53317, lon: 127.04678 },
+    { name: '뚝섬', sector: 'east', nx: 61, ny: 126, lat: 37.53317, lon: 127.04678 },
+    { name: '잠실', sector: 'east', nx: 62, ny: 126, lat: 37.53255, lon: 127.10493 }
   ];
 
   function getSharedSettings() {
@@ -214,8 +218,9 @@
     const windDirectionDeg = validObs(c[2]) === null ? null : Number(c[2]) * 10;
     const windSpeed = validObs(c[3]);
     const gustDirectionDeg = validObs(c[4]) === null ? null : Number(c[4]) * 10;
-    const gust = validObs(c[5]);
-    const gustTime = String(c[6] || '');
+    const rawGust = validObs(c[5]);
+    const gust = rawGust !== null && rawGust > 0 ? rawGust : null;
+    const gustTime = gust === null ? '' : String(c[6] || '');
     return {
       observedAt, station, windDirectionDeg, windSpeed,
       gustDirectionDeg, gust, gustTime,
@@ -528,15 +533,29 @@
           hour, time:f.time, direction:direction16(f.VEC), directionDeg:num(f.VEC), speed:num(f.WSD)
         }:null;
       }).filter(Boolean);
+      const gustAvailable = Number.isFinite(Number(gustObservation?.gust)) && Number(gustObservation.gust) > 0;
+      const gustStatus = asosResult?.error
+        ? {
+            state:'pending',
+            message:/403|활용신청/.test(asosResult.error)
+              ? '지상관측 시간자료 API 활용승인 대기'
+              : '순간최대풍속 자료 연결 확인 필요'
+          }
+        : gustAvailable
+          ? {state:'available', message:'서울 ASOS 대표 순간최대풍속'}
+          : {state:'no-observation', message:'해당 관측시각 순간최대풍속 미관측'};
+
       return {
-        name:st.name, sector:st.sector, observedAt:current.observedAt,
+        name:st.name, sector:st.sector, lat:st.lat, lon:st.lon,
+        observedAt:current.observedAt,
         direction:current.direction, directionDeg:current.directionDeg, speed:current.speed,
-        gust:gustObservation?.gust??null,
-        gustObservedAt:gustObservation?.observedAt??null,
-        gustDirectionDeg:gustObservation?.gustDirectionDeg??null,
-        gustSource:gustObservation?.sourceLabel||'지상관측 시간자료 API 연결 대기',
+        gust:gustAvailable ? Number(gustObservation.gust) : null,
+        gustObservedAt:gustAvailable ? gustObservation.observedAt : null,
+        gustDirectionDeg:gustAvailable ? gustObservation.gustDirectionDeg : null,
+        gustSource:gustObservation?.sourceLabel||'서울 ASOS(108)',
+        gustStatus,
         gustOperational:false,
-        sourceLabel:'기상청 초단기실황 격자',
+        sourceLabel:'기상청 초단기실황',
         forecasts
       };
     });
@@ -556,7 +575,7 @@
       alerts:situation.alerts, alertStatus:situation.status,
       observedAt, forecastIssuedAt, fetchedAt:new Date().toISOString(),
       sourceLabel:'기상청 API허브',
-      warnings:asosResult?.error?[`순간풍속: ${asosResult.error}`]:[]
+      warnings:[]
     };
   }
 
@@ -571,6 +590,8 @@
           key,
           nx: st.nx,
           ny: st.ny,
+          lat: st.lat,
+          lon: st.lon,
           names: []
         });
       }
@@ -651,7 +672,9 @@
     const h3=horizon(3),h6=horizon(6),h12=horizon(12),h24=horizon(24);
     const observedAt=currentCandidates.map(x=>new Date(x.observedAt).getTime()).filter(Number.isFinite);
     const forecastIssuedAt=groups.map(group=>shortMap[group.key]?.issuedAt).filter(Boolean).sort().at(-1)||null;
-    const basisLabel=groups.map(group=>`${group.names.join('·')}(${group.nx},${group.ny})`).join(' / ');
+    const basisLabel=groups.map(group=>
+      `${group.names.join('·')} ${Number(group.lat).toFixed(5)}°N, ${Number(group.lon).toFixed(5)}°E`
+    ).join(' / ');
     const dataAvailable=currentMax.available&&future.length>0;
     const allDry=dataAvailable&&currentMax.value===0&&future.every(row=>row.amount===0);
 
