@@ -78,6 +78,7 @@
           const live = await window.KMA.loadWeather();
           data.weather = live.weather;
           data.alerts = live.alerts;
+          data.alertStatus = live.alertStatus;
           data.meta.dataTimes.weatherObservation = live.observedAt;
           data.meta.dataTimes.weatherForecastIssued = live.forecastIssuedAt;
           data.health = (data.health || []).filter(x => !['기상관측','기상예보','기상특보'].includes(x.name));
@@ -170,6 +171,21 @@
     if(westStopWind){west='stop';westReasons.push(westWindText)}
     else if(westCautionWind){if(west==='normal')west='caution';westReasons.push(westWindText)}
     else westReasons.push(westWindText);
+
+    const eastRain=data.weather.rainfall?.east;
+    const westRain=data.weather.rainfall?.west;
+
+    if(eastRain){
+      eastReasons.push(
+        `강수 노선격자 최대값 · 3시간 ${fmt(eastRain.next3h,1)}mm · 확률 최대 ${fmt(eastRain.next3hProbability)}%`
+      );
+    }
+
+    if(westRain){
+      westReasons.push(
+        `강수 노선격자 최대값 · 3시간 ${fmt(westRain.next3h,1)}mm · 확률 최대 ${fmt(westRain.next3hProbability)}%`
+      );
+    }
 
     if(officialWarning){east='stop';west='stop'}
     else if(officialAdvisory){if(east==='normal')east='caution';if(west==='normal')west='caution'}
@@ -271,17 +287,127 @@
 
   function renderAlerts(){
     const root=$('alertList');
-    if(!data.alerts.length){root.innerHTML=`<div class="empty-card">${dateTimeText(data.meta.generatedAt)} 기준 · 현재 표시할 기상특보 또는 내부 사전경보가 없습니다.</div>`;return;}
-    root.innerHTML=data.alerts.map(a=>`<article class="alert-card ${esc(a.source==='internal'?'internal':a.level)}"><div class="alert-top"><div><div class="alert-tags"><span class="tag ${a.source==='internal'?'internal':''}">${a.source==='official'?'기상청 공식':a.source==='preliminary'?'기상청 예비':'한강버스 내부'}</span><span class="tag">${esc(a.area)}</span></div><h3>${esc(a.title)}</h3></div><span class="alert-time">발표 ${dateTimeText(a.issuedAt)}</span></div><p>${esc(a.message)}</p><div class="alert-period"><span>발표 ${fullDateTimeText(a.issuedAt)}</span><b>발효·예상 ${fullDateTimeText(a.effectiveAt)}</b></div></article>`).join('');
+
+    if(!data.alerts.length){
+      const status=data.alertStatus||{};
+      const area=status.area||'서울특별시·수도권';
+      const issuedAt=data.meta.dataTimes.weatherForecastIssued||data.meta.generatedAt;
+
+      root.innerHTML=`
+        <article class="alert-card clear">
+          <div class="alert-top">
+            <div>
+              <div class="alert-tags">
+                <span class="tag">기상청 공식</span>
+                <span class="tag">${esc(area)}</span>
+              </div>
+              <h3>${esc(status.warning||'현재 발효 특보 없음')}</h3>
+            </div>
+            <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
+          </div>
+          <p>${esc(status.preliminary||'현재 예비특보 없음')} · ${esc(status.message||'특보 안내문은 실제 특보로 계산하지 않습니다.')}</p>
+          <div class="alert-period">
+            <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
+            <b>현재 발표된 구체적인 주의보·경보 없음</b>
+          </div>
+        </article>`;
+      return;
+    }
+
+    root.innerHTML=data.alerts.map(a=>{
+      const effective=a.effectiveAt
+        ? `<b>발효·예상 ${fullDateTimeText(a.effectiveAt)}</b>`
+        : `<b>기상청 발표 원문 기준</b>`;
+
+      return `<article class="alert-card ${esc(a.source==='internal'?'internal':a.level)}">
+        <div class="alert-top">
+          <div>
+            <div class="alert-tags">
+              <span class="tag ${a.source==='internal'?'internal':''}">${a.source==='official'?'기상청 공식':a.source==='preliminary'?'기상청 예비':'한강버스 내부'}</span>
+              <span class="tag">${esc(a.area)}</span>
+            </div>
+            <h3>${esc(a.title)}</h3>
+          </div>
+          <span class="alert-time">발표 ${dateTimeText(a.issuedAt)}</span>
+        </div>
+        <p>${esc(a.message)}</p>
+        <div class="alert-period">
+          <span>발표 ${fullDateTimeText(a.issuedAt)}</span>
+          ${effective}
+        </div>
+      </article>`;
+    }).join('');
   }
 
   function renderRain(){
     const names={west:'서부선',east:'동부선'};
+
     $('rainCards').innerHTML=['west','east'].map(k=>{
-      const r=data.weather.rainfall[k], max=Math.max(1,...r.timeline.map(x=>x.amount));
-      const bars=r.timeline.map(x=>`<div class="bar-wrap ${x.type}"><span class="bar-value">${fmt(x.amount,x.type==='current'?1:0)}</span><div class="bar" style="height:${Math.max(2,x.amount/max*100)}%" title="${x.label} ${x.amount}mm"></div><small>${x.label}</small></div>`).join('');
-      const rows=r.timeline.map(x=>`<div class="hour-cell ${x.type}"><span>${x.label}</span><b>${fmt(x.amount,x.type==='current'?1:0)}mm</b><em>${x.type==='forecast'?'예보':x.type==='current'?'현재':'관측'}</em></div>`).join('');
-      return `<article class="sector-card"><div class="data-time">현재 관측 ${dateTimeText(r.observedAt)} · 예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 1시간 간격</div><div class="sector-title"><h3>${names[k]}</h3><span>${timeText(r.observedAt)} 현재 ${fmt(r.currentRate,1)}mm/h</span></div><div class="rain-summary">${[['3시간',r.next3h],['6시간',r.next6h],['12시간',r.next12h],['24시간',r.next24h],['현재',r.currentRate]].map(x=>`<div class="rain-item"><b>${fmt(x[1],x[0]==='현재'?1:0)}</b><span>${x[0]} ${x[0]==='현재'?'mm/h':'mm'}</span></div>`).join('')}</div><div class="bars">${bars}</div><div class="bar-legend"><span class="obs-dot"></span>관측 <span class="current-dot"></span>현재 <span class="forecast-dot"></span>예보</div><div class="hour-grid">${rows}</div></article>`;
+      const r=data.weather.rainfall[k];
+      const max=Math.max(1,...r.timeline.map(x=>Number(x.amount)||0));
+
+      const bars=r.timeline.map(x=>`
+        <div class="bar-wrap ${x.type}">
+          <span class="bar-value">${fmt(x.amount,x.type==='current'?1:0)}</span>
+          <div
+            class="bar"
+            style="height:${Math.max(2,(Number(x.amount)||0)/max*100)}%"
+            title="${esc(x.label)} ${fmt(x.amount,1)}mm${x.probability===null||x.probability===undefined?'':` · 강수확률 ${fmt(x.probability)}%`} · 기준 ${esc(x.source||'-')}"
+          ></div>
+          <small>${esc(x.label)}</small>
+        </div>`).join('');
+
+      const rows=r.timeline.map(x=>{
+        const probability=x.probability===null||x.probability===undefined
+          ? ''
+          : ` · ${fmt(x.probability)}%`;
+        const type=x.type==='forecast'?'예보':x.type==='current'?'현재':'관측';
+
+        return `<div class="hour-cell ${x.type}">
+          <span>${esc(x.label)}</span>
+          <b>${fmt(x.amount,x.type==='current'?1:0)}mm</b>
+          <em>${type}${probability}<br>${esc(x.source||'-')}</em>
+        </div>`;
+      }).join('');
+
+      const summaries=[
+        ['3시간',r.next3h,r.next3hProbability],
+        ['6시간',r.next6h,r.next6hProbability],
+        ['12시간',r.next12h,r.next12hProbability],
+        ['24시간',r.next24h,r.next24hProbability],
+        ['최근 1시간',r.currentRate,null]
+      ];
+
+      const dryNote=r.allDry
+        ? `<div class="rain-dry-note"><b>강수 없음 예보</b><span>${esc(r.dryMessage)}</span></div>`
+        : r.dataAvailable===false
+          ? `<div class="rain-dry-note data-missing"><b>강수 자료 확인</b><span>${esc(r.dryMessage)}</span></div>`
+          : '';
+
+      return `<article class="sector-card">
+        <div class="data-time">현재 관측 ${dateTimeText(r.observedAt)} · 예보 발표 ${dateTimeText(r.forecastIssuedAt)} · 1시간 간격</div>
+        <div class="sector-title">
+          <h3>${names[k]}</h3>
+          <span>${timeText(r.observedAt)} 최근 1시간 ${fmt(r.currentRate,1)}mm · 최대지점 ${esc(r.currentSource||'-')}</span>
+        </div>
+        <div class="rain-basis">
+          <b>산정 기준</b>
+          <span>${esc(r.basisLabel)}</span>
+          <em>${esc(r.aggregationLabel)}</em>
+        </div>
+        ${dryNote}
+        <div class="rain-summary">
+          ${summaries.map(x=>`
+            <div class="rain-item">
+              <b>${fmt(x[1],x[0]==='최근 1시간'?1:1)}</b>
+              <span>${x[0]} mm</span>
+              <em>${x[2]===null?'실황 RN1':`확률 최대 ${fmt(x[2])}%`}</em>
+            </div>`).join('')}
+        </div>
+        <div class="bars">${bars}</div>
+        <div class="bar-legend"><span class="obs-dot"></span>관측 <span class="current-dot"></span>현재 <span class="forecast-dot"></span>예보</div>
+        <div class="hour-grid">${rows}</div>
+      </article>`;
     }).join('');
   }
 

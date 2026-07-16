@@ -118,7 +118,29 @@
     } catch (error) {
       throw new Error(`기상청 중계 호출 실패: ${error.message}`);
     }
-    if (!res.ok) throw new Error(`기상청 HTTP ${res.status}`);
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const raw = await res.text();
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            detail =
+              parsed.error ||
+              parsed.upstreamBody ||
+              parsed.upstreamStatusText ||
+              raw;
+          } catch (_) {
+            detail = raw;
+          }
+        }
+      } catch (_) {}
+
+      detail = String(detail || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+      throw new Error(
+        `기상청 중계 HTTP ${res.status}${detail ? ` · ${detail}` : ''}`
+      );
+    }
     const text = await res.text();
     let json;
     try {
@@ -240,40 +262,141 @@
     return { issuedAt: isoFromKma(base.date, base.time), timeline: list };
   }
 
+  const WEATHER_ALERT_TYPES = [
+    '강풍', '풍랑', '호우', '대설', '건조',
+    '폭풍해일', '한파', '태풍', '황사', '폭염'
+  ];
+
+  function hasSpecificWeatherAlert(text) {
+    const source = String(text || '');
+    const typePattern = WEATHER_ALERT_TYPES.join('|');
+    return new RegExp(
+      `(?:${typePattern}).{0,14}(?:주의보|경보|예비특보)|` +
+      `(?:주의보|경보|예비특보).{0,14}(?:${typePattern})`
+    ).test(source);
+  }
+
+  function stripSituationNotice(text) {
+    return String(text || '')
+      .split(/\n+/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .filter(line => !(
+        /아래.*사이트.*참고/.test(line) ||
+        /기상청\s*날씨누리/.test(line) ||
+        /방재기상정보시스템/.test(line) ||
+        /특보현황/.test(line) ||
+        /www\.weather\.go\.kr/i.test(line) ||
+        /afso\.kma\.go\.kr/i.test(line)
+      ))
+      .join('\n')
+      .trim();
+  }
+
+  function extractAlertNames(text, fallback) {
+    const names = [];
+    const source = String(text || '');
+    const typePattern = WEATHER_ALERT_TYPES.join('|');
+    const pattern = new RegExp(
+      `(${typePattern})\\s*(주의보|경보|예비특보)`,
+      'g'
+    );
+
+    for (const match of source.matchAll(pattern)) {
+      const name = `${match[1]}${match[2]}`;
+      if (!names.includes(name)) names.push(name);
+    }
+
+    return names.length ? names.join(' · ') : fallback;
+  }
+
+  function inferAlertArea(text) {
+    const source = String(text || '');
+    const areas = [
+      ['서울특별시', /서울특별시|서울(?!·수도권)/],
+      ['인천광역시', /인천광역시|인천/],
+      ['경기도', /경기도|경기/]
+    ]
+      .filter(([, pattern]) => pattern.test(source))
+      .map(([name]) => name);
+
+    return areas.length ? areas.join(' · ') : '서울·수도권';
+  }
+
   async function fetchSituation(proxyBase) {
     const body = await fetchJson('VilageFcstMsgService/getWthrSituation', {
       pageNo: 1, numOfRows: 10, dataType: 'JSON', stnId: 109
     }, proxyBase);
+
     const list = items(body);
-    if (!list.length) return { issuedAt: null, alerts: [] };
-    const latest = [...list].sort((a,b) => String(b.tmFc || '').localeCompare(String(a.tmFc || '')))[0];
+
+    if (!list.length) {
+      return {
+        issuedAt: null,
+        alerts: [],
+        status: {
+          area: '서울·수도권',
+          warning: '자료 없음',
+          preliminary: '자료 없음',
+          message: '기상개황 응답에 특보 자료가 없습니다.'
+        }
+      };
+    }
+
+    const latest = [...list]
+      .sort((a,b) => String(b.tmFc || '').localeCompare(String(a.tmFc || '')))[0];
+
     const issuedAt = parseSituationTime(latest.tmFc);
+    const warningRaw = cleanText(latest.wn);
+    const preliminaryRaw = cleanText(latest.wr);
+    const warningText = stripSituationNotice(warningRaw);
+    const preliminaryText = stripSituationNotice(preliminaryRaw);
+
+    const warningActive = hasSpecificWeatherAlert(warningText);
+    const preliminaryActive = hasSpecificWeatherAlert(preliminaryText);
     const alerts = [];
-    const warningText = cleanText(latest.wn);
-    const preliminaryText = cleanText(latest.wr);
-    if (warningText && !/없음|해당없음/.test(warningText)) {
+
+    if (warningActive) {
       alerts.push({
         source: 'official',
-        level: warningText.includes('경보') ? 'warning' : 'advisory',
-        area: '서울·수도권',
-        title: '기상특보 사항',
+        level: /경보/.test(warningText) ? 'warning' : 'advisory',
+        area: inferAlertArea(warningText),
+        title: extractAlertNames(warningText, '기상특보 발표'),
         message: warningText,
         issuedAt,
-        effectiveAt: issuedAt
+        effectiveAt: null
       });
     }
-    if (preliminaryText && !/없음|해당없음/.test(preliminaryText)) {
+
+    if (preliminaryActive) {
       alerts.push({
         source: 'preliminary',
         level: 'watch',
-        area: '서울·수도권',
-        title: '예비특보',
+        area: inferAlertArea(preliminaryText),
+        title: extractAlertNames(preliminaryText, '예비특보 발표'),
         message: preliminaryText,
         issuedAt,
-        effectiveAt: issuedAt
+        effectiveAt: null
       });
     }
-    return { issuedAt, alerts };
+
+    return {
+      issuedAt,
+      alerts,
+      status: {
+        area: '서울특별시·수도권',
+        warning: warningActive
+          ? extractAlertNames(warningText, '특보 발표 중')
+          : '현재 발효 특보 없음',
+        preliminary: preliminaryActive
+          ? extractAlertNames(preliminaryText, '예비특보 발표 중')
+          : '현재 예비특보 없음',
+        message:
+          !warningActive && !preliminaryActive
+            ? '기상청 안내문은 특보로 처리하지 않았습니다.'
+            : '특보 종류와 발표 문구를 기상청 원문 기준으로 표시합니다.'
+      }
+    };
   }
 
   function cleanText(value) {
@@ -342,17 +465,23 @@
       };
     });
 
-    const reps = {
-      west: { nx: 59, ny: 126 },
-      east: { nx: 62, ny: 126 }
-    };
-    const rainEntries = await Promise.all(Object.entries(reps).map(async ([sector, grid]) => {
-      const key = `${grid.nx},${grid.ny}`;
-      const current = currentMap[key] || await fetchNowcastForGrid(grid, proxyBase, 0);
-      const previous = previousMap[key] || await fetchNowcastForGrid(grid, proxyBase, 1);
-      const short = await fetchShortForecastForGrid(grid, proxyBase);
-      return [sector, buildRainfall(current, previous, short)];
-    }));
+    // 노선별 강수량은 단일 지점이 아니라 노선 내 모든 대표 격자의
+    // 시간대별 최대값을 사용합니다. 운항 참고용으로 보수적으로 계산합니다.
+    const shortEntries = await Promise.all(
+      unique.map(async g => [
+        `${g.nx},${g.ny}`,
+        await fetchShortForecastForGrid(g, proxyBase)
+      ])
+    );
+    const shortMap = Object.fromEntries(shortEntries);
+
+    const rainEntries = ['west', 'east'].map(sector => {
+      const stations = STATIONS.filter(st => st.sector === sector);
+      return [
+        sector,
+        buildRouteRainfall(stations, currentMap, previousMap, shortMap)
+      ];
+    });
 
     const situation = await fetchSituation(proxyBase);
     const observedTimes = windStations.map(x => new Date(x.observedAt).getTime()).filter(Number.isFinite);
@@ -365,6 +494,7 @@
         rainfall: Object.fromEntries(rainEntries)
       },
       alerts: situation.alerts,
+      alertStatus: situation.status,
       observedAt,
       forecastIssuedAt,
       fetchedAt: new Date().toISOString(),
@@ -372,29 +502,219 @@
     };
   }
 
-  function buildRainfall(current, previous, short) {
-    const future = short.timeline
-      .filter(x => new Date(x.time).getTime() >= Date.now() - 30 * 60000)
+  function uniqueGridGroups(stations) {
+    const grouped = new Map();
+
+    stations.forEach(st => {
+      const key = `${st.nx},${st.ny}`;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          key,
+          nx: st.nx,
+          ny: st.ny,
+          names: []
+        });
+      }
+
+      grouped.get(key).names.push(st.name);
+    });
+
+    return [...grouped.values()];
+  }
+
+  function maxCandidate(candidates, valueKey) {
+    const valid = candidates
+      .filter(x => Number.isFinite(Number(x[valueKey])))
+      .sort((a,b) => Number(b[valueKey]) - Number(a[valueKey]));
+
+    if (!valid.length) {
+      return {
+        value: 0,
+        source: '자료 없음',
+        available: false
+      };
+    }
+
+    const maxValue = Number(valid[0][valueKey]);
+    const sources = valid
+      .filter(x => Number(x[valueKey]) === maxValue)
+      .flatMap(x => x.names)
+      .filter((name, index, all) => all.indexOf(name) === index);
+
+    return {
+      value: maxValue,
+      source: sources.join('·'),
+      available: true
+    };
+  }
+
+  function buildRouteRainfall(stations, currentMap, previousMap, shortMap) {
+    const groups = uniqueGridGroups(stations);
+
+    const currentCandidates = groups.map(group => {
+      const value = currentMap[group.key];
+
+      return {
+        names: group.names,
+        amount: Number(value?.rain1h ?? 0),
+        observedAt: value?.observedAt || null
+      };
+    });
+
+    const previousCandidates = groups.map(group => {
+      const value = previousMap[group.key];
+
+      return {
+        names: group.names,
+        amount: Number(value?.rain1h ?? 0),
+        observedAt: value?.observedAt || null
+      };
+    });
+
+    const currentMax = maxCandidate(currentCandidates, 'amount');
+    const previousMax = maxCandidate(previousCandidates, 'amount');
+    const forecastByTime = new Map();
+    const cutoff = Date.now() - 30 * 60000;
+
+    groups.forEach(group => {
+      const short = shortMap[group.key];
+
+      (short?.timeline || [])
+        .filter(row => new Date(row.time).getTime() >= cutoff)
+        .forEach(row => {
+          const amount = parseRain(row.PCP);
+          const probability = num(row.POP, 0);
+          const existing = forecastByTime.get(row.time) || {
+            time: row.time,
+            amount: -1,
+            probability: -1,
+            amountSource: '',
+            probabilitySource: ''
+          };
+
+          if (amount > existing.amount) {
+            existing.amount = amount;
+            existing.amountSource = group.names.join('·');
+          }
+
+          if (probability > existing.probability) {
+            existing.probability = probability;
+            existing.probabilitySource = group.names.join('·');
+          }
+
+          forecastByTime.set(row.time, existing);
+        });
+    });
+
+    const future = [...forecastByTime.values()]
+      .sort((a,b) => new Date(a.time) - new Date(b.time))
       .slice(0, 24)
-      .map(x => ({ time:x.time, label:labelTime(x.time), amount:parseRain(x.PCP), type:'forecast' }));
+      .map(row => ({
+        time: row.time,
+        label: labelTime(row.time),
+        amount: Math.max(0, row.amount),
+        probability: Math.max(0, row.probability),
+        source: row.amountSource || row.probabilitySource || '노선 대표격자',
+        type: 'forecast'
+      }));
+
+    const horizon = hours => {
+      const rows = future.slice(0, hours);
+
+      return {
+        amount: rows.reduce((sum, row) => sum + num(row.amount), 0),
+        probability: rows.length
+          ? Math.max(...rows.map(row => num(row.probability)))
+          : 0
+      };
+    };
+
+    const h3 = horizon(3);
+    const h6 = horizon(6);
+    const h12 = horizon(12);
+    const h24 = horizon(24);
+
+    const observedAt = currentCandidates
+      .map(x => new Date(x.observedAt).getTime())
+      .filter(Number.isFinite);
+
+    const previousAt = previousCandidates
+      .map(x => new Date(x.observedAt).getTime())
+      .filter(Number.isFinite);
+
+    const forecastIssuedAt = groups
+      .map(group => shortMap[group.key]?.issuedAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1) || null;
+
+    const basisLabel = groups
+      .map(group => `${group.names.join('·')}(${group.nx},${group.ny})`)
+      .join(' / ');
+
     const timeline = [
-      { time: previous.observedAt, label: labelTime(previous.observedAt), amount: previous.rain1h, type:'observed' },
-      { time: current.observedAt, label: labelTime(current.observedAt), amount: current.rain1h, type:'current' },
+      {
+        time: previousAt.length
+          ? new Date(Math.max(...previousAt)).toISOString()
+          : null,
+        label: previousAt.length
+          ? labelTime(new Date(Math.max(...previousAt)).toISOString())
+          : '-',
+        amount: previousMax.value,
+        probability: null,
+        source: previousMax.source,
+        type: 'observed'
+      },
+      {
+        time: observedAt.length
+          ? new Date(Math.max(...observedAt)).toISOString()
+          : null,
+        label: observedAt.length
+          ? labelTime(new Date(Math.max(...observedAt)).toISOString())
+          : '-',
+        amount: currentMax.value,
+        probability: null,
+        source: currentMax.source,
+        type: 'current'
+      },
       ...future.slice(0, 9)
     ];
-    const sum = h => future.slice(0,h).reduce((a,x) => a + num(x.amount), 0);
+
+    const dataAvailable = currentMax.available && future.length > 0;
+    const allDry =
+      dataAvailable &&
+      currentMax.value === 0 &&
+      future.every(row => row.amount === 0);
+
     return {
-      observedAt: current.observedAt,
-      forecastIssuedAt: short.issuedAt,
-      currentRate: current.rain1h,
-      next3h: sum(3),
-      next6h: sum(6),
-      next12h: sum(12),
-      next24h: sum(24),
+      observedAt: observedAt.length
+        ? new Date(Math.max(...observedAt)).toISOString()
+        : null,
+      forecastIssuedAt,
+      currentRate: currentMax.value,
+      currentSource: currentMax.source,
+      next3h: h3.amount,
+      next6h: h6.amount,
+      next12h: h12.amount,
+      next24h: h24.amount,
+      next3hProbability: h3.probability,
+      next6hProbability: h6.probability,
+      next12hProbability: h12.probability,
+      next24hProbability: h24.probability,
+      basisLabel,
+      aggregationLabel: '노선 내 대표격자별 시간당 최대 강수량 합계',
+      dataAvailable,
+      allDry,
+      dryMessage: allDry
+        ? '현재 및 예보 PCP가 전 대표격자에서 강수없음으로 응답했습니다.'
+        : dataAvailable
+          ? ''
+          : '강수 실황 또는 예보 자료가 누락되어 0mm로 판단하지 않습니다.',
       timeline,
       observationIntervalMinutes: 60,
       forecastIntervalMinutes: 60,
-      sourceLabel: '기상청 초단기실황·단기예보'
+      sourceLabel: '기상청 초단기실황 RN1·단기예보 PCP·POP'
     };
   }
 

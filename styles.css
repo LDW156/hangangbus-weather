@@ -1454,3 +1454,84 @@ footer strong {
 }
 .wind-compare.unavailable b{color:#7b8c98!important}
 .wind-compare.unavailable em{color:#8b9aa5!important}
+
+
+/* v53: 특보·강수 산정기준 표시 */
+.alert-card.clear {
+  background: #f4fbf7;
+  border-color: #9acbb0;
+}
+
+.alert-card.clear h3 {
+  color: var(--green);
+}
+
+.rain-basis {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  margin-top: 8px;
+  padding: 8px 9px;
+  color: var(--text-sub);
+  background: #f5f9fc;
+  border: 1px dashed var(--line-strong);
+  border-radius: 9px;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.rain-basis b {
+  color: var(--primary-dark);
+}
+
+.rain-basis em {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-style: normal;
+}
+
+.rain-dry-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  padding: 7px 9px;
+  color: #516b7b;
+  background: #f7fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 8px;
+}
+
+.rain-dry-note b {
+  color: var(--green);
+  white-space: nowrap;
+}
+
+.rain-item em {
+  display: block;
+  margin-top: 3px;
+  color: #60798a;
+  font-size: 7px;
+  font-style: normal;
+}
+
+@media (max-width: 720px) {
+  .rain-basis {
+    grid-template-columns: 1fr;
+  }
+
+  .rain-basis em {
+    grid-column: auto;
+  }
+
+  .rain-dry-note {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.rain-dry-note.data-missing b {
+  color: var(--red);
+}

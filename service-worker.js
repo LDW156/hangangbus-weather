@@ -1,15 +1,15 @@
-const CACHE='hangangbus-kma-cloudflare-v51';
+const CACHE='hangangbus-weather-display-v53';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=51',
-  './shared-config.js?v=51',
-  './weather-config.js?v=51',
-  './config.js?v=51',
-  './hrfco.js?v=51',
-  './kma.js?v=51',
-  './app.js?v=51',
-  './data/demo-data.js?v=51',
+  './styles.css?v=53',
+  './shared-config.js?v=53',
+  './weather-config.js?v=53',
+  './config.js?v=53',
+  './hrfco.js?v=53',
+  './kma.js?v=53',
+  './app.js?v=53',
+  './data/demo-data.js?v=53',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'
