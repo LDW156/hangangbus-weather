@@ -14,4 +14,4 @@
 - service-worker.js
 
 배포 완료 후 아래 주소로 접속합니다.
-https://ldw156.github.io/hangangbus-weather/?v=42
+https://ldw156.github.io/hangangbus-weather/?v=53
