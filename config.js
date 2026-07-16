@@ -1,5 +1,5 @@
 window.HANGANG_CONFIG = {
-  APP_NAME: '한강버스 기상·수문 모니터링',
+  APP_NAME: '한강버스 운항환경 통합 대시보드',
   DATA_MODE: 'hybrid',
   REFRESH_MS: 300000,
   SHOW_DEMO_CONTROLS: false,
@@ -16,6 +16,11 @@ window.HANGANG_CONFIG = {
     OBSERVATION_INTERVAL_MINUTES: 60,
     FORECAST_INTERVAL_MINUTES: 60
   },
+  OCEAN: {
+    ENABLED: true,
+    OBS_CODE: 'DT_0001',
+    FORECAST_INTERVAL_MINUTES: 1
+  },
   THRESHOLDS: {
     jamsu: {
       cautionLevelM: 4.10,
@@ -31,7 +36,9 @@ window.HANGANG_CONFIG = {
     },
     wind: {
       cautionMs: 8,
-      stopMs: 12
+      stopMs: 12,
+      gustCautionMs: 14,
+      gustStopMs: 20
     },
     rainfall: {
       stop3hMm: 90,

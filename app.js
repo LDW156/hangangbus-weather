@@ -135,6 +135,35 @@
       }
     }
 
+
+    if(cfg.OCEAN?.ENABLED){
+      if(window.OCEAN?.isConfigured()){
+        try{
+          const liveTide=await window.OCEAN.loadTide();
+          data.tide=liveTide;
+          data.meta.dataTimes.tide=liveTide.updatedAt;
+          data.health=(data.health||[]).filter(x=>!['조석','조석정보'].includes(x.name));
+          data.health.push({name:'조석',status:'normal',updatedAt:liveTide.updatedAt,intervalMinutes:10});
+          liveSources.push('조석');
+        }catch(err){
+          if(previousData?.tide){
+            data.tide=previousData.tide;
+            data.meta.dataTimes.tide=previousData.meta?.dataTimes?.tide;
+            data.health=(data.health||[]).filter(x=>!['조석','조석정보'].includes(x.name));
+            const previousHealth=(previousData.health||[]).filter(x=>['조석','조석정보'].includes(x.name));
+            data.health.push(...previousHealth);
+            notes.push(`조석 갱신 실패 · 직전 정상값 유지 (${err.message})`);
+            liveSources.push('조석(직전값)');
+          }else{
+            errors.push(`조석: ${err.message}`);
+          }
+        }
+      }else{
+        setupSources.push('조석');
+      }
+    }
+
+    updateTideOverlapRisk();
     data.meta.generatedAt = new Date().toISOString();
     data.meta.mode = liveSources.length ? 'hybrid' : 'demo';
 
@@ -150,7 +179,7 @@
       setBanner('error',`${errors.join(' | ')} · 현재 표시값은 데모이므로 운항판단에 사용하지 마십시오.`);
     }else{
       $('modeBadge').textContent=setupSources.length?'SETUP':'DEMO';
-      setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. GitHub 공용 설정파일을 확인하십시오. 조석은 데모 데이터입니다.`);
+      setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. GitHub 공용 설정파일을 확인하십시오. 조석 공용 설정파일을 확인하십시오.`);
     }
 
     render();
@@ -164,7 +193,7 @@
     btn.disabled=state==='loading';
     btn.classList.toggle('loading',state==='loading');
     btn.innerHTML=state==='loading'?'<span class="refresh-icon">↻</span> 불러오는 중':'<span class="refresh-icon">↻</span> 최신 데이터 업데이트';
-    if(state==='loading') note.textContent='수문·기상 최신자료 조회 중';
+    if(state==='loading') note.textContent='수문·기상·조석 최신자료 조회 중';
     else if(state==='warning') note.textContent=`갱신 완료 · 일부 참고자료 확인 필요 · ${timeText(new Date())}`;
     else note.textContent=`갱신 완료 ${timeText(new Date())} · 자동 5분`;
   }
@@ -172,6 +201,20 @@
   function setBanner(type,text){
     $('systemBanner').className=`system-banner ${type}`;
     $('systemBanner').textContent=text;
+  }
+
+  function updateTideOverlapRisk(){
+    if(!data?.tide)return;
+    const tide=data.tide;
+    const outflow=Number(data.hydrology?.paldang?.outflowCms)||0;
+    const nextHigh=tide.nextHigh?.time?new Date(tide.nextHigh.time):null;
+    const minutesToHigh=nextHigh?Math.round((nextHigh-Date.now())/60000):null;
+    const phase=tide.phase;
+
+    let risk='낮음';
+    if(minutesToHigh!==null&&minutesToHigh>=0&&minutesToHigh<=180&&outflow>=2000)risk='높음';
+    else if((minutesToHigh!==null&&minutesToHigh>=0&&minutesToHigh<=300)||(phase==='창조'&&outflow>=1500))risk='보통';
+    tide.overlapRisk=risk;
   }
 
   function compute(){
@@ -770,19 +813,70 @@
   }
   function renderRiver(){$('riverGrid').innerHTML=riverMetric('잠수교 수위',data.hydrology.jamsuBridge)+riverMetric('한강대교 수위',data.hydrology.hangangBridge)}
 
-  function tideEventCard(label,event,compareEvent,referenceAt){
-    const diff=compareEvent?event.heightCm-compareEvent.heightCm:null;
-    return `<div class="metric"><div class="data-time">자료 갱신 ${dateTimeText(data.tide.updatedAt)}</div><div class="metric-label">${label}</div><div class="metric-value">${timeText(event.time)}</div><div class="metric-sub">${dateTimeText(event.time)} · ${fmt(event.heightCm)}cm${diff===null?'':` · 이전 대비 ${signed(diff,0,'cm')}`}</div><div class="event-countdown">기준시각부터 ${durationText(referenceAt,event.time)}</div></div>`;
+  function tideEventCard(label,event,referenceAt){
+    if(!event){
+      return `<div class="metric"><div class="metric-label">${esc(label)}</div><div class="metric-value">-</div><div class="metric-sub">오늘 자료 범위 밖</div></div>`;
+    }
+    return `<div class="metric"><div class="data-time">자료 갱신 ${dateTimeText(data.tide.updatedAt)}</div><div class="metric-label">${esc(label)}</div><div class="metric-value">${timeText(event.time)}</div><div class="metric-sub">${dateTimeText(event.time)} · ${fmt(event.heightCm,0)}cm</div><div class="event-countdown">기준시각부터 ${durationText(referenceAt,event.time)}</div></div>`;
   }
+
+  function tideChart(svg,t){
+    const history=t.timeline||[];
+    if(!history.length){svg.innerHTML='';return;}
+    const H=230,W=responsiveChartWidth(svg,H),left=52,right=20,top=20,bottom=38;
+    const plotWidth=W-left-right,plotHeight=H-top-bottom;
+    const values=history.map(x=>Number(x.heightCm)).filter(Number.isFinite);
+    const min=Math.floor((Math.min(...values)-30)/50)*50;
+    const max=Math.ceil((Math.max(...values)+30)/50)*50;
+    const x=i=>history.length<=1?left+plotWidth/2:left+i*plotWidth/(history.length-1);
+    const y=v=>top+(max-v)*plotHeight/Math.max(1,max-min);
+    const ticks=Array.from({length:5},(_,i)=>min+(max-min)*i/4);
+    const grid=ticks.map(v=>`<line class="chart-grid" x1="${left}" x2="${W-right}" y1="${y(v)}" y2="${y(v)}"/><text class="chart-axis chart-axis-y" x="${left-8}" y="${y(v)+4}" text-anchor="end">${fmt(v,0)}</text>`).join('');
+    const points=history.map((row,i)=>`${x(i)},${y(row.heightCm)}`).join(' ');
+    const labelStep=Math.max(1,Math.ceil(history.length/8));
+    const labels=history.map((row,i)=>i%labelStep===0||i===history.length-1?`<text class="chart-axis chart-axis-x" text-anchor="middle" x="${x(i)}" y="${H-11}">${esc(row.label)}</text>`:'').join('');
+    const eventMarks=(t.events||[]).map(event=>{
+      const idx=history.reduce((best,row,i)=>Math.abs(new Date(row.time)-new Date(event.time))<Math.abs(new Date(history[best].time)-new Date(event.time))?i:best,0);
+      const color=event.type==='high'?'#d43942':'#176fa5';
+      const text=event.type==='high'?'만조':'간조';
+      return `<line x1="${x(idx)}" x2="${x(idx)}" y1="${top}" y2="${H-bottom}" stroke="${color}" stroke-width="2" stroke-dasharray="5 5"/><text x="${x(idx)}" y="${top+11}" text-anchor="middle" fill="${color}" font-size="9" font-weight="900">${text}</text>`;
+    }).join('');
+    const currentIndex=history.reduce((best,row,i)=>Math.abs(new Date(row.time)-Date.now())<Math.abs(new Date(history[best].time)-Date.now())?i:best,0);
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.setAttribute('tabindex','0');
+    svg.innerHTML=`${grid}${eventMarks}<polyline class="chart-line" stroke="#168dbd" points="${points}"/>${labels}<line x1="${x(currentIndex)}" x2="${x(currentIndex)}" y1="${top}" y2="${H-bottom}" stroke="#253f50" stroke-width="2.5"/><g class="chart-hover-layer" style="display:none"><line class="chart-hover-line"/><circle class="chart-hover-dot" r="6"/></g>`;
+    bindChartTooltip(svg,{history,left,plotWidth,top,bottomY:H-bottom,x,series:[{key:'heightCm',y,color:'#168dbd'}],format:(row,index)=>{
+      const prev=index>0?Number(history[index-1].heightCm):null;
+      const delta=prev===null?null:Number(row.heightCm)-prev;
+      return `<div class="chart-tooltip-time">${esc(dateTimeText(row.time))}</div><div class="chart-tooltip-row"><span>예측조위</span><b>${fmt(row.heightCm,1)}cm</b></div><div class="chart-tooltip-row"><span>10분 변화</span><b class="${delta===null?'':deltaClass(delta)}">${delta===null?'-':signed(delta,1,'cm')}</b></div>`;
+    }});
+    observeResponsiveChart(svg,()=>tideChart(svg,t));
+  }
+
   function renderTide(){
     const t=data.tide;
-    $('tideGrid').innerHTML=tideEventCard('다음 만조',t.nextHigh,t.previousHigh,t.referenceAt)+tideEventCard('다음 간조',t.nextLow,t.previousLow,t.referenceAt)+`<div class="metric"><div class="data-time">판단 기준 ${dateTimeText(t.referenceAt)}</div><div class="metric-label">조석 구분</div><div class="metric-value">${esc(t.phase)}</div><div class="metric-sub">이전 만조 ${timeText(t.previousHigh.time)} ${fmt(t.previousHigh.heightCm)}cm<br>다음날 만조 ${dateTimeText(t.nextAfterHigh.time)} ${fmt(t.nextAfterHigh.heightCm)}cm</div></div><div class="metric"><div class="data-time">판단 기준 ${dateTimeText(t.referenceAt)}</div><div class="metric-label">방류 중첩위험</div><div class="metric-value ${t.overlapRisk!=='낮음'?'warn':''}">${esc(t.overlapRisk)}</div><div class="metric-sub">다음 만조 ${timeText(t.nextHigh.time)} · 서부선 판단 참고</div></div>`;
-    $('tideComparisonBody').innerHTML=`<tr><td>이전 간조</td><td>${dateTimeText(t.previousLow.time)}</td><td>${fmt(t.previousLow.heightCm)}cm</td><td>관측·예측</td></tr><tr><td>이전 만조</td><td>${dateTimeText(t.previousHigh.time)}</td><td>${fmt(t.previousHigh.heightCm)}cm</td><td>관측·예측</td></tr><tr class="current-row"><td>기준시각</td><td>${dateTimeText(t.referenceAt)}</td><td>-</td><td>${esc(t.phase)}</td></tr><tr><td>다음 만조</td><td>${dateTimeText(t.nextHigh.time)}</td><td>${fmt(t.nextHigh.heightCm)}cm</td><td>이전 대비 ${signed(t.nextHigh.heightCm-t.previousHigh.heightCm,0,'cm')}</td></tr><tr><td>다음 간조</td><td>${dateTimeText(t.nextLow.time)}</td><td>${fmt(t.nextLow.heightCm)}cm</td><td>이전 대비 ${signed(t.nextLow.heightCm-t.previousLow.heightCm,0,'cm')}</td></tr>`;
+    const current=t.currentObserved;
+    const currentValue=current?.heightCm??t.currentPredicted?.heightCm;
+    const predicted=current?.predictedCm??t.currentPredicted?.heightCm;
+    const deviation=current?.deviationCm;
+    $('tideGrid').innerHTML=`<div class="metric tide-current-metric"><div class="data-time">인천 ${dateTimeText(current?.time||t.currentPredicted?.time)}</div><div class="metric-label">현재 실측조위</div><div class="metric-value">${currentValue===null||currentValue===undefined?'-':`${fmt(currentValue,1)}cm`}</div><div class="metric-sub">예측 ${predicted===null||predicted===undefined?'-':`${fmt(predicted,1)}cm`}${deviation===null||deviation===undefined?'':` · 편차 ${signed(deviation,1,'cm')}`}</div></div>`+
+      tideEventCard('다음 만조',t.nextHigh,t.referenceAt)+
+      tideEventCard('다음 간조',t.nextLow,t.referenceAt)+
+      `<div class="metric"><div class="data-time">판단 기준 ${dateTimeText(t.referenceAt)}</div><div class="metric-label">현재 조석상태</div><div class="metric-value">${esc(t.phase)}</div><div class="metric-sub">오늘 조차 ${t.rangeCm===null?'-':`${fmt(t.rangeCm,0)}cm`} · ${esc(t.rangeClass||'자료 확인')}<br>방류 중첩위험 ${esc(t.overlapRisk)}</div></div>`;
+
+    const rows=[];
+    if(t.previousHigh)rows.push(['이전 만조',t.previousHigh]);
+    if(t.previousLow)rows.push(['이전 간조',t.previousLow]);
+    rows.push(['현재 실측',current?{time:current.time,heightCm:current.heightCm}:null]);
+    if(t.nextHigh)rows.push(['다음 만조',t.nextHigh]);
+    if(t.nextLow)rows.push(['다음 간조',t.nextLow]);
+    $('tideComparisonBody').innerHTML=rows.map(([label,event])=>event?`<tr class="${label==='현재 실측'?'current-row':''}"><td>${esc(label)}</td><td>${dateTimeText(event.time)}</td><td>${fmt(event.heightCm,1)}cm</td><td>${label==='현재 실측'&&deviation!==null&&deviation!==undefined?`예측 대비 ${signed(deviation,1,'cm')}`:esc(t.phase)}</td></tr>`:'').join('');
+    tideChart($('tideChart'),t);
   }
 
   function renderHealth(){
     const items=data.health||[];
-    const limits={한강수위:25,팔당댐:25,기상관측:110,기상예보:240,기상특보:30,조석:720};
+    const limits={한강수위:25,팔당댐:25,기상관측:110,기상예보:240,기상특보:30,조석:30,조석정보:30};
     $('healthGrid').innerHTML=items.map(x=>{
       const age=ageMinutes(x.updatedAt), limit=limits[x.name]??Math.max(30,x.intervalMinutes*2);
       const stale=age===null||age>limit;

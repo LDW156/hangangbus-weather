@@ -2831,3 +2831,14 @@ footer strong {
     padding: 9px;
   }
 }
+
+
+/* v62 인천 조석 실데이터 */
+.tide-current-metric .metric-value { color:#075f8f; }
+.tide-chart-panel svg { width:100%; min-height:245px; height:245px; background:#fff; border:1px solid #bdcfd9; border-radius:10px; }
+.tide-chart-legend { gap:14px; color:#405f70; font-size:9px; font-weight:800; }
+.tide-now-line,.tide-high-line,.tide-low-line { display:inline-block; width:24px; height:2px; vertical-align:middle; }
+.tide-now-line { background:#253f50; }
+.tide-high-line { background:repeating-linear-gradient(to right,#d43942 0 5px,transparent 5px 9px); }
+.tide-low-line { background:repeating-linear-gradient(to right,#176fa5 0 5px,transparent 5px 9px); }
+@media (max-width:760px){ .tide-chart-panel svg{min-height:220px;height:220px;} }

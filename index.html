@@ -8,7 +8,7 @@
   <title>한강버스 기상·수문 모니터링</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=61">
+  <link rel="stylesheet" href="styles.css?v=62">
   <script>
     // 새 배포 파일을 즉시 받도록 이전 한강버스 캐시를 정리합니다.
     if ('caches' in window) {
@@ -23,7 +23,7 @@
   <header class="app-header">
     <div class="brand-lockup">
       <div class="brand-mark official-logo" aria-label="한강버스 공식 로고">
-        <img src="./assets/hangangbus-logo.png?v=61" alt="한강버스 로고">
+        <img src="./assets/hangangbus-logo.png?v=62" alt="한강버스 로고">
       </div>
       <div class="brand-copy">
         <p class="eyebrow">HANGANG BUS WEATHER MONITORING</p>
@@ -111,8 +111,13 @@
     </section>
 
     <section id="tide" class="section">
-      <div class="section-head"><div><span>08</span><h2>인천 조석</h2></div><small>만조·간조·대조기·중첩위험</small></div>
+      <div class="section-head"><div><span>08</span><h2>인천 조석</h2></div><small>실측·예측조위 · 만조·간조 · 방류 중첩</small></div>
       <div id="tideGrid" class="metric-grid four"></div>
+      <article class="panel chart-panel top-gap tide-chart-panel">
+        <div class="panel-title"><h3>인천 24시간 예측조위</h3><span>10분 단위 마우스·터치 조회</span></div>
+        <svg id="tideChart" viewBox="0 0 1100 230" role="img" aria-label="인천 예측조위 그래프"></svg>
+        <div class="chart-legend tide-chart-legend"><span class="line water"></span>예측조위 <span class="tide-now-line"></span>현재시각 <span class="tide-high-line"></span>만조 <span class="tide-low-line"></span>간조</div>
+      </article>
       <article class="panel table-panel top-gap">
         <div class="panel-title"><h3>조석 전후 시각 비교</h3><span>이전·현재·다음 이벤트</span></div>
         <div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>조위</th><th>비교</th></tr></thead><tbody id="tideComparisonBody"></tbody></table></div>
@@ -128,12 +133,14 @@
   <footer>
     <strong>주의:</strong> 공식기관 자료를 취합한 운항 참고용 화면입니다. 실제 운항판단은 회사 지침과 현장 확인을 우선합니다. <span class="footer-credit">제작 · 운항감독 이대운</span>
   </footer>
-<script src="shared-config.js?v=61"></script>
-  <script src="weather-config.js?v=61"></script>
-  <script src="config.js?v=61"></script>
-  <script src="data/demo-data.js?v=61"></script>
-  <script src="hrfco.js?v=61"></script>
-  <script src="kma.js?v=61"></script>
-  <script src="app.js?v=61"></script>
+<script src="shared-config.js?v=62"></script>
+  <script src="weather-config.js?v=62"></script>
+  <script src="ocean-config.js?v=62"></script>
+  <script src="config.js?v=62"></script>
+  <script src="data/demo-data.js?v=62"></script>
+  <script src="hrfco.js?v=62"></script>
+  <script src="kma.js?v=62"></script>
+  <script src="ocean.js?v=62"></script>
+  <script src="app.js?v=62"></script>
 </body>
 </html>

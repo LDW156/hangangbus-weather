@@ -1,17 +1,19 @@
-const CACHE='hangangbus-chart-fullwidth-v61';
+const CACHE='hangangbus-tide-live-v62';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=61',
+  './styles.css?v=62',
   './shared-config.js?v=61',
-  './weather-config.js?v=61',
-  './config.js?v=61',
-  './hrfco.js?v=61',
-  './kma.js?v=61',
-  './app.js?v=61',
-  './data/demo-data.js?v=61',
+  './weather-config.js?v=62',
+  './ocean-config.js?v=62',
+  './config.js?v=62',
+  './hrfco.js?v=62',
+  './kma.js?v=62',
+  './ocean.js?v=62',
+  './app.js?v=62',
+  './data/demo-data.js?v=62',
   './manifest.webmanifest',
-  './assets/hangangbus-logo.png?v=61',
+  './assets/hangangbus-logo.png?v=62',
   './assets/icon-192.png',
   './assets/icon-512.png'
 ];
