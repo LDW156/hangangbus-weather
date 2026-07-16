@@ -2842,3 +2842,17 @@ footer strong {
 .tide-high-line { background:repeating-linear-gradient(to right,#d43942 0 5px,transparent 5px 9px); }
 .tide-low-line { background:repeating-linear-gradient(to right,#176fa5 0 5px,transparent 5px 9px); }
 @media (max-width:760px){ .tide-chart-panel svg{min-height:220px;height:220px;} }
+
+
+/* v67: 실측 결측·원자료 지연 구분 */
+.metric-data-warning {
+  border-color:#d39a35 !important;
+  background:#fffaf0 !important;
+}
+.health-card.source-delay {
+  background:#fff8e8;
+  border-color:#e3bf72;
+}
+.health-card .warn {
+  color:#a85f00;
+}

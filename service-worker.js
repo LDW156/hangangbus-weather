@@ -1,16 +1,16 @@
-const CACHE='hangangbus-ocean-proxy-sync-v65';
+const CACHE='hangangbus-tide-health-fix-v67';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=62',
+  './styles.css?v=67',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
-  './ocean-config.js?v=65',
+  './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
   './kma.js?v=62',
-  './ocean.js?v=62',
-  './app.js?v=62',
+  './ocean.js?v=67',
+  './app.js?v=67',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

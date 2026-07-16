@@ -72,8 +72,8 @@
           data.meta.dataTimes.hydrology = live.fetchedAt;
           data.health = (data.health || []).filter(x => !['한강수위','팔당댐'].includes(x.name));
           data.health.unshift(
-            {name:'한강수위',status:'normal',updatedAt:live.jamsuBridge.observedAt,intervalMinutes:10},
-            {name:'팔당댐',status:'normal',updatedAt:live.paldang.observedAt,intervalMinutes:10}
+            {name:'한강수위',status:'normal',updatedAt:live.jamsuBridge.observedAt,checkedAt:live.fetchedAt,intervalMinutes:10},
+            {name:'팔당댐',status:'normal',updatedAt:live.paldang.observedAt,checkedAt:live.fetchedAt,intervalMinutes:10}
           );
           if(live.warnings?.length){
             notes.push(...live.warnings.map(x=>`수문 참고: ${x}`));
@@ -143,7 +143,7 @@
           data.tide=liveTide;
           data.meta.dataTimes.tide=liveTide.updatedAt;
           data.health=(data.health||[]).filter(x=>!['조석','조석정보'].includes(x.name));
-          data.health.push({name:'조석',status:'normal',updatedAt:liveTide.updatedAt,intervalMinutes:10});
+          data.health.push({name:'조석',status:'normal',updatedAt:liveTide.updatedAt,checkedAt:liveTide.updatedAt,intervalMinutes:10});
           liveSources.push('조석');
         }catch(err){
           if(previousData?.tide){
@@ -815,7 +815,7 @@
 
   function tideEventCard(label,event,referenceAt){
     if(!event){
-      return `<div class="metric"><div class="metric-label">${esc(label)}</div><div class="metric-value">-</div><div class="metric-sub">오늘 자료 범위 밖</div></div>`;
+      return `<div class="metric"><div class="metric-label">${esc(label)}</div><div class="metric-value">-</div><div class="metric-sub">익일 고·저조 자료 연결 필요</div></div>`;
     }
     return `<div class="metric"><div class="data-time">자료 갱신 ${dateTimeText(data.tide.updatedAt)}</div><div class="metric-label">${esc(label)}</div><div class="metric-value">${timeText(event.time)}</div><div class="metric-sub">${dateTimeText(event.time)} · ${fmt(event.heightCm,0)}cm</div><div class="event-countdown">기준시각부터 ${durationText(referenceAt,event.time)}</div></div>`;
   }
@@ -856,31 +856,136 @@
   function renderTide(){
     const t=data.tide;
     const current=t.currentObserved;
-    const currentValue=current?.heightCm??t.currentPredicted?.heightCm;
-    const predicted=current?.predictedCm??t.currentPredicted?.heightCm;
+    const hasObserved=Boolean(current);
+    const observedIsCurrent=Boolean(current?.isCurrent);
+    const predicted=t.currentPredicted?.heightCm;
     const deviation=current?.deviationCm;
-    $('tideGrid').innerHTML=`<div class="metric tide-current-metric"><div class="data-time">인천 ${dateTimeText(current?.time||t.currentPredicted?.time)}</div><div class="metric-label">현재 실측조위</div><div class="metric-value">${currentValue===null||currentValue===undefined?'-':`${fmt(currentValue,1)}cm`}</div><div class="metric-sub">예측 ${predicted===null||predicted===undefined?'-':`${fmt(predicted,1)}cm`}${deviation===null||deviation===undefined?'':` · 편차 ${signed(deviation,1,'cm')}`}</div></div>`+
+
+    const currentLabel=hasObserved
+      ? (observedIsCurrent?'현재 실측조위':'마지막 유효 실측')
+      : '현재 예측조위';
+
+    const currentTime=hasObserved
+      ? current.time
+      : t.currentPredicted?.time;
+
+    const currentValue=hasObserved
+      ? current.heightCm
+      : predicted;
+
+    let currentSub='실측 자료 미수신 · 예측값 표시';
+    if(hasObserved){
+      currentSub=`동시각 예측 ${current.predictedCm===null||current.predictedCm===undefined?'-':`${fmt(current.predictedCm,1)}cm`}`;
+      if(deviation!==null&&deviation!==undefined){
+        currentSub+=` · 편차 ${signed(deviation,1,'cm')}`;
+      }
+      if(!observedIsCurrent){
+        currentSub+=` · ${current.ageMinutes}분 전 실측`;
+      }
+    }
+
+    $('tideGrid').innerHTML=
+      `<div class="metric tide-current-metric ${hasObserved?'':'metric-data-warning'}">
+        <div class="data-time">인천 ${dateTimeText(currentTime)}</div>
+        <div class="metric-label">${currentLabel}</div>
+        <div class="metric-value">${currentValue===null||currentValue===undefined?'-':`${fmt(currentValue,1)}cm`}</div>
+        <div class="metric-sub">${currentSub}</div>
+      </div>`+
       tideEventCard('다음 만조',t.nextHigh,t.referenceAt)+
       tideEventCard('다음 간조',t.nextLow,t.referenceAt)+
-      `<div class="metric"><div class="data-time">판단 기준 ${dateTimeText(t.referenceAt)}</div><div class="metric-label">현재 조석상태</div><div class="metric-value">${esc(t.phase)}</div><div class="metric-sub">오늘 조차 ${t.rangeCm===null?'-':`${fmt(t.rangeCm,0)}cm`} · ${esc(t.rangeClass||'자료 확인')}<br>방류 중첩위험 ${esc(t.overlapRisk)}</div></div>`;
+      `<div class="metric">
+        <div class="data-time">판단 기준 ${dateTimeText(t.referenceAt)}</div>
+        <div class="metric-label">현재 조석상태</div>
+        <div class="metric-value">${esc(t.phase)}</div>
+        <div class="metric-sub">오늘 조차 ${t.rangeCm===null?'-':`${fmt(t.rangeCm,0)}cm`} · ${esc(t.rangeClass||'자료 확인')}<br>방류 중첩위험 ${esc(t.overlapRisk)}</div>
+      </div>`;
 
     const rows=[];
     if(t.previousHigh)rows.push(['이전 만조',t.previousHigh]);
     if(t.previousLow)rows.push(['이전 간조',t.previousLow]);
-    rows.push(['현재 실측',current?{time:current.time,heightCm:current.heightCm}:null]);
+
+    if(hasObserved){
+      rows.push([
+        observedIsCurrent?'현재 실측':'마지막 실측',
+        {time:current.time,heightCm:current.heightCm}
+      ]);
+    }else if(t.currentPredicted){
+      rows.push([
+        '현재 예측',
+        {time:t.currentPredicted.time,heightCm:t.currentPredicted.heightCm}
+      ]);
+    }
+
     if(t.nextHigh)rows.push(['다음 만조',t.nextHigh]);
     if(t.nextLow)rows.push(['다음 간조',t.nextLow]);
-    $('tideComparisonBody').innerHTML=rows.map(([label,event])=>event?`<tr class="${label==='현재 실측'?'current-row':''}"><td>${esc(label)}</td><td>${dateTimeText(event.time)}</td><td>${fmt(event.heightCm,1)}cm</td><td>${label==='현재 실측'&&deviation!==null&&deviation!==undefined?`예측 대비 ${signed(deviation,1,'cm')}`:esc(t.phase)}</td></tr>`:'').join('');
+
+    $('tideComparisonBody').innerHTML=rows.map(([label,event])=>{
+      const isObserved=label==='현재 실측'||label==='마지막 실측';
+      const comparison=isObserved&&deviation!==null&&deviation!==undefined
+        ? `예측 대비 ${signed(deviation,1,'cm')}`
+        : label==='현재 예측'
+          ? '실측 미수신'
+          : t.phase;
+
+      return `<tr class="${label==='현재 실측'?'current-row':''}">
+        <td>${esc(label)}</td>
+        <td>${dateTimeText(event.time)}</td>
+        <td>${fmt(event.heightCm,1)}cm</td>
+        <td>${esc(comparison)}</td>
+      </tr>`;
+    }).join('');
+
     tideChart($('tideChart'),t);
   }
 
   function renderHealth(){
     const items=data.health||[];
-    const limits={한강수위:25,팔당댐:25,기상관측:110,기상예보:240,기상특보:30,조석:30,조석정보:30};
+    const limits={
+      한강수위:40,
+      팔당댐:40,
+      기상관측:110,
+      기상예보:240,
+      기상특보:30,
+      조석:40,
+      조석정보:40
+    };
+
     $('healthGrid').innerHTML=items.map(x=>{
-      const age=ageMinutes(x.updatedAt), limit=limits[x.name]??Math.max(30,x.intervalMinutes*2);
-      const stale=age===null||age>limit;
-      return `<div class="health-card ${stale?'stale':''}"><span>${esc(x.name)}</span><b class="${stale?'bad':'good'}">${stale?'갱신 확인':'정상'}</b><em>${dateTimeText(x.updatedAt)} · ${age===null?'-':`${age}분 전`} · 기준 ${limit}분</em></div>`;
+      const sourceAge=ageMinutes(x.updatedAt);
+      const checkedAge=ageMinutes(x.checkedAt||x.updatedAt);
+      const limit=limits[x.name]??Math.max(40,x.intervalMinutes*3);
+
+      const connectionOk=checkedAge!==null&&checkedAge<=15;
+      const sourceDelayed=sourceAge===null||sourceAge>limit;
+      const severeDelay=sourceAge===null||sourceAge>90;
+
+      let state='정상';
+      let stateClass='good';
+      let cardClass='';
+
+      if(!connectionOk){
+        state='갱신 확인';
+        stateClass='bad';
+        cardClass='stale';
+      }else if(severeDelay){
+        state='원자료 지연';
+        stateClass='bad';
+        cardClass='stale';
+      }else if(sourceDelayed){
+        state='원자료 지연';
+        stateClass='warn';
+        cardClass='source-delay';
+      }
+
+      const checkedText=x.checkedAt
+        ? `조회 ${dateTimeText(x.checkedAt)} · `
+        : '';
+
+      return `<div class="health-card ${cardClass}">
+        <span>${esc(x.name)}</span>
+        <b class="${stateClass}">${state}</b>
+        <em>${checkedText}원자료 ${dateTimeText(x.updatedAt)} · ${sourceAge===null?'-':`${sourceAge}분 전`} · 허용 ${limit}분</em>
+      </div>`;
     }).join('');
   }
 

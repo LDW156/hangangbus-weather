@@ -106,6 +106,45 @@
       .sort((a,b) => new Date(a.time) - new Date(b.time));
   }
 
+  function isPlausibleObservedRow(row) {
+    const observed = Number(row?.observedCm);
+    const predicted = Number(row?.predictedCm);
+
+    if (!Number.isFinite(observed)) return false;
+
+    // 예측조위가 수백 cm인데 실측이 정확히 0cm로 내려오는 행은
+    // 미수신·결측 기본값으로 처리합니다.
+    if (
+      Math.abs(observed) < 0.05 &&
+      Number.isFinite(predicted) &&
+      Math.abs(predicted) >= 150
+    ) {
+      return false;
+    }
+
+    // 인천 조위에서 실측·예측 차이가 비정상적으로 큰 행은
+    // 운항화면에 실측값으로 표시하지 않습니다.
+    if (
+      Number.isFinite(predicted) &&
+      Math.abs(observed - predicted) > 250
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function latestValidObserved(rows, now) {
+    const target = now.getTime();
+
+    return rows.filter(row => {
+      const time = new Date(row.time).getTime();
+      return Number.isFinite(time) &&
+        time <= target &&
+        isPlausibleObservedRow(row);
+    }).at(-1) || null;
+  }
+
   function nearestAtOrBefore(rows, now, key) {
     const target = now.getTime();
     const valid = rows.filter(row => {
@@ -174,8 +213,17 @@
     const survey = parseSurvey(surveyXml);
     if (!prediction.length) throw new Error('인천 조석예보 시계열 자료 없음');
 
-    const currentObserved = nearestAtOrBefore(survey, fetchedAt, 'observedCm');
+    const currentObserved = latestValidObserved(survey, fetchedAt);
     const currentPredicted = nearest(prediction, fetchedAt, 'heightCm');
+    const observedAgeMinutes = currentObserved
+      ? Math.max(
+          0,
+          Math.round(
+            (fetchedAt.getTime() - new Date(currentObserved.time).getTime()) /
+            60000
+          )
+        )
+      : null;
     const previousHigh = eventAround(events, fetchedAt, 'high', 'previous');
     const previousLow = eventAround(events, fetchedAt, 'low', 'previous');
     const nextHigh = eventAround(events, fetchedAt, 'high', 'next');
@@ -199,8 +247,13 @@
         time: currentObserved.time,
         heightCm: currentObserved.observedCm,
         predictedCm: currentObserved.predictedCm,
-        deviationCm: currentObserved.observedCm - currentObserved.predictedCm
+        deviationCm: currentObserved.observedCm - currentObserved.predictedCm,
+        ageMinutes: observedAgeMinutes,
+        isCurrent: observedAgeMinutes !== null && observedAgeMinutes <= 30
       } : null,
+      observedStatus: currentObserved
+        ? (observedAgeMinutes <= 30 ? 'current' : 'delayed')
+        : 'unavailable',
       currentPredicted: currentPredicted ? {
         time: currentPredicted.time,
         heightCm: currentPredicted.heightCm
