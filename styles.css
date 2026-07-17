@@ -3741,3 +3741,61 @@ details.rain-contribution-box {
     font-size:19px;
   }
 }
+
+
+/* =========================================================
+   v75 예비특보 복구·마곡/잠실 기준·긴 강수량 표시
+========================================================= */
+
+.weather-alert-banner.reference {
+  color:#155c78;
+  background:#eaf7fc;
+  border-color:#4a9fc2;
+  animation:none;
+}
+
+.rain-basis-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:66px;
+  padding:5px 8px;
+  border:1px solid #73acd0;
+  border-radius:999px;
+  color:#0c638f !important;
+  background:#edf8fd;
+  font-size:8.5px !important;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.rain-summary-v57 .rain-item > b {
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:2px;
+  width:100%;
+  min-width:0;
+}
+
+.rain-summary-v57 .rain-item > b > span {
+  display:block;
+  min-width:0;
+  max-width:100%;
+  white-space:nowrap;
+}
+
+.rain-summary-v57 .rain-item > b.rain-value-long {
+  font-size:16px !important;
+  letter-spacing:-0.45px;
+}
+
+.rain-summary-v57 .rain-item > b.rain-value-long small {
+  font-size:7px !important;
+}
+
+@media (max-width:760px) {
+  .rain-summary-v57 .rain-item > b.rain-value-long {
+    font-size:15px !important;
+  }
+}

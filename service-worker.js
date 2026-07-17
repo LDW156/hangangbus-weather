@@ -1,16 +1,16 @@
-const CACHE='hangangbus-seoul-alert-rain-simple-v74';
+const CACHE='hangangbus-alert-rep-rain-v75';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=74',
+  './styles.css?v=75',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=74',
+  './kma.js?v=75',
   './ocean.js?v=69',
-  './app.js?v=74',
+  './app.js?v=75',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

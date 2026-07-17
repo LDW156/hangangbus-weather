@@ -22,6 +22,11 @@
     { name: '잠실', sector: 'east', nx: 62, ny: 126, lat: 37.53255, lon: 127.10493 }
   ];
 
+  const RAIN_REPRESENTATIVES = {
+    west: '마곡',
+    east: '잠실'
+  };
+
   function getSharedSettings() {
     const shared = window.HANGANG_WEATHER_CONFIG || {};
     const proxyBase = String(shared.PROXY_BASE || '').trim().replace(/\/$/, '');
@@ -836,6 +841,86 @@
   }
 
 
+  function sectionAroundKeyword(text, keyword) {
+    const source = cleanText(text);
+    const index = source.indexOf(keyword);
+
+    if (index < 0) return '';
+
+    const previousHeading = Math.max(
+      source.lastIndexOf('\n*', index),
+      source.lastIndexOf('\n□', index),
+      source.lastIndexOf('\n■', index)
+    );
+
+    const start = previousHeading >= 0
+      ? previousHeading + 1
+      : Math.max(0, index - 120);
+
+    const nextCandidates = [
+      source.indexOf('\n*', index + keyword.length),
+      source.indexOf('\n□', index + keyword.length),
+      source.indexOf('\n■', index + keyword.length)
+    ].filter(value => value >= 0);
+
+    const end = nextCandidates.length
+      ? Math.min(...nextCandidates)
+      : Math.min(source.length, index + 3200);
+
+    return source.slice(start, end).trim();
+  }
+
+  function preliminaryTextFromItem(item) {
+    const direct = stripSituationNotice(cleanText(item?.wr));
+
+    if (
+      direct &&
+      /예비특보/.test(direct) &&
+      !/예비특보\s*없음|해당\s*없음/.test(direct)
+    ) {
+      return direct;
+    }
+
+    const extracted = sectionAroundKeyword(
+      item?.wfSv1,
+      '예비특보'
+    );
+
+    if (
+      extracted &&
+      !/예비특보\s*없음|해당\s*없음/.test(extracted)
+    ) {
+      return stripSituationNotice(extracted);
+    }
+
+    return '';
+  }
+
+  function officialWarningTextFromItem(item) {
+    const direct = stripSituationNotice(cleanText(item?.wn));
+
+    if (
+      direct &&
+      !/특보\s*없음|발효\s*없음|현재.*없음|해당\s*없음/.test(direct)
+    ) {
+      return direct;
+    }
+
+    const extracted = sectionAroundKeyword(
+      item?.wfSv1,
+      '특보현황'
+    );
+
+    if (
+      extracted &&
+      !/특보현황.{0,30}없음|현재.*특보.*없음/.test(extracted)
+    ) {
+      return stripSituationNotice(extracted);
+    }
+
+    return '';
+  }
+
   async function fetchSituation(proxyBase) {
     const body = await fetchJson('VilageFcstMsgService/getWthrSituation', {
       pageNo: 1,
@@ -871,8 +956,8 @@
      * 실제 발효 특보는 최신 발표문의 wn을 현재상태로 사용합니다.
      * 이전 발표의 해제된 특보가 다시 살아나는 것을 방지합니다.
      */
-    const latestWarningText = stripSituationNotice(
-      cleanText(newest.wn)
+    const latestWarningText = officialWarningTextFromItem(
+      newest
     );
 
     if (
@@ -892,31 +977,27 @@
      */
     list.forEach(item=>{
       const issuedAt = parseSituationTime(item.tmFc);
-      const preliminaryTexts = [
-        stripSituationNotice(cleanText(item.wr)),
-        stripSituationNotice(cleanText(item.wn))
-      ];
+      const text = preliminaryTextFromItem(item);
 
-      preliminaryTexts.forEach(text=>{
-        if (
-          !hasSpecificWeatherAlert(text) ||
-          !/예비특보/.test(text) ||
-          /해제|취소/.test(text)
-        ) {
-          return;
+      if (
+        !text ||
+        !hasSpecificWeatherAlert(text) ||
+        !/예비특보/.test(text) ||
+        /해제|취소/.test(text)
+      ) {
+        return;
+      }
+
+      const scopedAlerts = buildAlert({
+        source:'preliminary',
+        text,
+        issuedAt
+      });
+
+      scopedAlerts.forEach(alert => {
+        if (isRecentPreliminary(alert)) {
+          alerts.push(alert);
         }
-
-        const scopedAlerts = buildAlert({
-          source:'preliminary',
-          text,
-          issuedAt
-        });
-
-        scopedAlerts.forEach(alert => {
-          if (isRecentPreliminary(alert)) {
-            alerts.push(alert);
-          }
-        });
       });
     });
 
@@ -973,9 +1054,12 @@
 
   function cleanText(value) {
     return String(value || '')
+      .replace(/\\r/g, '')
+      .replace(/\\n/g, '\n')
       .replace(/<br\s*\/?\s*>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
       .replace(/\s+\n/g, '\n')
       .trim();
   }
@@ -1022,10 +1106,27 @@
       };
     });
 
-    const rainEntries=['west','east'].map(sector=>[
-      sector,
-      buildRouteRainfall(STATIONS.filter(st=>st.sector===sector),currentMap,shortMap)
-    ]);
+    const rainEntries=['west','east'].map(sector=>{
+      const representativeName=RAIN_REPRESENTATIVES[sector];
+      const representative=STATIONS.find(
+        station=>station.name===representativeName
+      );
+
+      const rainfall=buildRouteRainfall(
+        representative ? [representative] : [],
+        currentMap,
+        shortMap
+      );
+
+      rainfall.representativeName=
+        representative?.name || representativeName;
+      rainfall.representativeLat=
+        representative?.lat ?? null;
+      rainfall.representativeLon=
+        representative?.lon ?? null;
+
+      return [sector,rainfall];
+    });
 
     const situation=await fetchSituation(proxyBase);
     const observedTimes=windStations.map(x=>new Date(x.observedAt).getTime()).filter(Number.isFinite);

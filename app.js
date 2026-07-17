@@ -656,9 +656,17 @@
 
   function renderWeatherAlertBanner(){
     const root=$('weatherAlertBanner');
-    const alerts=[...(data.alerts||[])]
+    const directAlerts=[...(data.alerts||[])]
       .filter(alert=>alert.scope==='seoul-direct')
       .sort((a,b)=>alertPriority(a)-alertPriority(b));
+
+    const upstreamAlerts=[...(data.alerts||[])]
+      .filter(alert=>alert.scope==='paldang-upstream')
+      .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
+
+    const alerts=directAlerts.length
+      ? directAlerts
+      : upstreamAlerts;
 
     if(!alerts.length){
       root.hidden=true;
@@ -669,15 +677,18 @@
 
     const alert=alerts[0];
     const extra=alerts.length-1;
-    const bannerClass=
-      alert.source==='preliminary'
+    const isUpstream=alert.scope==='paldang-upstream';
+    const bannerClass=isUpstream
+      ? 'reference'
+      : alert.source==='preliminary'
         ? 'watch'
         : alert.level==='warning'
           ? 'warning'
           : 'advisory';
 
-    const sourceLabel=
-      alert.source==='preliminary'
+    const sourceLabel=isUpstream
+      ? '팔당 상류 참고'
+      : alert.source==='preliminary'
         ? '예비특보'
         : alert.level==='warning'
           ? '경보'
@@ -687,9 +698,9 @@
     root.className=`weather-alert-banner ${bannerClass}`;
     root.innerHTML=`
       <a href="#alerts" class="weather-alert-banner-link">
-        <span class="weather-alert-icon">${bannerClass==='warning'?'!':'⚠'}</span>
+        <span class="weather-alert-icon">${bannerClass==='warning'?'!':bannerClass==='reference'?'↗':'⚠'}</span>
         <span class="weather-alert-banner-copy">
-          <b>서울 ${esc(sourceLabel)} · ${esc(alert.title)}</b>
+          <b>${isUpstream?'':'서울 '}${esc(sourceLabel)} · ${esc(alert.title)}</b>
           <em>
             발표 ${fullDateTimeText(alert.issuedAt)}
             · 발효${alert.source==='preliminary'?'예정':''} ${esc(alertEffectiveLabel(alert))}
@@ -957,7 +968,7 @@
 
         <div class="sector-title rain-sector-title">
           <h3>${names[k]}</h3>
-          <span>노선별 대표 예보값</span>
+          <span class="rain-basis-badge">${esc(r.representativeName||'-')} 기준</span>
         </div>
 
         <div class="rain-current-row">
@@ -982,9 +993,13 @@
               ? rainDisplay(x[1],x[2])
               : '부분자료';
 
+            const longValue=String(mainValue).length>=7;
+
             return `<div class="rain-item ${reliable?'':'rain-summary-partial'}">
               <span>${x[0]}</span>
-              <b>${mainValue}${reliable?'<small>mm</small>':''}</b>
+              <b class="${longValue?'rain-value-long':''}">
+                <span>${mainValue}</span>${reliable?'<small>mm</small>':''}
+              </b>
               ${reliable?'':'<em>일부 시각 미제공</em>'}
             </div>`;
           }).join('')}
@@ -1018,7 +1033,7 @@
 
         <div class="rain-table-heading">
           <h4>예상 강수량(향후 ${fmt(r.timelineHours||8)}시간)</h4>
-          <span>기상 기준좌표 ${esc(r.basisLabel)}</span>
+          <span>${esc(r.representativeName||'-')} ${Number(r.representativeLat).toFixed(5)}°N, ${Number(r.representativeLon).toFixed(5)}°E</span>
         </div>
 
         <div class="rain-hour-scroll rain-hour-scroll-v59">
