@@ -1,16 +1,16 @@
-const CACHE='hangangbus-official-warning-frontend-v80';
+const CACHE='hangangbus-critical-alerts-only-v81';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=80',
+  './styles.css?v=81',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=80',
+  './kma.js?v=81',
   './ocean.js?v=69',
-  './app.js?v=80',
+  './app.js?v=81',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

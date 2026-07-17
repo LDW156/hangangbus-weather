@@ -422,6 +422,11 @@
         detailText
       ].filter(Boolean).join('\n');
 
+      // 호우·강풍·태풍이 아닌 공식 발표는 표시하지 않습니다.
+      if (!extractWeatherTypes(combinedText).length) {
+        return;
+      }
+
       const scoped = buildAlert({
         source,
         text:combinedText,
@@ -436,7 +441,7 @@
           alert.tmSeq = listItem?.tmSeq ?? null;
         });
         alerts.push(...scoped);
-      } else {
+      } else if (extractWeatherTypes(combinedText).length) {
         alerts.push(officialUnclassifiedAlert({
           source,
           record:listItem,
@@ -631,7 +636,7 @@
           ? unclassified.map(alert => alert.title).join(' · ')
           : '',
         message:
-          '기상청 기상특보 조회서비스 공식 목록·통보문·특보현황 기준'
+          '운항 관련 특보만 표시: 호우·강풍·태풍'
       },
       diagnostics:{
         preliminaryListCount:preliminaryList.length,
@@ -938,9 +943,14 @@
     throw lastError || new Error(`단기예보 자료 없음 (${grid.nx},${grid.ny})`);
   }
 
+  /*
+   * 한강버스 운항 관련 핵심 특보만 표시합니다.
+   * 폭염·건조·한파·황사·대설·풍랑·폭풍해일은 화면에서 제외합니다.
+   */
   const WEATHER_ALERT_TYPES = [
-    '강풍', '풍랑', '호우', '대설', '건조',
-    '폭풍해일', '한파', '태풍', '황사', '폭염'
+    '호우',
+    '강풍',
+    '태풍'
   ];
 
   /*

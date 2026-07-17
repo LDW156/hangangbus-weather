@@ -243,6 +243,19 @@
     tide.overlapRisk=risk;
   }
 
+  const IMPORTANT_OPERATION_ALERT_TYPES = [
+    '호우',
+    '강풍',
+    '태풍'
+  ];
+
+  function isImportantOperationAlert(alert){
+    const text=`${alert?.title||''} ${alert?.message||''}`;
+    return IMPORTANT_OPERATION_ALERT_TYPES.some(
+      type=>text.includes(type)
+    );
+  }
+
   function compute(){
     const t=cfg.THRESHOLDS;
     const wl=data.hydrology.jamsuBridge.waterLevelM;
@@ -422,16 +435,26 @@
       '호우경보','강풍주의보','강풍경보','태풍주의보','태풍경보'
     ];
     const officialAlerts=data.alerts.filter(
-      a=>a.scope==='seoul-direct'&&a.source==='official'
+      a=>
+        a.scope==='seoul-direct' &&
+        a.source==='official' &&
+        isImportantOperationAlert(a)
     );
     const preliminaryAlerts=data.alerts.filter(
-      a=>a.scope==='seoul-direct'&&a.source==='preliminary'
+      a=>
+        a.scope==='seoul-direct' &&
+        a.source==='preliminary' &&
+        isImportantOperationAlert(a)
     );
     const upstreamAlerts=data.alerts.filter(
-      a=>a.scope==='paldang-upstream'
+      a=>
+        a.scope==='paldang-upstream' &&
+        isImportantOperationAlert(a)
     );
     const officialUnclassifiedAlerts=data.alerts.filter(
-      a=>a.scope==='official-unclassified'
+      a=>
+        a.scope==='official-unclassified' &&
+        isImportantOperationAlert(a)
     );
     const stopAlerts=officialAlerts.filter(a=>{
       const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
@@ -443,7 +466,7 @@
       east='stop';
       west='stop';
       const alertReason=reason(
-        `기상특보 운항중지 대상 발효 · ${names||'호우경보·강풍/태풍 주의보 이상'}`,
+        `운항중지 특보 발효 · ${names||'호우경보 · 강풍주의보 이상 · 태풍주의보 이상'}`,
         'danger','특보중지'
       );
       eastReasons.push(alertReason);
@@ -461,8 +484,8 @@
       eastReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
       westReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
     }else{
-      eastReasons.push(reason('서울 운항중지 대상 기상특보 없음','normal','정상'));
-      westReasons.push(reason('서울 운항중지 대상 기상특보 없음','normal','정상'));
+      eastReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 없음','normal','정상'));
+      westReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 없음','normal','정상'));
     }
 
     if(upstreamAlerts.length){
@@ -675,15 +698,27 @@
   function renderWeatherAlertBanner(){
     const root=$('weatherAlertBanner');
     const directAlerts=[...(data.alerts||[])]
-      .filter(alert=>alert.scope==='seoul-direct')
+      .filter(
+        alert=>
+          alert.scope==='seoul-direct' &&
+          isImportantOperationAlert(alert)
+      )
       .sort((a,b)=>alertPriority(a)-alertPriority(b));
 
     const upstreamAlerts=[...(data.alerts||[])]
-      .filter(alert=>alert.scope==='paldang-upstream')
+      .filter(
+        alert=>
+          alert.scope==='paldang-upstream' &&
+          isImportantOperationAlert(alert)
+      )
       .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
 
     const unclassifiedAlerts=[...(data.alerts||[])]
-      .filter(alert=>alert.scope==='official-unclassified')
+      .filter(
+        alert=>
+          alert.scope==='official-unclassified' &&
+          isImportantOperationAlert(alert)
+      )
       .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
 
     const alerts=directAlerts.length
@@ -756,22 +791,22 @@
                 <span class="tag">기상청 공식</span>
                 <span class="tag">${esc(area)}</span>
               </div>
-              <h3>${esc(status.warning||'현재 발효 특보 없음')}</h3>
+              <h3>${esc(status.warning||'운항 관련 발효 특보 없음')}</h3>
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>${esc(status.preliminary||'서울 예비특보 없음')} · ${esc(status.upstream||'팔당 상류 영향특보 없음')}</p>
+          <p>서울 호우·강풍·태풍 예비특보 없음 · 팔당 상류 호우·태풍 영향특보 없음</p>
           <div class="alert-period ${status.sourceMode==='official-warning-api'?'':'alert-source-warning'}">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
-            <b>${esc(status.message||'기상특보 자료 확인')}</b>
+            <b>호우·강풍·태풍만 표시</b>
           </div>
         </article>`;
       return;
     }
 
-    const alerts=[...data.alerts].sort(
-      (a,b)=>alertPriority(a)-alertPriority(b)
-    );
+    const alerts=[...data.alerts]
+      .filter(isImportantOperationAlert)
+      .sort((a,b)=>alertPriority(a)-alertPriority(b));
 
     root.innerHTML=alerts.map(a=>{
       const sourceLabel=

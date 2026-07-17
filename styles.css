@@ -4051,3 +4051,61 @@ details.rain-contribution-box {
   color:#155f7d;
   background:#dff2fa;
 }
+
+
+/* =========================================================
+   v81 운항 핵심특보만 표시
+========================================================= */
+
+.alert-operation-criteria {
+  display:grid;
+  grid-template-columns:1.35fr 1fr 1fr;
+  gap:8px;
+  margin:0 0 10px;
+}
+
+.alert-operation-criteria > div {
+  min-height:54px;
+  padding:9px 11px;
+  border:1px solid #c7d7df;
+  border-radius:10px;
+  background:#f7fafc;
+}
+
+.alert-operation-criteria > div:first-child {
+  border-color:#df969e;
+  background:#fff3f4;
+}
+
+.alert-operation-criteria b,
+.alert-operation-criteria span {
+  display:block;
+}
+
+.alert-operation-criteria b {
+  color:#294f63;
+  font-size:9px;
+  font-weight:950;
+}
+
+.alert-operation-criteria > div:first-child b {
+  color:#b31f2d;
+}
+
+.alert-operation-criteria span {
+  margin-top:5px;
+  color:#466878;
+  font-size:8.5px;
+  font-weight:800;
+  line-height:1.45;
+}
+
+@media (max-width:760px) {
+  .alert-operation-criteria {
+    grid-template-columns:1fr;
+  }
+
+  .alert-operation-criteria > div {
+    min-height:auto;
+  }
+}
