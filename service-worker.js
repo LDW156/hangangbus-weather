@@ -1,16 +1,16 @@
-const CACHE='hangangbus-prealert-rain-visible-v77';
+const CACHE='hangangbus-rain-font-alert-source-v78';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=77',
+  './styles.css?v=78',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=77',
+  './kma.js?v=78',
   './ocean.js?v=69',
-  './app.js?v=77',
+  './app.js?v=78',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

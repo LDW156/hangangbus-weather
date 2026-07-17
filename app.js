@@ -733,10 +733,10 @@
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>${esc(status.preliminary||'서울 예비특보 없음')} · ${esc(status.upstream||'팔당 상류 영향특보 없음')}</p>
-          <div class="alert-period">
+          <p>${esc(status.preliminary||'통보문 보조조회 결과 없음')} · ${esc(status.upstream||'팔당 상류 특보 미확인')}</p>
+          <div class="alert-period alert-source-warning">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
-            <b>현재 주의보·경보·예비특보 없음</b>
+            <b>${esc(status.message||'기상특보 전용 API 연결 필요')}</b>
           </div>
         </article>`;
       return;

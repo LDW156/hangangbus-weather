@@ -1049,19 +1049,20 @@
       issuedAt:latestIssuedAt,
       alerts:uniqueAlerts,
       status:{
+        sourceMode:'forecast-message-fallback',
         area:'서울특별시',
         warning:directOfficialAlerts.length
           ? directOfficialAlerts.map(alert=>alert.title).join(' · ')
-          : '서울 발효 특보 없음',
+          : '기상특보 전용 API 미연결',
         preliminary:directPreliminaryAlerts.length
           ? directPreliminaryAlerts.map(alert=>alert.title).join(' · ')
-          : '서울 예비특보 없음',
+          : '통보문 보조조회에서 서울 예비특보 미확인',
         upstream:upstreamAlerts.length
           ? upstreamAlerts.map(alert=>alert.title).join(' · ')
-          : '팔당 상류 영향특보 없음',
+          : '통보문 보조조회에서 팔당 상류 특보 미확인',
         message:uniqueAlerts.length
-          ? '서울 직접특보와 팔당 상류 영향특보를 분리해 표시합니다.'
-          : '서울 직접특보와 팔당 상류 영향특보가 없습니다.'
+          ? '현재 통보문 보조조회에서 확인된 특보입니다.'
+          : '전용 기상특보 API 연결 전에는 공식 특보 없음으로 확정하지 않습니다.'
       }
     };
   }
