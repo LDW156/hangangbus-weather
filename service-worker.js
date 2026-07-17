@@ -1,8 +1,8 @@
-const CACHE='hangangbus-alert-rep-rain-v75';
+const CACHE='hangangbus-rain-summary-readable-v76';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=75',
+  './styles.css?v=76',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
@@ -10,7 +10,7 @@ const ASSETS=[
   './hrfco.js?v=62',
   './kma.js?v=75',
   './ocean.js?v=69',
-  './app.js?v=75',
+  './app.js?v=76',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

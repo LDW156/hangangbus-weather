@@ -3799,3 +3799,125 @@ details.rain-contribution-box {
     font-size:15px !important;
   }
 }
+
+
+/* =========================================================
+   v76 강수 누적요약 시인성 확대
+========================================================= */
+
+.rain-summary-v57 {
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:10px !important;
+  margin-top:12px !important;
+}
+
+.rain-summary-v57 .rain-item {
+  min-height:116px !important;
+  padding:13px 12px !important;
+  justify-content:center !important;
+  border-width:2px !important;
+}
+
+.rain-summary-v57 .rain-item > .rain-summary-title {
+  min-height:auto !important;
+  display:block !important;
+  color:#244c62 !important;
+  font-size:12px !important;
+  font-weight:950 !important;
+  line-height:1.3 !important;
+  text-align:center;
+}
+
+.rain-summary-window {
+  display:block;
+  margin-top:5px !important;
+  color:#68808d !important;
+  font-size:9px !important;
+  font-style:normal !important;
+  font-weight:800 !important;
+  line-height:1.2;
+}
+
+.rain-summary-v57 .rain-item > b {
+  display:flex !important;
+  align-items:baseline !important;
+  justify-content:center !important;
+  gap:3px !important;
+  width:100% !important;
+  margin-top:10px !important;
+  color:#056a98 !important;
+  font-size:32px !important;
+  font-weight:1000 !important;
+  line-height:1 !important;
+  letter-spacing:-0.6px;
+  white-space:nowrap !important;
+}
+
+.rain-summary-v57 .rain-item > b > span {
+  display:block !important;
+  max-width:none !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
+}
+
+.rain-summary-v57 .rain-item > b small {
+  margin-left:1px !important;
+  font-size:11px !important;
+  font-weight:950 !important;
+}
+
+.rain-summary-v57 .rain-item > b.rain-value-long {
+  font-size:25px !important;
+  letter-spacing:-0.9px !important;
+}
+
+.rain-summary-v57 .rain-item > b.rain-value-long small {
+  font-size:9px !important;
+}
+
+.rain-summary-missing {
+  margin-top:6px !important;
+  color:#9b5c00 !important;
+  font-size:8px !important;
+  font-style:normal !important;
+  font-weight:900 !important;
+}
+
+.rain-basis-badge {
+  min-width:104px !important;
+  padding:6px 10px !important;
+  font-size:9px !important;
+}
+
+@media (max-width:760px) {
+  .rain-summary-v57 {
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .rain-summary-v57 .rain-item {
+    min-height:106px !important;
+    padding:11px 8px !important;
+  }
+
+  .rain-summary-v57 .rain-item > .rain-summary-title {
+    font-size:10.5px !important;
+  }
+
+  .rain-summary-v57 .rain-item > b {
+    font-size:27px !important;
+  }
+
+  .rain-summary-v57 .rain-item > b.rain-value-long {
+    font-size:21px !important;
+  }
+}
+
+@media (max-width:430px) {
+  .rain-summary-v57 {
+    grid-template-columns:1fr !important;
+  }
+
+  .rain-summary-v57 .rain-item {
+    min-height:96px !important;
+  }
+}

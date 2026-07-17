@@ -869,6 +869,38 @@
     return fmt(fallbackNumber,1);
   }
 
+  function rainWindowText(startAt,hours){
+    const start=toDate(startAt);
+    if(!start||Number.isNaN(start.getTime()))return '-';
+
+    const end=new Date(start.getTime()+Number(hours)*60*60*1000);
+    const startDate=start.toLocaleDateString('ko-KR',{
+      month:'2-digit',
+      day:'2-digit'
+    }).replace(/\s/g,'');
+
+    const endDate=end.toLocaleDateString('ko-KR',{
+      month:'2-digit',
+      day:'2-digit'
+    }).replace(/\s/g,'');
+
+    const startTime=start.toLocaleTimeString('ko-KR',{
+      hour:'2-digit',
+      minute:'2-digit',
+      hour12:false
+    });
+
+    const endTime=end.toLocaleTimeString('ko-KR',{
+      hour:'2-digit',
+      minute:'2-digit',
+      hour12:false
+    });
+
+    return startDate===endDate
+      ? `${startTime}~${endTime}`
+      : `${startDate} ${startTime}~${endDate} ${endTime}`;
+  }
+
   function rainAmountMarkup(row){
     if(row?.amountAvailable===false){
       return `<span class="rain-amount-missing">미제공</span>`;
@@ -928,10 +960,10 @@
       const r=data.weather.rainfall[k];
 
       const summaries=[
-        ['향후 3시간 강수량 예보',r.next3hDisplay,r.next3hAmountDisplay,r.next3hReliable],
-        ['향후 6시간 강수량 예보',r.next6hDisplay,r.next6hAmountDisplay,r.next6hReliable],
-        ['향후 12시간 강수량 예보',r.next12hDisplay,r.next12hAmountDisplay,r.next12hReliable],
-        ['향후 24시간 강수량 예보',r.next24hDisplay,r.next24hAmountDisplay,r.next24hReliable]
+        ['향후 3시간 강수량 예보',3,r.next3hDisplay,r.next3hAmountDisplay,r.next3hReliable],
+        ['향후 6시간 강수량 예보',6,r.next6hDisplay,r.next6hAmountDisplay,r.next6hReliable],
+        ['향후 12시간 강수량 예보',12,r.next12hDisplay,r.next12hAmountDisplay,r.next12hReliable],
+        ['향후 24시간 강수량 예보',24,r.next24hDisplay,r.next24hAmountDisplay,r.next24hReliable]
       ];
 
       const contribution=rainfallContributionSummary(
@@ -968,7 +1000,7 @@
 
         <div class="sector-title rain-sector-title">
           <h3>${names[k]}</h3>
-          <span class="rain-basis-badge">${esc(r.representativeName||'-')} 기준</span>
+          <span class="rain-basis-badge">${esc(r.representativeName||'-')} 단일지점 기준</span>
         </div>
 
         <div class="rain-current-row">
@@ -988,19 +1020,20 @@
 
         <div class="rain-summary rain-summary-v57">
           ${summaries.map(x=>{
-            const reliable=x[3]!==false;
+            const reliable=x[4]!==false;
             const mainValue=reliable
-              ? rainDisplay(x[1],x[2])
+              ? rainDisplay(x[2],x[3])
               : '부분자료';
 
             const longValue=String(mainValue).length>=7;
 
             return `<div class="rain-item ${reliable?'':'rain-summary-partial'}">
-              <span>${x[0]}</span>
+              <span class="rain-summary-title">${x[0]}</span>
+              <em class="rain-summary-window">${rainWindowText(r.forecastStartAt,x[1])}</em>
               <b class="${longValue?'rain-value-long':''}">
                 <span>${mainValue}</span>${reliable?'<small>mm</small>':''}
               </b>
-              ${reliable?'':'<em>일부 시각 미제공</em>'}
+              ${reliable?'':'<em class="rain-summary-missing">일부 시각 미제공</em>'}
             </div>`;
           }).join('')}
         </div>
