@@ -3109,3 +3109,24 @@ footer strong {
     grid-template-columns:1fr;
   }
 }
+
+
+/* v70 강수량 원문 범위·확률 해석 */
+.rain-interpretation-note {
+  margin: 10px 0 8px;
+  padding: 8px 10px;
+  border-left: 3px solid #398ab4;
+  background: #f2f8fb;
+  color: #476a7c;
+  font-size: 9px;
+  line-height: 1.55;
+  font-weight: 720;
+}
+
+.rain-hour-amount {
+  white-space: nowrap;
+}
+
+.rain-hour-amount[title] {
+  cursor: help;
+}

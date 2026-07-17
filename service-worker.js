@@ -1,16 +1,16 @@
-const CACHE='hangangbus-tide-monthly-v69';
+const CACHE='hangangbus-rainfall-integrity-v70';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=69',
+  './styles.css?v=70',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=62',
+  './kma.js?v=70',
   './ocean.js?v=69',
-  './app.js?v=69',
+  './app.js?v=70',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

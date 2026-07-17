@@ -264,22 +264,108 @@
     return Number.isFinite(n) ? n : fallback;
   }
 
+  function parseRainDetail(value) {
+    const raw = String(value ?? '').trim();
+    const compact = raw.replace(/\s+/g, '');
+
+    if (!compact || /강수없음|없음/.test(compact)) {
+      return {
+        raw: raw || '강수없음',
+        lower: 0,
+        upper: 0,
+        safety: 0,
+        display: '0.0',
+        hasAmount: false,
+        qualifier: 'none'
+      };
+    }
+
+    if (/미만/.test(compact)) {
+      const n = Number(compact.match(/[\d.]+/)?.[0]);
+
+      if (Number.isFinite(n)) {
+        return {
+          raw,
+          lower: 0,
+          upper: n,
+          safety: n,
+          display: `<${formatRainNumber(n)}`,
+          hasAmount: true,
+          qualifier: 'less-than'
+        };
+      }
+    }
+
+    if (/이상/.test(compact)) {
+      const n = Number(compact.match(/[\d.]+/)?.[0]);
+
+      if (Number.isFinite(n)) {
+        return {
+          raw,
+          lower: n,
+          upper: null,
+          safety: n,
+          display: `≥${formatRainNumber(n)}`,
+          hasAmount: true,
+          qualifier: 'at-least'
+        };
+      }
+    }
+
+    if (compact.includes('~')) {
+      const nums = compact.match(/[\d.]+/g)?.map(Number) || [];
+
+      if (nums.length >= 2 && nums.every(Number.isFinite)) {
+        const lower = Math.min(nums[0], nums[1]);
+        const upper = Math.max(nums[0], nums[1]);
+
+        return {
+          raw,
+          lower,
+          upper,
+          safety: upper,
+          display: `${formatRainNumber(lower)}~${formatRainNumber(upper)}`,
+          hasAmount: upper > 0,
+          qualifier: 'range'
+        };
+      }
+    }
+
+    const exact = Number(compact.replace(/,/g, ''));
+
+    if (Number.isFinite(exact)) {
+      return {
+        raw,
+        lower: exact,
+        upper: exact,
+        safety: exact,
+        display: formatRainNumber(exact),
+        hasAmount: exact > 0,
+        qualifier: 'exact'
+      };
+    }
+
+    return {
+      raw,
+      lower: 0,
+      upper: 0,
+      safety: 0,
+      display: '자료확인',
+      hasAmount: false,
+      qualifier: 'unknown'
+    };
+  }
+
+  function formatRainNumber(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '-';
+    return n >= 10 || Number.isInteger(n)
+      ? String(n)
+      : n.toFixed(1);
+  }
+
   function parseRain(value) {
-    const s = String(value ?? '').trim();
-    if (!s || /강수없음|없음/.test(s)) return 0;
-    if (/미만/.test(s)) {
-      const n = Number(s.match(/[\d.]+/)?.[0]);
-      return Number.isFinite(n) ? n / 2 : 0;
-    }
-    if (/이상/.test(s)) {
-      const n = Number(s.match(/[\d.]+/)?.[0]);
-      return Number.isFinite(n) ? n : 0;
-    }
-    if (s.includes('~')) {
-      const nums = s.match(/[\d.]+/g)?.map(Number) || [];
-      if (nums.length >= 2) return (nums[0] + nums[1]) / 2;
-    }
-    return num(s, 0);
+    return parseRainDetail(value).safety;
   }
 
   function direction16(deg) {
@@ -611,95 +697,195 @@
 
   function buildRouteRainfall(stations,currentMap,shortMap) {
     const groups=uniqueGridGroups(stations);
+
     const currentCandidates=groups.map(group=>{
       const value=currentMap[group.key];
-      return {names:group.names,amount:Number(value?.rain1h),observedAt:value?.observedAt||null};
+      return {
+        names:group.names,
+        amount:Number(value?.rain1h),
+        observedAt:value?.observedAt||null
+      };
     });
+
     const currentMax=maxCandidate(currentCandidates,'amount');
-    const forecastByTime=new Map();
+    const candidatesByTime=new Map();
     const firstForecast=ceilHour(new Date()).getTime();
 
     groups.forEach(group=>{
       const short=shortMap[group.key];
+
       (short?.timeline||[])
         .filter(row=>new Date(row.time).getTime()>=firstForecast-60000)
         .forEach(row=>{
-          const amount=parseRain(row.PCP), probability=num(row.POP,0);
-          const existing=forecastByTime.get(row.time)||{
+          const detail=parseRainDetail(row.PCP);
+          const candidate={
             time:row.time,
-            amount:-1,
-            probability:-1,
-            amountSource:'',
-            probabilitySource:'',
-            pty:0,
-            sky:1
+            names:group.names,
+            source:group.names.join('·'),
+            probability:num(row.POP,0),
+            pty:num(row.PTY,0),
+            sky:num(row.SKY,1),
+            rawAmount:String(row.PCP??'').trim(),
+            amountLower:detail.lower,
+            amountUpper:detail.upper,
+            amountSafety:detail.safety,
+            amountDisplay:detail.display,
+            amountQualifier:detail.qualifier,
+            hasAmount:detail.hasAmount
           };
 
-          if(amount>existing.amount){
-            existing.amount=amount;
-            existing.amountSource=group.names.join('·');
-            existing.pty=num(row.PTY,0);
-            existing.sky=num(row.SKY,1);
+          if(!candidatesByTime.has(row.time)){
+            candidatesByTime.set(row.time,[]);
           }
 
-          if(probability>existing.probability){
-            existing.probability=probability;
-            existing.probabilitySource=group.names.join('·');
-
-            // 강수량이 0일 때는 가장 높은 강수확률 지점의 하늘/강수형태를 사용합니다.
-            if(existing.amount<=0){
-              existing.pty=num(row.PTY,0);
-              existing.sky=num(row.SKY,1);
-            }
-          }
-
-          forecastByTime.set(row.time,existing);
+          candidatesByTime.get(row.time).push(candidate);
         });
     });
 
-    const future=[...forecastByTime.values()]
-      .sort((a,b)=>new Date(a.time)-new Date(b.time))
+    const future=[...candidatesByTime.entries()]
+      .sort((a,b)=>new Date(a[0])-new Date(b[0]))
       .slice(0,24)
-      .map(row=>({
-        time:row.time,
-        label:labelTime(row.time),
-        amount:Math.max(0,row.amount),
-        probability:Math.max(0,row.probability),
-        source:row.amountSource||row.probabilitySource||'노선 대표격자',
-        pty:num(row.pty,0),
-        sky:num(row.sky,1),
-        type:'forecast'
-      }));
+      .map(([time,candidates])=>{
+        const selected=[...candidates].sort((a,b)=>
+          b.amountSafety-a.amountSafety ||
+          b.probability-a.probability
+        )[0];
+
+        return {
+          ...selected,
+          time,
+          label:labelTime(time),
+          amount:selected.amountSafety,
+          type:'forecast'
+        };
+      });
 
     const horizon=hours=>{
       const rows=future.slice(0,hours);
+      const lower=rows.reduce(
+        (sum,row)=>sum+num(row.amountLower),
+        0
+      );
+      const hasOpenUpper=rows.some(
+        row=>row.amountUpper===null
+      );
+      const upper=hasOpenUpper
+        ? null
+        : rows.reduce((sum,row)=>sum+num(row.amountUpper),0);
+      const safety=rows.reduce(
+        (sum,row)=>sum+num(row.amountSafety),
+        0
+      );
+      const probability=rows.length
+        ? Math.max(...rows.map(row=>num(row.probability)))
+        : 0;
+
       return {
-        amount:rows.reduce((sum,row)=>sum+num(row.amount),0),
-        probability:rows.length?Math.max(...rows.map(row=>num(row.probability))):0
+        lower,
+        upper,
+        safety,
+        probability,
+        count:rows.length,
+        display:rainAccumulationDisplay(lower,upper)
       };
     };
-    const h3=horizon(3),h6=horizon(6),h12=horizon(12),h24=horizon(24);
-    const observedAt=currentCandidates.map(x=>new Date(x.observedAt).getTime()).filter(Number.isFinite);
-    const forecastIssuedAt=groups.map(group=>shortMap[group.key]?.issuedAt).filter(Boolean).sort().at(-1)||null;
+
+    const h3=horizon(3);
+    const h6=horizon(6);
+    const h12=horizon(12);
+    const h24=horizon(24);
+
+    const observedAt=currentCandidates
+      .map(x=>new Date(x.observedAt).getTime())
+      .filter(Number.isFinite);
+
+    const forecastIssuedAt=groups
+      .map(group=>shortMap[group.key]?.issuedAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1)||null;
+
     const basisLabel=groups.map(group=>
       `${group.names.join('·')} ${Number(group.lat).toFixed(5)}°N, ${Number(group.lon).toFixed(5)}°E`
     ).join(' / ');
+
     const dataAvailable=currentMax.available&&future.length>0;
-    const allDry=dataAvailable&&currentMax.value===0&&future.every(row=>row.amount===0);
+    const allDry=dataAvailable&&
+      currentMax.value===0&&
+      future.every(row=>row.amountUpper===0);
 
     return {
-      observedAt:observedAt.length?new Date(Math.max(...observedAt)).toISOString():null,
-      forecastIssuedAt, forecastStartAt:future[0]?.time||null,
-      currentRate:currentMax.value,currentSource:currentMax.source,
-      next3h:h3.amount,next6h:h6.amount,next12h:h12.amount,next24h:h24.amount,
-      next3hProbability:h3.probability,next6hProbability:h6.probability,
-      next12hProbability:h12.probability,next24hProbability:h24.probability,
-      basisLabel,aggregationLabel:'각 시간대 노선 대표격자 중 최대 강수량을 누적',
-      allDry,dataAvailable,
-      dryMessage:!dataAvailable?'실황 또는 단기예보 응답이 부족합니다.':allDry?'현재 실황과 향후 예보가 모든 대표격자에서 강수없음입니다.':'',
-      timeline:future.slice(0,8),observationIntervalMinutes:60,forecastIntervalMinutes:60,
-      sourceLabel:'기상청 초단기실황 RN1 · 단기예보 PCP·POP'
+      observedAt:observedAt.length
+        ? new Date(Math.max(...observedAt)).toISOString()
+        : null,
+      forecastIssuedAt,
+      forecastStartAt:future[0]?.time||null,
+
+      currentRate:currentMax.value,
+      currentSource:currentMax.source,
+
+      next3h:h3.safety,
+      next6h:h6.safety,
+      next12h:h12.safety,
+      next24h:h24.safety,
+
+      next3hDisplay:h3.display,
+      next6hDisplay:h6.display,
+      next12hDisplay:h12.display,
+      next24hDisplay:h24.display,
+
+      next3hProbability:h3.probability,
+      next6hProbability:h6.probability,
+      next12hProbability:h12.probability,
+      next24hProbability:h24.probability,
+
+      forecastHourCount:future.length,
+      next3hCount:h3.count,
+      next6hCount:h6.count,
+      next12hCount:h12.count,
+      next24hCount:h24.count,
+
+      basisLabel,
+      aggregationLabel:
+        '시간별로 한 개 대표격자를 선택해 동일 격자의 강수량·확률·강수형태를 사용',
+      allDry,
+      dataAvailable,
+      dryMessage:!dataAvailable
+        ? '실황 또는 단기예보 응답이 부족합니다.'
+        : allDry
+          ? '현재 실황과 향후 예보가 모든 대표격자에서 강수없음입니다.'
+          : '',
+      timeline:future.slice(0,8),
+      observationIntervalMinutes:60,
+      forecastIntervalMinutes:60,
+      sourceLabel:
+        '기상청 초단기실황 RN1 · 단기예보 PCP(1시간 강수량)·POP'
     };
+  }
+
+  function rainAccumulationDisplay(lower,upper){
+    const low=Number(lower);
+    const high=upper===null?null:Number(upper);
+
+    if(!Number.isFinite(low))return '-';
+
+    if(high===null){
+      return `≥${formatRainNumber(low)}`;
+    }
+
+    if(!Number.isFinite(high)){
+      return formatRainNumber(low);
+    }
+
+    if(Math.abs(high-low)<1e-9){
+      return formatRainNumber(low);
+    }
+
+    if(low===0&&high<=1){
+      return `<${formatRainNumber(high)}`;
+    }
+
+    return `${formatRainNumber(low)}~${formatRainNumber(high)}`;
   }
 
   function labelTime(iso) {

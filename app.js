@@ -668,27 +668,47 @@
   }
 
   function rainVisual(row){
-    const amount=Number(row?.amount)||0;
     const probability=Number(row?.probability)||0;
     const pty=Number(row?.pty)||0;
+    const upper=row?.amountUpper===null
+      ? null
+      : Number(row?.amountUpper);
+    const hasForecastAmount=
+      row?.hasAmount===true ||
+      upper===null ||
+      (Number.isFinite(upper)&&upper>0);
 
-    if([1,4,5].includes(pty)||amount>0){
+    if(hasForecastAmount&&[1,4,5].includes(pty)){
       return {icon:'🌧️',label:'비',className:'rain-now'};
     }
 
-    if([2,6].includes(pty)){
+    if(hasForecastAmount&&[2,6].includes(pty)){
       return {icon:'🌨️',label:'비·눈',className:'rain-now'};
     }
 
-    if([3,7].includes(pty)){
+    if(hasForecastAmount&&[3,7].includes(pty)){
       return {icon:'❄️',label:'눈',className:'rain-now'};
     }
 
     if(probability>=20){
-      return {icon:'🌦️',label:'비 가능성 있음',className:'rain-possible'};
+      return {
+        icon:'🌦️',
+        label:'비 가능성 있음',
+        className:'rain-possible'
+      };
     }
 
-    return {icon:'☀️',label:'강수 예보 없음',className:'rain-none'};
+    return {
+      icon:'☀️',
+      label:'강수 예보 없음',
+      className:'rain-none'
+    };
+  }
+
+  function rainDisplay(value,fallbackNumber){
+    const text=String(value??'').trim();
+    if(text)return text;
+    return fmt(fallbackNumber,1);
   }
 
   function renderRain(){
@@ -698,10 +718,10 @@
       const r=data.weather.rainfall[k];
 
       const summaries=[
-        ['향후 3시간',r.next3h,r.next3hProbability],
-        ['향후 6시간',r.next6h,r.next6hProbability],
-        ['향후 12시간',r.next12h,r.next12hProbability],
-        ['향후 24시간',r.next24h,r.next24hProbability]
+        ['향후 3시간',r.next3hDisplay,r.next3h,r.next3hProbability,r.next3hCount],
+        ['향후 6시간',r.next6hDisplay,r.next6h,r.next6hProbability,r.next6hCount],
+        ['향후 12시간',r.next12hDisplay,r.next12h,r.next12hProbability,r.next12hCount],
+        ['향후 24시간',r.next24hDisplay,r.next24h,r.next24hProbability,r.next24hCount]
       ];
 
       const rows=(r.timeline||[]).map(x=>{
@@ -713,7 +733,7 @@
             <div class="rain-weather-icon" aria-label="${esc(visual.label)}">${visual.icon}</div>
           </div>
           <div class="rain-weather-label">${esc(visual.label)}</div>
-          <div class="rain-hour-amount">${fmt(x.amount,1)}<small>mm</small></div>
+          <div class="rain-hour-amount" title="기상청 PCP 원문: ${esc(x.rawAmount||'-')}">${rainDisplay(x.amountDisplay,x.amount)}<small>mm</small></div>
           <div class="rain-hour-probability">
             <span>강수확률</span>
             <b>${fmt(x.probability)}%</b>
@@ -754,15 +774,21 @@
 
         <div class="rain-summary rain-summary-v57">
           ${summaries.map(x=>{
-            const probability=Number(x[2])||0;
+            const probability=Number(x[3])||0;
             const band=probability>=20?'possible':'none';
+            const count=Number(x[4])||0;
 
             return `<div class="rain-item probability-${band}">
               <span>${x[0]} 누적</span>
-              <b>${fmt(x[1],1)}<small>mm</small></b>
-              <em>강수확률 최대 <strong>${fmt(probability)}%</strong></em>
+              <b>${rainDisplay(x[1],x[2])}<small>mm</small></b>
+              <em>${count}개 시각 · 강수확률 최대 <strong>${fmt(probability)}%</strong></em>
             </div>`;
           }).join('')}
+        </div>
+
+        <div class="rain-interpretation-note">
+          강수확률은 비가 내릴 가능성이고, 강수량은 해당 1시간의 예상량입니다.
+          &quot;1mm 미만&quot; 같은 정성값은 임의의 0.5mm로 바꾸지 않고 원문 범위로 표시합니다.
         </div>
 
         <div class="rain-table-heading">
