@@ -3921,3 +3921,53 @@ details.rain-contribution-box {
     min-height:96px !important;
   }
 }
+
+
+/* =========================================================
+   v77 강수량 숫자 직접 확대·예비특보 wr 필드 수정
+========================================================= */
+
+.rain-summary-v57 .rain-item > b.rain-summary-amount {
+  display:block !important;
+  width:100% !important;
+  margin:12px 0 0 !important;
+  padding:0 !important;
+  color:#006b9e !important;
+  font-family:Arial, "Noto Sans KR", sans-serif !important;
+  font-size:38px !important;
+  font-weight:1000 !important;
+  line-height:1 !important;
+  letter-spacing:-1.2px !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+}
+
+.rain-summary-v57 .rain-item > b.rain-summary-amount small {
+  display:inline !important;
+  margin-left:4px !important;
+  color:#006b9e !important;
+  font-size:13px !important;
+  font-weight:1000 !important;
+  line-height:1 !important;
+  vertical-align:baseline !important;
+}
+
+.rain-summary-v57 .rain-item > b.rain-summary-amount.rain-value-long {
+  font-size:30px !important;
+  letter-spacing:-1.5px !important;
+}
+
+.rain-summary-v57 .rain-item > b.rain-summary-amount.rain-value-long small {
+  font-size:11px !important;
+}
+
+@media (max-width:760px) {
+  .rain-summary-v57 .rain-item > b.rain-summary-amount {
+    font-size:34px !important;
+  }
+
+  .rain-summary-v57 .rain-item > b.rain-summary-amount.rain-value-long {
+    font-size:27px !important;
+  }
+}

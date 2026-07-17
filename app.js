@@ -1030,8 +1030,8 @@
             return `<div class="rain-item ${reliable?'':'rain-summary-partial'}">
               <span class="rain-summary-title">${x[0]}</span>
               <em class="rain-summary-window">${rainWindowText(r.forecastStartAt,x[1])}</em>
-              <b class="${longValue?'rain-value-long':''}">
-                <span>${mainValue}</span>${reliable?'<small>mm</small>':''}
+              <b class="rain-summary-amount ${longValue?'rain-value-long':''}">
+                ${mainValue}${reliable?'<small>mm</small>':''}
               </b>
               ${reliable?'':'<em class="rain-summary-missing">일부 시각 미제공</em>'}
             </div>`;

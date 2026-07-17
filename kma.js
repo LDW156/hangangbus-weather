@@ -607,10 +607,16 @@
   }) {
     const alerts = [];
     const period = parseAlertEffectivePeriod(text, issuedAt);
+    const weatherTypes = extractWeatherTypes(text);
+    const preliminaryFallback =
+      weatherTypes.length
+        ? weatherTypes.map(type => `${type} 예비특보`).join(' · ')
+        : '기상 예비특보';
+
     const baseTitle = extractAlertNames(
       text,
       source === 'preliminary'
-        ? '기상 예비특보'
+        ? preliminaryFallback
         : '기상특보 발표'
     );
 
@@ -871,12 +877,16 @@
   }
 
   function preliminaryTextFromItem(item) {
+    /*
+     * wr는 기상청 응답정의상 예비특보 전용 필드입니다.
+     * wr 본문에 '예비특보'라는 단어가 반복되지 않아도
+     * 내용이 있으면 예비특보로 처리해야 합니다.
+     */
     const direct = stripSituationNotice(cleanText(item?.wr));
 
     if (
       direct &&
-      /예비특보/.test(direct) &&
-      !/예비특보\s*없음|해당\s*없음/.test(direct)
+      !/예비특보\s*없음|특보\s*없음|해당\s*없음|현재\s*없음/.test(direct)
     ) {
       return direct;
     }
@@ -888,7 +898,7 @@
 
     if (
       extracted &&
-      !/예비특보\s*없음|해당\s*없음/.test(extracted)
+      !/예비특보\s*없음|특보\s*없음|해당\s*없음|현재\s*없음/.test(extracted)
     ) {
       return stripSituationNotice(extracted);
     }
@@ -979,11 +989,15 @@
       const issuedAt = parseSituationTime(item.tmFc);
       const text = preliminaryTextFromItem(item);
 
+      /*
+       * wr 자체가 예비특보 필드이므로 본문에 '예비특보',
+       * '주의보', '경보'라는 단어가 없어도 기상현상명이
+       * 한 개 이상 있으면 유효 예비특보로 처리합니다.
+       */
       if (
         !text ||
-        !hasSpecificWeatherAlert(text) ||
-        !/예비특보/.test(text) ||
-        /해제|취소/.test(text)
+        !extractWeatherTypes(text).length ||
+        /해제|취소|예비특보\s*없음|특보\s*없음/.test(text)
       ) {
         return;
       }
