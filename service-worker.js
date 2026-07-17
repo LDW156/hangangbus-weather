@@ -1,16 +1,16 @@
-const CACHE='hangangbus-rainfall-integrity-v70';
+const CACHE='hangangbus-rainfall-trace-v71';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=70',
+  './styles.css?v=71',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=70',
+  './kma.js?v=71',
   './ocean.js?v=69',
-  './app.js?v=70',
+  './app.js?v=71',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

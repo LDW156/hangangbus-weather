@@ -382,6 +382,8 @@
 
       const by3=Number(r.next3h)>=stop3h;
       const by12=Number(r.next12h)>=stop12h;
+      const reliable3=r.next3hReliable!==false;
+      const reliable12=r.next12hReliable!==false;
 
       if(by3||by12){
         const triggered=[
@@ -396,8 +398,16 @@
         return 'stop';
       }
 
+      if(!reliable3||!reliable12){
+        reasons.push(reason(
+          `강수량 일부 미제공 · 3시간 ${esc(r.next3hAmountDisplay||'-')}mm / 12시간 ${esc(r.next12hAmountDisplay||'-')}mm · 수동 확인 필요`,
+          'warning','확인'
+        ));
+        return currentStatus==='normal'?'caution':currentStatus;
+      }
+
       reasons.push(reason(
-        `예상강수 3시간 ${fmt(r.next3h,1)}mm / 12시간 ${fmt(r.next12h,1)}mm · 강수확률 최대 ${fmt(Math.max(r.next3hProbability||0,r.next12hProbability||0))}%`,
+        `예상강수 3시간 ${esc(r.next3hAmountDisplay||fmt(r.next3h,1))}mm / 12시간 ${esc(r.next12hAmountDisplay||fmt(r.next12h,1))}mm · 강수확률 최대 ${fmt(Math.max(r.next3hProbability||0,r.next12hProbability||0))}%`,
         'normal','정상'
       ));
       return currentStatus;
@@ -711,6 +721,32 @@
     return fmt(fallbackNumber,1);
   }
 
+  function rainAmountMarkup(row){
+    if(row?.amountAvailable===false){
+      return `<span class="rain-amount-missing">미제공</span>`;
+    }
+
+    const amount=rainDisplay(row?.amountDisplay,row?.amount);
+    const note=row?.amountQualifier==='none'
+      ? '<em class="rain-zero-note">정량 강수 없음</em>'
+      : '';
+
+    return `${amount}<small>mm</small>${note}`;
+  }
+
+  function rainfallContributorText(rows){
+    if(!Array.isArray(rows)||!rows.length){
+      return '<span class="rain-contribution-empty">정량 강수 예상시간 없음</span>';
+    }
+
+    return rows.map(row=>
+      `<span class="rain-contribution-chip">
+        <b>${dateTimeText(row.time)}</b>
+        <em>${esc(row.amountDisplay)}mm</em>
+      </span>`
+    ).join('');
+  }
+
   function renderRain(){
     const names={west:'서부선',east:'동부선'};
 
@@ -718,10 +754,10 @@
       const r=data.weather.rainfall[k];
 
       const summaries=[
-        ['향후 3시간',r.next3hDisplay,r.next3h,r.next3hProbability,r.next3hCount],
-        ['향후 6시간',r.next6hDisplay,r.next6h,r.next6hProbability,r.next6hCount],
-        ['향후 12시간',r.next12hDisplay,r.next12h,r.next12hProbability,r.next12hCount],
-        ['향후 24시간',r.next24hDisplay,r.next24h,r.next24hProbability,r.next24hCount]
+        ['향후 3시간',r.next3hDisplay,r.next3hAmountDisplay,r.next3hProbability,r.next3hCount,r.next3hAvailableCount,r.next3hReliable],
+        ['향후 6시간',r.next6hDisplay,r.next6hAmountDisplay,r.next6hProbability,r.next6hCount,r.next6hAvailableCount,r.next6hReliable],
+        ['향후 12시간',r.next12hDisplay,r.next12hAmountDisplay,r.next12hProbability,r.next12hCount,r.next12hAvailableCount,r.next12hReliable],
+        ['향후 24시간',r.next24hDisplay,r.next24hAmountDisplay,r.next24hProbability,r.next24hCount,r.next24hAvailableCount,r.next24hReliable]
       ];
 
       const rows=(r.timeline||[]).map(x=>{
@@ -733,7 +769,7 @@
             <div class="rain-weather-icon" aria-label="${esc(visual.label)}">${visual.icon}</div>
           </div>
           <div class="rain-weather-label">${esc(visual.label)}</div>
-          <div class="rain-hour-amount" title="기상청 PCP 원문: ${esc(x.rawAmount||'-')}">${rainDisplay(x.amountDisplay,x.amount)}<small>mm</small></div>
+          <div class="rain-hour-amount" title="기상청 PCP 원문: ${esc(x.rawAmount||'-')}">${rainAmountMarkup(x)}</div>
           <div class="rain-hour-probability">
             <span>강수확률</span>
             <b>${fmt(x.probability)}%</b>
@@ -776,12 +812,16 @@
           ${summaries.map(x=>{
             const probability=Number(x[3])||0;
             const band=probability>=20?'possible':'none';
-            const count=Number(x[4])||0;
+            const totalCount=Number(x[4])||0;
+            const availableCount=Number(x[5])||0;
+            const reliable=x[6]!==false;
+            const mainValue=reliable?rainDisplay(x[1],x[2]):'부분자료';
+            const detailValue=rainDisplay(x[2],0);
 
-            return `<div class="rain-item probability-${band}">
+            return `<div class="rain-item probability-${band} ${reliable?'':'rain-summary-partial'}">
               <span>${x[0]} 누적</span>
-              <b>${rainDisplay(x[1],x[2])}<small>mm</small></b>
-              <em>${count}개 시각 · 강수확률 최대 <strong>${fmt(probability)}%</strong></em>
+              <b>${mainValue}${reliable?'<small>mm</small>':''}</b>
+              <em>${availableCount}/${totalCount}개 정량자료 · 강수확률 최대 <strong>${fmt(probability)}%</strong>${reliable?'':`<br>확인분 누적 ${detailValue}mm`}</em>
             </div>`;
           }).join('')}
         </div>
@@ -791,8 +831,21 @@
           &quot;1mm 미만&quot; 같은 정성값은 임의의 0.5mm로 바꾸지 않고 원문 범위로 표시합니다.
         </div>
 
+        <div class="rain-contribution-box">
+          <div class="rain-contribution-head">
+            <b>24시간 누적 강수 기여시간</b>
+            <span>아래 첫 ${fmt(r.timelineHours||8)}시간 이후 자료도 포함</span>
+          </div>
+          <div class="rain-contribution-list">
+            ${rainfallContributorText(r.rainContributors)}
+          </div>
+          ${(r.missingAmountHours||[]).length
+            ? `<div class="rain-missing-hours">강수량 미제공 시각 ${(r.missingAmountHours||[]).map(x=>dateTimeText(x.time)).join(' · ')}</div>`
+            : ''}
+        </div>
+
         <div class="rain-table-heading">
-          <h4>예상 강수량(시간별)</h4>
+          <h4>예상 강수량(향후 ${fmt(r.timelineHours||8)}시간)</h4>
           <span>기상 기준좌표 ${esc(r.basisLabel)}</span>
         </div>
 

@@ -3130,3 +3130,116 @@ footer strong {
 .rain-hour-amount[title] {
   cursor: help;
 }
+
+
+/* =========================================================
+   v71 강수량 파싱·24시간 누적 추적
+========================================================= */
+
+.rain-amount-missing {
+  display:inline-block;
+  color:#a44936;
+  font-size:14px;
+  font-weight:900;
+}
+
+.rain-zero-note {
+  display:block;
+  margin-top:3px;
+  color:#6c8290;
+  font-size:7px;
+  font-style:normal;
+  font-weight:750;
+}
+
+.rain-summary-partial {
+  border-color:#d9a55b !important;
+  background:#fff8e8 !important;
+}
+
+.rain-summary-partial b {
+  color:#9b5c00 !important;
+  font-size:15px !important;
+}
+
+.rain-contribution-box {
+  margin:10px 0 6px;
+  padding:10px;
+  border:1px solid #bed2de;
+  border-radius:10px;
+  background:#f7fbfd;
+}
+
+.rain-contribution-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.rain-contribution-head b {
+  color:#173f56;
+  font-size:10px;
+}
+
+.rain-contribution-head span {
+  color:#718894;
+  font-size:8px;
+  text-align:right;
+}
+
+.rain-contribution-list {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.rain-contribution-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 8px;
+  border:1px solid #8abdd6;
+  border-radius:999px;
+  background:#eaf6fc;
+}
+
+.rain-contribution-chip b {
+  color:#155c7e;
+  font-size:8px;
+}
+
+.rain-contribution-chip em {
+  color:#0b789f;
+  font-size:9px;
+  font-style:normal;
+  font-weight:900;
+}
+
+.rain-contribution-empty {
+  color:#607b89;
+  font-size:8px;
+  font-weight:750;
+}
+
+.rain-missing-hours {
+  margin-top:7px;
+  padding-top:7px;
+  border-top:1px dashed #d4b57a;
+  color:#9b5c00;
+  font-size:8px;
+  font-weight:800;
+}
+
+@media (max-width:760px) {
+  .rain-contribution-head {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:3px;
+  }
+
+  .rain-contribution-head span {
+    text-align:left;
+  }
+}

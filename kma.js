@@ -268,14 +268,33 @@
     const raw = String(value ?? '').trim();
     const compact = raw.replace(/\s+/g, '');
 
-    if (!compact || /강수없음|없음/.test(compact)) {
+    // PCP 항목 자체가 없거나 원기관이 결측기호를 보낸 경우
+    if (
+      !compact ||
+      /^[-–—]+$/.test(compact) ||
+      /자료없음|미제공|결측|확인필요/.test(compact)
+    ) {
       return {
-        raw: raw || '강수없음',
+        raw,
+        lower: null,
+        upper: null,
+        safety: 0,
+        display: '-',
+        hasAmount: false,
+        available: false,
+        qualifier: 'missing'
+      };
+    }
+
+    if (/강수없음|없음/.test(compact)) {
+      return {
+        raw,
         lower: 0,
         upper: 0,
         safety: 0,
         display: '0.0',
         hasAmount: false,
+        available: true,
         qualifier: 'none'
       };
     }
@@ -291,6 +310,7 @@
           safety: n,
           display: `<${formatRainNumber(n)}`,
           hasAmount: true,
+          available: true,
           qualifier: 'less-than'
         };
       }
@@ -307,6 +327,7 @@
           safety: n,
           display: `≥${formatRainNumber(n)}`,
           hasAmount: true,
+          available: true,
           qualifier: 'at-least'
         };
       }
@@ -326,32 +347,42 @@
           safety: upper,
           display: `${formatRainNumber(lower)}~${formatRainNumber(upper)}`,
           hasAmount: upper > 0,
+          available: true,
           qualifier: 'range'
         };
       }
     }
 
-    const exact = Number(compact.replace(/,/g, ''));
+    // 0.0mm, 1mm처럼 단위가 붙은 정확값 처리
+    const exactMatch = compact.match(
+      /^(-?\d+(?:\.\d+)?)(?:mm)?$/i
+    );
 
-    if (Number.isFinite(exact)) {
-      return {
-        raw,
-        lower: exact,
-        upper: exact,
-        safety: exact,
-        display: formatRainNumber(exact),
-        hasAmount: exact > 0,
-        qualifier: 'exact'
-      };
+    if (exactMatch) {
+      const exact = Number(exactMatch[1]);
+
+      if (Number.isFinite(exact)) {
+        return {
+          raw,
+          lower: exact,
+          upper: exact,
+          safety: exact,
+          display: formatRainNumber(exact),
+          hasAmount: exact > 0,
+          available: true,
+          qualifier: 'exact'
+        };
+      }
     }
 
     return {
       raw,
-      lower: 0,
-      upper: 0,
+      lower: null,
+      upper: null,
       safety: 0,
-      display: '자료확인',
+      display: '-',
       hasAmount: false,
+      available: false,
       qualifier: 'unknown'
     };
   }
@@ -731,7 +762,8 @@
             amountSafety:detail.safety,
             amountDisplay:detail.display,
             amountQualifier:detail.qualifier,
-            hasAmount:detail.hasAmount
+            hasAmount:detail.hasAmount,
+            amountAvailable:detail.available
           };
 
           if(!candidatesByTime.has(row.time)){
@@ -746,7 +778,13 @@
       .sort((a,b)=>new Date(a[0])-new Date(b[0]))
       .slice(0,24)
       .map(([time,candidates])=>{
-        const selected=[...candidates].sort((a,b)=>
+        const available=candidates.filter(
+          candidate=>candidate.amountAvailable
+        );
+
+        const pool=available.length?available:candidates;
+
+        const selected=[...pool].sort((a,b)=>
           b.amountSafety-a.amountSafety ||
           b.probability-a.probability
         )[0];
@@ -762,23 +800,40 @@
 
     const horizon=hours=>{
       const rows=future.slice(0,hours);
-      const lower=rows.reduce(
+      const expectedCount=hours;
+      const availableRows=rows.filter(row=>row.amountAvailable);
+      const unavailableCount=
+        Math.max(0,expectedCount-rows.length) +
+        rows.filter(row=>!row.amountAvailable).length;
+
+      const lower=availableRows.reduce(
         (sum,row)=>sum+num(row.amountLower),
         0
       );
-      const hasOpenUpper=rows.some(
-        row=>row.amountUpper===null
+
+      const hasOpenUpper=availableRows.some(
+        row=>row.amountUpper===null &&
+          row.amountQualifier==='at-least'
       );
+
       const upper=hasOpenUpper
         ? null
-        : rows.reduce((sum,row)=>sum+num(row.amountUpper),0);
-      const safety=rows.reduce(
+        : availableRows.reduce(
+            (sum,row)=>sum+num(row.amountUpper),
+            0
+          );
+
+      const safety=availableRows.reduce(
         (sum,row)=>sum+num(row.amountSafety),
         0
       );
+
       const probability=rows.length
         ? Math.max(...rows.map(row=>num(row.probability)))
         : 0;
+
+      const amountDisplay=rainAccumulationDisplay(lower,upper);
+      const complete=unavailableCount===0&&rows.length===expectedCount;
 
       return {
         lower,
@@ -786,7 +841,12 @@
         safety,
         probability,
         count:rows.length,
-        display:rainAccumulationDisplay(lower,upper)
+        expectedCount,
+        availableCount:availableRows.length,
+        unavailableCount,
+        complete,
+        amountDisplay,
+        display:complete?amountDisplay:'부분자료'
       };
     };
 
@@ -834,6 +894,26 @@
       next12hDisplay:h12.display,
       next24hDisplay:h24.display,
 
+      next3hAmountDisplay:h3.amountDisplay,
+      next6hAmountDisplay:h6.amountDisplay,
+      next12hAmountDisplay:h12.amountDisplay,
+      next24hAmountDisplay:h24.amountDisplay,
+
+      next3hReliable:h3.complete,
+      next6hReliable:h6.complete,
+      next12hReliable:h12.complete,
+      next24hReliable:h24.complete,
+
+      next3hAvailableCount:h3.availableCount,
+      next6hAvailableCount:h6.availableCount,
+      next12hAvailableCount:h12.availableCount,
+      next24hAvailableCount:h24.availableCount,
+
+      next3hMissingCount:h3.unavailableCount,
+      next6hMissingCount:h6.unavailableCount,
+      next12hMissingCount:h12.unavailableCount,
+      next24hMissingCount:h24.unavailableCount,
+
       next3hProbability:h3.probability,
       next6hProbability:h6.probability,
       next12hProbability:h12.probability,
@@ -856,6 +936,30 @@
           ? '현재 실황과 향후 예보가 모든 대표격자에서 강수없음입니다.'
           : '',
       timeline:future.slice(0,8),
+      timelineHours:Math.min(8,future.length),
+      rainContributors:future
+        .filter(row=>
+          row.amountAvailable &&
+          (
+            row.amountUpper===null ||
+            Number(row.amountUpper)>0
+          )
+        )
+        .map(row=>({
+          time:row.time,
+          label:row.label,
+          amountDisplay:row.amountDisplay,
+          source:row.source,
+          rawAmount:row.rawAmount
+        })),
+      missingAmountHours:future
+        .filter(row=>!row.amountAvailable)
+        .map(row=>({
+          time:row.time,
+          label:row.label,
+          source:row.source,
+          rawAmount:row.rawAmount
+        })),
       observationIntervalMinutes:60,
       forecastIntervalMinutes:60,
       sourceLabel:
