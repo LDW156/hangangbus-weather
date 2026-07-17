@@ -3441,3 +3441,303 @@ details.rain-contribution-box {
     max-height:180px;
   }
 }
+
+
+/* =========================================================
+   v73 기상특보·예비특보 상단 경고
+========================================================= */
+
+.weather-alert-banner {
+  position:sticky;
+  top:0;
+  z-index:120;
+  max-width:1148px;
+  margin:0 auto 10px;
+  border:2px solid;
+  border-radius:12px;
+  box-shadow:0 8px 24px rgba(20,49,66,.16);
+  overflow:hidden;
+}
+
+.weather-alert-banner[hidden] {
+  display:none;
+}
+
+.weather-alert-banner.watch {
+  color:#6d4700;
+  background:#fff4c9;
+  border-color:#e0aa1c;
+  animation:weather-watch-pulse 1.35s ease-in-out infinite;
+}
+
+.weather-alert-banner.advisory {
+  color:#753400;
+  background:#ffead2;
+  border-color:#e47c16;
+  animation:weather-advisory-pulse 1.1s ease-in-out infinite;
+}
+
+.weather-alert-banner.warning {
+  color:#8b0f1b;
+  background:#ffe0e3;
+  border-color:#d92536;
+  animation:weather-warning-pulse .85s ease-in-out infinite;
+}
+
+.weather-alert-banner-link {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:11px;
+  padding:10px 13px;
+  color:inherit;
+  text-decoration:none;
+}
+
+.weather-alert-icon {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border:2px solid currentColor;
+  border-radius:50%;
+  font-size:16px;
+  font-weight:1000;
+}
+
+.weather-alert-banner-copy {
+  min-width:0;
+}
+
+.weather-alert-banner-copy b,
+.weather-alert-banner-copy em {
+  display:block;
+}
+
+.weather-alert-banner-copy b {
+  font-size:12px;
+  line-height:1.35;
+}
+
+.weather-alert-banner-copy em {
+  margin-top:3px;
+  overflow:hidden;
+  font-size:9px;
+  font-style:normal;
+  font-weight:750;
+  line-height:1.45;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.weather-alert-banner-link > strong {
+  padding:6px 9px;
+  border:1px solid currentColor;
+  border-radius:999px;
+  font-size:8px;
+  white-space:nowrap;
+}
+
+@keyframes weather-watch-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(224,170,28,.20),0 8px 24px rgba(20,49,66,.14); }
+  50% { box-shadow:0 0 0 5px rgba(224,170,28,.12),0 8px 28px rgba(20,49,66,.18); }
+}
+
+@keyframes weather-advisory-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(228,124,22,.25),0 8px 24px rgba(20,49,66,.14); }
+  50% { box-shadow:0 0 0 6px rgba(228,124,22,.13),0 8px 30px rgba(20,49,66,.20); }
+}
+
+@keyframes weather-warning-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(217,37,54,.30),0 8px 24px rgba(20,49,66,.16); }
+  50% { box-shadow:0 0 0 7px rgba(217,37,54,.15),0 8px 32px rgba(20,49,66,.24); }
+}
+
+.alert-level-tag.watch {
+  color:#735000;
+  background:#ffedaf;
+}
+
+.alert-level-tag.advisory {
+  color:#8b4100;
+  background:#ffe0bc;
+}
+
+.alert-level-tag.warning {
+  color:#a21624;
+  background:#ffd6da;
+}
+
+.alert-time-grid {
+  display:grid;
+  grid-template-columns:1fr 1.4fr;
+  gap:8px;
+  margin-top:9px;
+}
+
+.alert-time-grid > div {
+  padding:8px 9px;
+  border:1px solid rgba(82,116,135,.18);
+  border-radius:9px;
+  background:rgba(255,255,255,.56);
+}
+
+.alert-time-grid span,
+.alert-time-grid b {
+  display:block;
+}
+
+.alert-time-grid span {
+  color:var(--muted);
+  font-size:8px;
+  font-weight:850;
+}
+
+.alert-time-grid b {
+  margin-top:4px;
+  color:var(--text);
+  font-size:9.5px;
+  line-height:1.45;
+}
+
+.alert-original {
+  margin-top:8px;
+  border-top:1px solid rgba(82,116,135,.20);
+  padding-top:7px;
+}
+
+.alert-original summary {
+  color:#476a7c;
+  cursor:pointer;
+  font-size:8.5px;
+  font-weight:900;
+}
+
+.alert-original p {
+  white-space:pre-line;
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .weather-alert-banner {
+    animation:none !important;
+  }
+}
+
+@media (max-width:680px) {
+  .weather-alert-banner {
+    margin-left:10px;
+    margin-right:10px;
+  }
+
+  .weather-alert-banner-link {
+    grid-template-columns:auto minmax(0,1fr);
+  }
+
+  .weather-alert-banner-link > strong {
+    grid-column:2;
+    justify-self:start;
+  }
+
+  .weather-alert-banner-copy em {
+    white-space:normal;
+  }
+
+  .alert-time-grid {
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* =========================================================
+   v74 서울 직접특보·팔당 상류 참고 / 강수요약 간소화
+========================================================= */
+
+.alert-card.upstream {
+  border-color:#78a9c2;
+  background:#f1f8fb;
+}
+
+.alert-card.upstream h3 {
+  color:#175f82;
+}
+
+.alert-scope-note {
+  margin-top:8px;
+  padding:7px 9px;
+  border-left:3px solid #4c8cab;
+  background:rgba(255,255,255,.65);
+  color:#476a7c;
+  font-size:8px;
+  font-weight:800;
+  line-height:1.45;
+}
+
+.alert-scope-note.direct {
+  border-left-color:#d67a17;
+  color:#744100;
+  background:#fff8ec;
+}
+
+.rain-summary-v57 .rain-item {
+  min-height:92px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:10px 8px;
+  text-align:center;
+}
+
+.rain-summary-v57 .rain-item > span {
+  min-height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#244c62;
+  font-size:9px;
+  font-weight:900;
+  line-height:1.3;
+}
+
+.rain-summary-v57 .rain-item > b {
+  margin-top:7px;
+  overflow:visible;
+  color:#086895;
+  font-size:clamp(18px,2vw,25px);
+  line-height:1.05;
+  text-overflow:clip;
+  white-space:normal;
+  word-break:keep-all;
+}
+
+.rain-summary-v57 .rain-item > b small {
+  margin-left:2px;
+  font-size:9px;
+}
+
+.rain-summary-v57 .rain-item em {
+  margin-top:5px;
+  color:#9b5c00;
+  font-size:7.5px;
+  font-style:normal;
+  font-weight:850;
+}
+
+.rain-summary-v57 .rain-item[class*="probability-"] {
+  border-color:#59a9de;
+  background:#f4faff;
+}
+
+.rain-interpretation-note {
+  display:none !important;
+}
+
+@media (max-width:560px) {
+  .rain-summary-v57 .rain-item {
+    min-height:82px;
+  }
+
+  .rain-summary-v57 .rain-item > b {
+    font-size:19px;
+  }
+}

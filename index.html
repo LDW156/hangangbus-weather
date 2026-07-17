@@ -8,7 +8,7 @@
   <title>한강버스 기상·수문 모니터링</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=72">
+  <link rel="stylesheet" href="styles.css?v=74">
   <script>
     // 새 배포 파일을 즉시 받도록 이전 한강버스 캐시를 정리합니다.
     if ('caches' in window) {
@@ -42,6 +42,7 @@
   </header>
 
   <div id="systemBanner" class="system-banner demo">현재 데모 데이터로 표시 중입니다.</div>
+  <div id="weatherAlertBanner" class="weather-alert-banner" role="alert" aria-live="assertive" hidden></div>
 
   <nav class="quick-nav" aria-label="섹터 이동">
     <a href="#route">노선판단</a><a href="#jamsu">잠수교</a><a href="#dam">팔당댐</a>
@@ -166,8 +167,8 @@
   <script src="config.js?v=62"></script>
   <script src="data/demo-data.js?v=62"></script>
   <script src="hrfco.js?v=62"></script>
-  <script src="kma.js?v=72"></script>
+  <script src="kma.js?v=74"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=72"></script>
+  <script src="app.js?v=74"></script>
 </body>
 </html>

@@ -475,12 +475,40 @@
     '폭풍해일', '한파', '태풍', '황사', '폭염'
   ];
 
+  /*
+   * 서울 직접 운항판정 지역
+   * - 서울특별시가 발표 대상에 명시된 특보만 직접 운항판정에 사용
+   */
+  const SEOUL_DIRECT_PATTERNS = [
+    /서울특별시/,
+    /서울시/,
+    /(?:^|[\s,(])서울(?:[\s,):]|$)/
+  ];
+
+  /*
+   * 팔당댐 상류 영향 참고지역
+   * - 경기 동부 중 팔당 유역 및 인접 상류권
+   * - 호우·태풍 특보만 방류 증가 가능성 참고자료로 사용
+   */
+  const PALDANG_UPSTREAM_AREAS = [
+    ['가평군', /가평군|가평/],
+    ['양평군', /양평군|양평/],
+    ['남양주시', /남양주시|남양주/],
+    ['광주시', /광주시(?!.*광역시)|경기광주/],
+    ['하남시', /하남시|하남/],
+    ['여주시', /여주시|여주/],
+    ['이천시', /이천시|이천/]
+  ];
+
+  const PALDANG_UPSTREAM_WEATHER_TYPES = ['호우', '태풍'];
+
+
   function hasSpecificWeatherAlert(text) {
     const source = String(text || '');
     const typePattern = WEATHER_ALERT_TYPES.join('|');
     return new RegExp(
-      `(?:${typePattern}).{0,14}(?:주의보|경보|예비특보)|` +
-      `(?:주의보|경보|예비특보).{0,14}(?:${typePattern})`
+      `(?:${typePattern}).{0,24}(?:주의보|경보|예비특보)|` +
+      `(?:주의보|경보|예비특보).{0,24}(?:${typePattern})`
     ).test(source);
   }
 
@@ -506,103 +534,439 @@
     const source = String(text || '');
     const typePattern = WEATHER_ALERT_TYPES.join('|');
     const pattern = new RegExp(
-      `(${typePattern})\\s*(주의보|경보|예비특보)`,
+      `(${typePattern})\\s*(주의보|경보|예비특보)|` +
+      `(주의보|경보|예비특보)\\s*(${typePattern})`,
       'g'
     );
 
     for (const match of source.matchAll(pattern)) {
-      const name = `${match[1]}${match[2]}`;
+      const weatherType = match[1] || match[4];
+      const alertType = match[2] || match[3];
+      const name = alertType === '예비특보'
+        ? `${weatherType} 예비특보`
+        : `${weatherType}${alertType}`;
+
       if (!names.includes(name)) names.push(name);
     }
 
     return names.length ? names.join(' · ') : fallback;
   }
 
-  function inferAlertArea(text) {
+  function extractWeatherTypes(text) {
     const source = String(text || '');
-    const areas = [
-      ['서울특별시', /서울특별시|서울(?!·수도권)/],
-      ['인천광역시', /인천광역시|인천/],
-      ['경기도', /경기도|경기/]
-    ]
+    return WEATHER_ALERT_TYPES.filter(type => source.includes(type));
+  }
+
+  function containsSeoulDirectArea(text) {
+    const source = String(text || '');
+    return SEOUL_DIRECT_PATTERNS.some(pattern => pattern.test(source));
+  }
+
+  function matchedPaldangUpstreamAreas(text) {
+    const source = String(text || '');
+
+    return PALDANG_UPSTREAM_AREAS
       .filter(([, pattern]) => pattern.test(source))
       .map(([name]) => name);
-
-    return areas.length ? areas.join(' · ') : '서울·수도권';
   }
+
+  function containsPaldangUpstreamWeather(text) {
+    const source = String(text || '');
+    return PALDANG_UPSTREAM_WEATHER_TYPES.some(type => source.includes(type));
+  }
+
+  function scopedAreaLabel(scope, text) {
+    if (scope === 'seoul-direct') return '서울특별시';
+
+    if (scope === 'paldang-upstream') {
+      const areas = matchedPaldangUpstreamAreas(text);
+      return areas.length
+        ? `경기 동부 · ${areas.join('·')}`
+        : '경기 동부 팔당 상류권';
+    }
+
+    return '기타지역';
+  }
+
+  function scopedTitle(scope, baseTitle) {
+    if (scope === 'paldang-upstream') {
+      return `팔당 상류 영향 참고 · ${baseTitle}`;
+    }
+    return baseTitle;
+  }
+
+  function buildScopedAlerts({
+    source,
+    text,
+    issuedAt
+  }) {
+    const alerts = [];
+    const period = parseAlertEffectivePeriod(text, issuedAt);
+    const baseTitle = extractAlertNames(
+      text,
+      source === 'preliminary'
+        ? '기상 예비특보'
+        : '기상특보 발표'
+    );
+
+    if (containsSeoulDirectArea(text)) {
+      alerts.push({
+        source,
+        scope:'seoul-direct',
+        operationImpact:true,
+        level:alertLevel(text, source),
+        levelLabel:alertLevelLabel(text, source),
+        weatherTypes:extractWeatherTypes(text),
+        area:scopedAreaLabel('seoul-direct', text),
+        title:scopedTitle('seoul-direct', baseTitle),
+        message:text,
+        issuedAt,
+        effectiveAt:period.effectiveAt,
+        effectiveEndAt:period.effectiveEndAt,
+        periodText:period.periodText,
+        periods:period.periods
+      });
+    }
+
+    const upstreamAreas = matchedPaldangUpstreamAreas(text);
+
+    if (
+      upstreamAreas.length &&
+      containsPaldangUpstreamWeather(text)
+    ) {
+      alerts.push({
+        source,
+        scope:'paldang-upstream',
+        operationImpact:false,
+        level:'reference',
+        levelLabel:'상류 참고',
+        weatherTypes:extractWeatherTypes(text).filter(
+          type => PALDANG_UPSTREAM_WEATHER_TYPES.includes(type)
+        ),
+        area:scopedAreaLabel('paldang-upstream', text),
+        title:scopedTitle('paldang-upstream', baseTitle),
+        message:text,
+        issuedAt,
+        effectiveAt:period.effectiveAt,
+        effectiveEndAt:period.effectiveEndAt,
+        periodText:period.periodText,
+        periods:period.periods
+      });
+    }
+
+    return alerts;
+  }
+
+  function alertLevel(text, source) {
+    if (source === 'preliminary') return 'watch';
+    if (/경보/.test(text)) return 'warning';
+    return 'advisory';
+  }
+
+  function alertLevelLabel(text, source) {
+    if (source === 'preliminary') return '예비특보';
+    if (/경보/.test(text)) return '경보';
+    if (/주의보/.test(text)) return '주의보';
+    return '특보';
+  }
+
+  function inferAlertYear(month, issuedAt) {
+    const issued = issuedAt ? new Date(issuedAt) : new Date();
+    let year = Number(
+      new Intl.DateTimeFormat('en', {
+        timeZone:'Asia/Seoul',
+        year:'numeric'
+      }).format(issued)
+    );
+
+    const issuedMonth = Number(
+      new Intl.DateTimeFormat('en', {
+        timeZone:'Asia/Seoul',
+        month:'numeric'
+      }).format(issued)
+    );
+
+    if (issuedMonth === 12 && month === 1) year += 1;
+    if (issuedMonth === 1 && month === 12) year -= 1;
+    return year;
+  }
+
+  function kstIso(year, month, day, hour, minute = 0) {
+    const y = String(year).padStart(4,'0');
+    const m = String(month).padStart(2,'0');
+    const d = String(day).padStart(2,'0');
+    const h = String(hour).padStart(2,'0');
+    const min = String(minute).padStart(2,'0');
+    return `${y}-${m}-${d}T${h}:${min}:00+09:00`;
+  }
+
+  function parseAlertEffectivePeriod(text, issuedAt) {
+    const source = String(text || '').replace(/\s+/g,' ').trim();
+    const periods = [];
+
+    /*
+     * 예비특보 예:
+     * 07월 18일 새벽(00시~06시)
+     * 07월 18일 아침(06~09시)
+     */
+    const rangePattern =
+      /(?:(\d{4})년\s*)?(\d{1,2})월\s*(\d{1,2})일\s*([가-힣]+)?\s*\(\s*(\d{1,2})(?:시)?(?:\s*(\d{1,2})분)?\s*[~～\-]\s*(\d{1,2})(?:시)?(?:\s*(\d{1,2})분)?\s*\)/g;
+
+    for (const match of source.matchAll(rangePattern)) {
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      const startHour = Number(match[5]);
+      const startMinute = Number(match[6] || 0);
+      const endHourRaw = Number(match[7]);
+      const endMinute = Number(match[8] || 0);
+      const year = Number(match[1]) || inferAlertYear(month, issuedAt);
+      const endHour = endHourRaw === 24 ? 23 : endHourRaw;
+
+      periods.push({
+        label:
+          `${String(month).padStart(2,'0')}.${String(day).padStart(2,'0')} ` +
+          `${match[4] || ''}(${String(startHour).padStart(2,'0')}:${String(startMinute).padStart(2,'0')}~` +
+          `${String(endHourRaw).padStart(2,'0')}:${String(endMinute).padStart(2,'0')})`,
+        start: kstIso(year, month, day, startHour, startMinute),
+        end: kstIso(year, month, day, endHour, endMinute)
+      });
+    }
+
+    /*
+     * 실제 특보 예:
+     * 발효시각 2026년 7월 17일 18시 00분
+     */
+    if (!periods.length) {
+      const effectivePattern =
+        /(?:발효(?:예정)?(?:시각)?|예상시각)\s*[:：]?\s*(?:(\d{4})년\s*)?(\d{1,2})월\s*(\d{1,2})일\s*(\d{1,2})시(?:\s*(\d{1,2})분)?/;
+
+      const match = source.match(effectivePattern);
+
+      if (match) {
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const hour = Number(match[4]);
+        const minute = Number(match[5] || 0);
+        const year = Number(match[1]) || inferAlertYear(month, issuedAt);
+        const start = kstIso(year, month, day, hour, minute);
+
+        periods.push({
+          label:
+            `${String(month).padStart(2,'0')}.${String(day).padStart(2,'0')} ` +
+            `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
+          start,
+          end:null
+        });
+      }
+    }
+
+    if (!periods.length) {
+      return {
+        effectiveAt:null,
+        effectiveEndAt:null,
+        periodText:'기상청 발표 원문 참고',
+        periods:[]
+      };
+    }
+
+    const sorted = [...periods].sort(
+      (a,b)=>new Date(a.start)-new Date(b.start)
+    );
+
+    const validEnds = sorted
+      .map(period=>period.end)
+      .filter(Boolean)
+      .sort((a,b)=>new Date(a)-new Date(b));
+
+    return {
+      effectiveAt:sorted[0].start,
+      effectiveEndAt:validEnds.at(-1) || null,
+      periodText:sorted.map(period=>period.label).join(' · '),
+      periods:sorted
+    };
+  }
+
+  function isRecentPreliminary(alert, now = new Date()) {
+    const issued = alert.issuedAt ? new Date(alert.issuedAt) : null;
+    const end = alert.effectiveEndAt
+      ? new Date(alert.effectiveEndAt)
+      : null;
+    const start = alert.effectiveAt
+      ? new Date(alert.effectiveAt)
+      : null;
+
+    if (end && now <= new Date(end.getTime() + 60 * 60000)) {
+      return true;
+    }
+
+    if (start && start > now && start-now <= 72*60*60000) {
+      return true;
+    }
+
+    return issued && now-issued <= 36*60*60000;
+  }
+
+  function dedupeAlerts(alerts) {
+    const result = [];
+    const keys = new Set();
+
+    alerts.forEach(alert=>{
+      const key = [
+        alert.source,
+        alert.scope || '',
+        alert.title,
+        alert.periodText || '',
+        alert.area || ''
+      ].join('|');
+
+      if (keys.has(key)) return;
+      keys.add(key);
+      result.push(alert);
+    });
+
+    return result;
+  }
+
+  function buildAlert({
+    source,
+    text,
+    issuedAt
+  }) {
+    return buildScopedAlerts({ source, text, issuedAt });
+  }
+
 
   async function fetchSituation(proxyBase) {
     const body = await fetchJson('VilageFcstMsgService/getWthrSituation', {
-      pageNo: 1, numOfRows: 10, dataType: 'JSON', stnId: 109
+      pageNo: 1,
+      numOfRows: 10,
+      dataType: 'JSON',
+      stnId: 109
     }, proxyBase);
 
-    const list = items(body);
+    const list = items(body)
+      .sort(
+        (a,b)=>
+          String(b.tmFc || '').localeCompare(String(a.tmFc || ''))
+      );
 
     if (!list.length) {
       return {
-        issuedAt: null,
-        alerts: [],
-        status: {
-          area: '서울·수도권',
-          warning: '자료 없음',
-          preliminary: '자료 없음',
-          message: '기상개황 응답에 특보 자료가 없습니다.'
+        issuedAt:null,
+        alerts:[],
+        status:{
+          area:'서울·수도권',
+          warning:'자료 없음',
+          preliminary:'자료 없음',
+          message:'기상개황 응답에 특보 자료가 없습니다.'
         }
       };
     }
 
-    const latest = [...list]
-      .sort((a,b) => String(b.tmFc || '').localeCompare(String(a.tmFc || '')))[0];
-
-    const issuedAt = parseSituationTime(latest.tmFc);
-    const warningRaw = cleanText(latest.wn);
-    const preliminaryRaw = cleanText(latest.wr);
-    const warningText = stripSituationNotice(warningRaw);
-    const preliminaryText = stripSituationNotice(preliminaryRaw);
-
-    const warningActive = hasSpecificWeatherAlert(warningText);
-    const preliminaryActive = hasSpecificWeatherAlert(preliminaryText);
+    const newest = list[0];
+    const latestIssuedAt = parseSituationTime(newest.tmFc);
     const alerts = [];
 
-    if (warningActive) {
-      alerts.push({
-        source: 'official',
-        level: /경보/.test(warningText) ? 'warning' : 'advisory',
-        area: inferAlertArea(warningText),
-        title: extractAlertNames(warningText, '기상특보 발표'),
-        message: warningText,
-        issuedAt,
-        effectiveAt: null
-      });
+    /*
+     * 실제 발효 특보는 최신 발표문의 wn을 현재상태로 사용합니다.
+     * 이전 발표의 해제된 특보가 다시 살아나는 것을 방지합니다.
+     */
+    const latestWarningText = stripSituationNotice(
+      cleanText(newest.wn)
+    );
+
+    if (
+      hasSpecificWeatherAlert(latestWarningText) &&
+      !/해제|특보\s*없음|발효\s*없음/.test(latestWarningText)
+    ) {
+      alerts.push(...buildAlert({
+        source:'official',
+        text:latestWarningText,
+        issuedAt:latestIssuedAt
+      }));
     }
 
-    if (preliminaryActive) {
-      alerts.push({
-        source: 'preliminary',
-        level: 'watch',
-        area: inferAlertArea(preliminaryText),
-        title: extractAlertNames(preliminaryText, '예비특보 발표'),
-        message: preliminaryText,
-        issuedAt,
-        effectiveAt: null
+    /*
+     * 예비특보는 발표 시점의 문서에만 들어가고 다음 일반예보에는
+     * 반복되지 않을 수 있으므로 최근 10개 발표를 모두 검색합니다.
+     */
+    list.forEach(item=>{
+      const issuedAt = parseSituationTime(item.tmFc);
+      const preliminaryTexts = [
+        stripSituationNotice(cleanText(item.wr)),
+        stripSituationNotice(cleanText(item.wn))
+      ];
+
+      preliminaryTexts.forEach(text=>{
+        if (
+          !hasSpecificWeatherAlert(text) ||
+          !/예비특보/.test(text) ||
+          /해제|취소/.test(text)
+        ) {
+          return;
+        }
+
+        const scopedAlerts = buildAlert({
+          source:'preliminary',
+          text,
+          issuedAt
+        });
+
+        scopedAlerts.forEach(alert => {
+          if (isRecentPreliminary(alert)) {
+            alerts.push(alert);
+          }
+        });
       });
-    }
+    });
+
+    const uniqueAlerts = dedupeAlerts(alerts).sort((a,b)=>{
+      const priority = {
+        warning:0,
+        advisory:1,
+        watch:2,
+        reference:3
+      };
+
+      return (
+        (priority[a.level] ?? 9) -
+        (priority[b.level] ?? 9) ||
+        new Date(b.issuedAt || 0) -
+        new Date(a.issuedAt || 0)
+      );
+    });
+
+    const directOfficialAlerts = uniqueAlerts.filter(
+      alert=>
+        alert.scope==='seoul-direct' &&
+        alert.source==='official'
+    );
+    const directPreliminaryAlerts = uniqueAlerts.filter(
+      alert=>
+        alert.scope==='seoul-direct' &&
+        alert.source==='preliminary'
+    );
+    const upstreamAlerts = uniqueAlerts.filter(
+      alert=>alert.scope==='paldang-upstream'
+    );
 
     return {
-      issuedAt,
-      alerts,
-      status: {
-        area: '서울특별시·수도권',
-        warning: warningActive
-          ? extractAlertNames(warningText, '특보 발표 중')
-          : '현재 발효 특보 없음',
-        preliminary: preliminaryActive
-          ? extractAlertNames(preliminaryText, '예비특보 발표 중')
-          : '현재 예비특보 없음',
-        message:
-          !warningActive && !preliminaryActive
-            ? '기상청 안내문은 특보로 처리하지 않았습니다.'
-            : '특보 종류와 발표 문구를 기상청 원문 기준으로 표시합니다.'
+      issuedAt:latestIssuedAt,
+      alerts:uniqueAlerts,
+      status:{
+        area:'서울특별시',
+        warning:directOfficialAlerts.length
+          ? directOfficialAlerts.map(alert=>alert.title).join(' · ')
+          : '서울 발효 특보 없음',
+        preliminary:directPreliminaryAlerts.length
+          ? directPreliminaryAlerts.map(alert=>alert.title).join(' · ')
+          : '서울 예비특보 없음',
+        upstream:upstreamAlerts.length
+          ? upstreamAlerts.map(alert=>alert.title).join(' · ')
+          : '팔당 상류 영향특보 없음',
+        message:uniqueAlerts.length
+          ? '서울 직접특보와 팔당 상류 영향특보를 분리해 표시합니다.'
+          : '서울 직접특보와 팔당 상류 영향특보가 없습니다.'
       }
     };
   }

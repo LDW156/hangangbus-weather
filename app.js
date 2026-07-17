@@ -421,8 +421,15 @@
     const alertKeywords=t.alerts?.stopKeywords||[
       '호우경보','강풍주의보','강풍경보','태풍주의보','태풍경보'
     ];
-    const officialAlerts=data.alerts.filter(a=>a.source==='official');
-    const preliminaryAlerts=data.alerts.filter(a=>a.source==='preliminary');
+    const officialAlerts=data.alerts.filter(
+      a=>a.scope==='seoul-direct'&&a.source==='official'
+    );
+    const preliminaryAlerts=data.alerts.filter(
+      a=>a.scope==='seoul-direct'&&a.source==='preliminary'
+    );
+    const upstreamAlerts=data.alerts.filter(
+      a=>a.scope==='paldang-upstream'
+    );
     const stopAlerts=officialAlerts.filter(a=>{
       const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
       return alertKeywords.some(keyword=>text.includes(String(keyword).replace(/\s+/g,'')));
@@ -451,8 +458,21 @@
       eastReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
       westReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
     }else{
-      eastReasons.push(reason('운항중지 대상 기상특보 없음','normal','정상'));
-      westReasons.push(reason('운항중지 대상 기상특보 없음','normal','정상'));
+      eastReasons.push(reason('서울 운항중지 대상 기상특보 없음','normal','정상'));
+      westReasons.push(reason('서울 운항중지 대상 기상특보 없음','normal','정상'));
+    }
+
+    if(upstreamAlerts.length){
+      const names=[...new Set(
+        upstreamAlerts.map(a=>a.title).filter(Boolean)
+      )].join(' · ');
+
+      const upstreamReason=reason(
+        `${names} · 팔당 방류 증가 가능성 참고`,
+        'info','상류참고'
+      );
+      eastReasons.push(upstreamReason);
+      westReasons.push({...upstreamReason});
     }
 
     westReasons.push(reason(
@@ -471,7 +491,7 @@
 
   function render(){
     const calc=compute();
-    renderRoutes(calc);renderJamsu(calc);renderDam(calc);renderAlerts();renderRain();renderWind();renderRiver();renderTide();renderHealth();
+    renderRoutes(calc);renderJamsu(calc);renderDam(calc);renderAlerts();renderWeatherAlertBanner();renderRain();renderWind();renderRiver();renderTide();renderHealth();
     $('updatedAt').textContent=`화면 갱신 ${dateTimeText(data.meta.generatedAt)}`;
   }
 
@@ -610,13 +630,85 @@
     $('damComparisonBody').innerHTML=compareRows(h);
   }
 
+  function alertPriority(alert){
+    if(alert?.source==='official'&&alert?.level==='warning')return 0;
+    if(alert?.source==='official'&&alert?.level==='advisory')return 1;
+    if(alert?.source==='preliminary')return 2;
+    return 9;
+  }
+
+  function alertEffectiveLabel(alert){
+    if(alert?.periodText&&
+       alert.periodText!=='기상청 발표 원문 참고'){
+      return alert.periodText;
+    }
+
+    if(alert?.effectiveAt&&alert?.effectiveEndAt){
+      return `${fullDateTimeText(alert.effectiveAt)} ~ ${fullDateTimeText(alert.effectiveEndAt)}`;
+    }
+
+    if(alert?.effectiveAt){
+      return fullDateTimeText(alert.effectiveAt);
+    }
+
+    return '발효시간은 기상청 발표 원문 참고';
+  }
+
+  function renderWeatherAlertBanner(){
+    const root=$('weatherAlertBanner');
+    const alerts=[...(data.alerts||[])]
+      .filter(alert=>alert.scope==='seoul-direct')
+      .sort((a,b)=>alertPriority(a)-alertPriority(b));
+
+    if(!alerts.length){
+      root.hidden=true;
+      root.className='weather-alert-banner';
+      root.innerHTML='';
+      return;
+    }
+
+    const alert=alerts[0];
+    const extra=alerts.length-1;
+    const bannerClass=
+      alert.source==='preliminary'
+        ? 'watch'
+        : alert.level==='warning'
+          ? 'warning'
+          : 'advisory';
+
+    const sourceLabel=
+      alert.source==='preliminary'
+        ? '예비특보'
+        : alert.level==='warning'
+          ? '경보'
+          : '주의보';
+
+    root.hidden=false;
+    root.className=`weather-alert-banner ${bannerClass}`;
+    root.innerHTML=`
+      <a href="#alerts" class="weather-alert-banner-link">
+        <span class="weather-alert-icon">${bannerClass==='warning'?'!':'⚠'}</span>
+        <span class="weather-alert-banner-copy">
+          <b>서울 ${esc(sourceLabel)} · ${esc(alert.title)}</b>
+          <em>
+            발표 ${fullDateTimeText(alert.issuedAt)}
+            · 발효${alert.source==='preliminary'?'예정':''} ${esc(alertEffectiveLabel(alert))}
+            ${extra>0?` · 추가 ${extra}건`:''}
+          </em>
+        </span>
+        <strong>특보 확인</strong>
+      </a>`;
+  }
+
   function renderAlerts(){
     const root=$('alertList');
 
     if(!data.alerts.length){
       const status=data.alertStatus||{};
       const area=status.area||'서울특별시·수도권';
-      const issuedAt=data.meta.dataTimes.weatherForecastIssued||data.meta.generatedAt;
+      const issuedAt=
+        data.meta.dataTimes.weatherForecastIssued||
+        data.meta.generatedAt;
 
       root.innerHTML=`
         <article class="alert-card clear">
@@ -630,36 +722,81 @@
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>${esc(status.preliminary||'현재 예비특보 없음')} · ${esc(status.message||'특보 안내문은 실제 특보로 계산하지 않습니다.')}</p>
+          <p>${esc(status.preliminary||'서울 예비특보 없음')} · ${esc(status.upstream||'팔당 상류 영향특보 없음')}</p>
           <div class="alert-period">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
-            <b>현재 발표된 구체적인 주의보·경보 없음</b>
+            <b>현재 주의보·경보·예비특보 없음</b>
           </div>
         </article>`;
       return;
     }
 
-    root.innerHTML=data.alerts.map(a=>{
-      const effective=a.effectiveAt
-        ? `<b>발효·예상 ${fullDateTimeText(a.effectiveAt)}</b>`
-        : `<b>기상청 발표 원문 기준</b>`;
+    const alerts=[...data.alerts].sort(
+      (a,b)=>alertPriority(a)-alertPriority(b)
+    );
 
-      return `<article class="alert-card ${esc(a.source==='internal'?'internal':a.level)}">
+    root.innerHTML=alerts.map(a=>{
+      const sourceLabel=
+        a.scope==='paldang-upstream'
+          ? '팔당 상류 참고'
+          : a.source==='official'
+            ? '서울 기상청 공식'
+            : a.source==='preliminary'
+              ? '서울 기상청 예비'
+              : '한강버스 내부';
+
+      const levelLabel=
+        a.levelLabel ||
+        (a.level==='warning'
+          ? '경보'
+          : a.level==='advisory'
+            ? '주의보'
+            : '예비특보');
+
+      const effectiveLabel=alertEffectiveLabel(a);
+      const periodTitle=
+        a.source==='preliminary'
+          ? '발효예정'
+          : '발효시각';
+
+      return `<article class="alert-card ${esc(
+        a.scope==='paldang-upstream'
+          ? 'upstream'
+          : a.source==='internal'
+            ? 'internal'
+            : a.level
+      )}">
         <div class="alert-top">
           <div>
             <div class="alert-tags">
-              <span class="tag ${a.source==='internal'?'internal':''}">${a.source==='official'?'기상청 공식':a.source==='preliminary'?'기상청 예비':'한강버스 내부'}</span>
+              <span class="tag ${a.source==='internal'?'internal':''}">${sourceLabel}</span>
+              <span class="tag alert-level-tag ${esc(a.level)}">${esc(levelLabel)}</span>
               <span class="tag">${esc(a.area)}</span>
             </div>
             <h3>${esc(a.title)}</h3>
           </div>
           <span class="alert-time">발표 ${dateTimeText(a.issuedAt)}</span>
         </div>
-        <p>${esc(a.message)}</p>
-        <div class="alert-period">
-          <span>발표 ${fullDateTimeText(a.issuedAt)}</span>
-          ${effective}
+
+        <div class="alert-time-grid">
+          <div>
+            <span>발표시각</span>
+            <b>${fullDateTimeText(a.issuedAt)}</b>
+          </div>
+          <div>
+            <span>${periodTitle}</span>
+            <b>${esc(effectiveLabel)}</b>
+          </div>
         </div>
+
+        ${a.scope==='paldang-upstream'
+          ? '<div class="alert-scope-note">운항중지 직접판정에는 반영하지 않고 팔당댐 방류 증가 가능성 참고자료로 사용합니다.</div>'
+          : '<div class="alert-scope-note direct">서울 직접특보로 운항판정에 반영합니다.</div>'}
+
+        <details class="alert-original">
+          <summary>기상청 발표 원문 보기</summary>
+          <p>${esc(a.message)}</p>
+        </details>
       </article>`;
     }).join('');
   }
@@ -780,10 +917,10 @@
       const r=data.weather.rainfall[k];
 
       const summaries=[
-        ['향후 3시간',r.next3hDisplay,r.next3hAmountDisplay,r.next3hProbability,r.next3hCount,r.next3hAvailableCount,r.next3hReliable],
-        ['향후 6시간',r.next6hDisplay,r.next6hAmountDisplay,r.next6hProbability,r.next6hCount,r.next6hAvailableCount,r.next6hReliable],
-        ['향후 12시간',r.next12hDisplay,r.next12hAmountDisplay,r.next12hProbability,r.next12hCount,r.next12hAvailableCount,r.next12hReliable],
-        ['향후 24시간',r.next24hDisplay,r.next24hAmountDisplay,r.next24hProbability,r.next24hCount,r.next24hAvailableCount,r.next24hReliable]
+        ['향후 3시간 강수량 예보',r.next3hDisplay,r.next3hAmountDisplay,r.next3hReliable],
+        ['향후 6시간 강수량 예보',r.next6hDisplay,r.next6hAmountDisplay,r.next6hReliable],
+        ['향후 12시간 강수량 예보',r.next12hDisplay,r.next12hAmountDisplay,r.next12hReliable],
+        ['향후 24시간 강수량 예보',r.next24hDisplay,r.next24hAmountDisplay,r.next24hReliable]
       ];
 
       const contribution=rainfallContributionSummary(
@@ -832,7 +969,7 @@
           <div>
             <span>시간별 예보 시작</span>
             <b>${timeText(r.forecastStartAt)}</b>
-            <em>강수량·확률·비 여부</em>
+            <em>시간별 강수예보</em>
           </div>
         </div>
 
@@ -840,32 +977,24 @@
 
         <div class="rain-summary rain-summary-v57">
           ${summaries.map(x=>{
-            const probability=Number(x[3])||0;
-            const band=probability>=20?'possible':'none';
-            const totalCount=Number(x[4])||0;
-            const availableCount=Number(x[5])||0;
-            const reliable=x[6]!==false;
-            const mainValue=reliable?rainDisplay(x[1],x[2]):'부분자료';
-            const detailValue=rainDisplay(x[2],0);
+            const reliable=x[3]!==false;
+            const mainValue=reliable
+              ? rainDisplay(x[1],x[2])
+              : '부분자료';
 
-            return `<div class="rain-item probability-${band} ${reliable?'':'rain-summary-partial'}">
-              <span>${x[0]} 누적</span>
+            return `<div class="rain-item ${reliable?'':'rain-summary-partial'}">
+              <span>${x[0]}</span>
               <b>${mainValue}${reliable?'<small>mm</small>':''}</b>
-              <em>${availableCount}/${totalCount}개 정량자료 · 강수확률 최대 <strong>${fmt(probability)}%</strong>${reliable?'':`<br>확인분 누적 ${detailValue}mm`}</em>
+              ${reliable?'':'<em>일부 시각 미제공</em>'}
             </div>`;
           }).join('')}
-        </div>
-
-        <div class="rain-interpretation-note">
-          강수확률은 비가 내릴 가능성이고, 강수량은 해당 1시간의 예상량입니다.
-          &quot;1mm 미만&quot; 같은 정성값은 임의의 0.5mm로 바꾸지 않고 원문 범위로 표시합니다.
         </div>
 
         <details class="rain-contribution-box">
           <summary class="rain-contribution-summary">
             <div class="rain-contribution-summary-main">
               <b>24시간 누적 강수 근거</b>
-              <span>${esc(contribution.period)} · ${fmt(contribution.count)}개 시각</span>
+              <span>${esc(contribution.period)}</span>
             </div>
             <div class="rain-contribution-summary-max">
               <span>최대 시간강수</span>
