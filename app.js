@@ -747,6 +747,32 @@
     ).join('');
   }
 
+  function rainfallContributionSummary(rows){
+    if(!Array.isArray(rows)||!rows.length){
+      return {
+        period:'정량 강수 예상시간 없음',
+        count:0,
+        maximum:'-',
+        maximumTime:'-'
+      };
+    }
+
+    const sorted=[...rows].sort(
+      (a,b)=>new Date(a.time)-new Date(b.time)
+    );
+
+    const maximum=[...rows].sort(
+      (a,b)=>(Number(b.amountSafety)||0)-(Number(a.amountSafety)||0)
+    )[0];
+
+    return {
+      period:`${dateTimeText(sorted[0].time)} ~ ${dateTimeText(sorted.at(-1).time)}`,
+      count:rows.length,
+      maximum:maximum?.amountDisplay||'-',
+      maximumTime:dateTimeText(maximum?.time)
+    };
+  }
+
   function renderRain(){
     const names={west:'서부선',east:'동부선'};
 
@@ -759,6 +785,10 @@
         ['향후 12시간',r.next12hDisplay,r.next12hAmountDisplay,r.next12hProbability,r.next12hCount,r.next12hAvailableCount,r.next12hReliable],
         ['향후 24시간',r.next24hDisplay,r.next24hAmountDisplay,r.next24hProbability,r.next24hCount,r.next24hAvailableCount,r.next24hReliable]
       ];
+
+      const contribution=rainfallContributionSummary(
+        r.rainContributors
+      );
 
       const rows=(r.timeline||[]).map(x=>{
         const visual=rainVisual(x);
@@ -831,18 +861,31 @@
           &quot;1mm 미만&quot; 같은 정성값은 임의의 0.5mm로 바꾸지 않고 원문 범위로 표시합니다.
         </div>
 
-        <div class="rain-contribution-box">
-          <div class="rain-contribution-head">
-            <b>24시간 누적 강수 기여시간</b>
-            <span>아래 첫 ${fmt(r.timelineHours||8)}시간 이후 자료도 포함</span>
+        <details class="rain-contribution-box">
+          <summary class="rain-contribution-summary">
+            <div class="rain-contribution-summary-main">
+              <b>24시간 누적 강수 근거</b>
+              <span>${esc(contribution.period)} · ${fmt(contribution.count)}개 시각</span>
+            </div>
+            <div class="rain-contribution-summary-max">
+              <span>최대 시간강수</span>
+              <b>${esc(contribution.maximumTime)} · ${esc(contribution.maximum)}mm</b>
+            </div>
+            <em class="rain-contribution-toggle">상세보기</em>
+          </summary>
+
+          <div class="rain-contribution-detail">
+            <div class="rain-contribution-note">
+              향후 8시간 카드 이후의 시간도 24시간 누적에 포함됩니다.
+            </div>
+            <div class="rain-contribution-list">
+              ${rainfallContributorText(r.rainContributors)}
+            </div>
+            ${(r.missingAmountHours||[]).length
+              ? `<div class="rain-missing-hours">강수량 미제공 시각 ${(r.missingAmountHours||[]).map(x=>dateTimeText(x.time)).join(' · ')}</div>`
+              : ''}
           </div>
-          <div class="rain-contribution-list">
-            ${rainfallContributorText(r.rainContributors)}
-          </div>
-          ${(r.missingAmountHours||[]).length
-            ? `<div class="rain-missing-hours">강수량 미제공 시각 ${(r.missingAmountHours||[]).map(x=>dateTimeText(x.time)).join(' · ')}</div>`
-            : ''}
-        </div>
+        </details>
 
         <div class="rain-table-heading">
           <h4>예상 강수량(향후 ${fmt(r.timelineHours||8)}시간)</h4>

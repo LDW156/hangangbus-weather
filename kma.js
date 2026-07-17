@@ -949,6 +949,9 @@
           time:row.time,
           label:row.label,
           amountDisplay:row.amountDisplay,
+          amountLower:row.amountLower,
+          amountUpper:row.amountUpper,
+          amountSafety:row.amountSafety,
           source:row.source,
           rawAmount:row.rawAmount
         })),
