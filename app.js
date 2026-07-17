@@ -430,6 +430,9 @@
     const upstreamAlerts=data.alerts.filter(
       a=>a.scope==='paldang-upstream'
     );
+    const officialUnclassifiedAlerts=data.alerts.filter(
+      a=>a.scope==='official-unclassified'
+    );
     const stopAlerts=officialAlerts.filter(a=>{
       const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
       return alertKeywords.some(keyword=>text.includes(String(keyword).replace(/\s+/g,'')));
@@ -473,6 +476,21 @@
       );
       eastReasons.push(upstreamReason);
       westReasons.push({...upstreamReason});
+    }
+
+    if(officialUnclassifiedAlerts.length){
+      const names=[...new Set(
+        officialUnclassifiedAlerts
+          .map(a=>a.title)
+          .filter(Boolean)
+      )].join(' · ');
+
+      const officialReason=reason(
+        `${names} · 공식 발표 상세지역 확인`,
+        'info','공식확인'
+      );
+      eastReasons.push(officialReason);
+      westReasons.push({...officialReason});
     }
 
     westReasons.push(reason(
@@ -664,9 +682,15 @@
       .filter(alert=>alert.scope==='paldang-upstream')
       .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
 
+    const unclassifiedAlerts=[...(data.alerts||[])]
+      .filter(alert=>alert.scope==='official-unclassified')
+      .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
+
     const alerts=directAlerts.length
       ? directAlerts
-      : upstreamAlerts;
+      : upstreamAlerts.length
+        ? upstreamAlerts
+        : unclassifiedAlerts;
 
     if(!alerts.length){
       root.hidden=true;
@@ -678,7 +702,8 @@
     const alert=alerts[0];
     const extra=alerts.length-1;
     const isUpstream=alert.scope==='paldang-upstream';
-    const bannerClass=isUpstream
+    const isUnclassified=alert.scope==='official-unclassified';
+    const bannerClass=isUpstream||isUnclassified
       ? 'reference'
       : alert.source==='preliminary'
         ? 'watch'
@@ -688,11 +713,13 @@
 
     const sourceLabel=isUpstream
       ? '팔당 상류 참고'
-      : alert.source==='preliminary'
-        ? '예비특보'
-        : alert.level==='warning'
-          ? '경보'
-          : '주의보';
+      : isUnclassified
+        ? '공식 특보 발표'
+        : alert.source==='preliminary'
+          ? '예비특보'
+          : alert.level==='warning'
+            ? '경보'
+            : '주의보';
 
     root.hidden=false;
     root.className=`weather-alert-banner ${bannerClass}`;
@@ -700,7 +727,7 @@
       <a href="#alerts" class="weather-alert-banner-link">
         <span class="weather-alert-icon">${bannerClass==='warning'?'!':bannerClass==='reference'?'↗':'⚠'}</span>
         <span class="weather-alert-banner-copy">
-          <b>${isUpstream?'':'서울 '}${esc(sourceLabel)} · ${esc(alert.title)}</b>
+          <b>${isUpstream||isUnclassified?'':'서울 '}${esc(sourceLabel)} · ${esc(alert.title)}</b>
           <em>
             발표 ${fullDateTimeText(alert.issuedAt)}
             · 발효${alert.source==='preliminary'?'예정':''} ${esc(alertEffectiveLabel(alert))}
@@ -733,10 +760,10 @@
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>${esc(status.preliminary||'통보문 보조조회 결과 없음')} · ${esc(status.upstream||'팔당 상류 특보 미확인')}</p>
-          <div class="alert-period alert-source-warning">
+          <p>${esc(status.preliminary||'서울 예비특보 없음')} · ${esc(status.upstream||'팔당 상류 영향특보 없음')}</p>
+          <div class="alert-period ${status.sourceMode==='official-warning-api'?'':'alert-source-warning'}">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
-            <b>${esc(status.message||'기상특보 전용 API 연결 필요')}</b>
+            <b>${esc(status.message||'기상특보 자료 확인')}</b>
           </div>
         </article>`;
       return;
@@ -750,11 +777,13 @@
       const sourceLabel=
         a.scope==='paldang-upstream'
           ? '팔당 상류 참고'
-          : a.source==='official'
-            ? '서울 기상청 공식'
-            : a.source==='preliminary'
-              ? '서울 기상청 예비'
-              : '한강버스 내부';
+          : a.scope==='official-unclassified'
+            ? '기상청 공식 발표'
+            : a.source==='official'
+              ? '서울 기상청 공식'
+              : a.source==='preliminary'
+                ? '서울 기상청 예비'
+                : '한강버스 내부';
 
       const levelLabel=
         a.levelLabel ||
@@ -773,9 +802,11 @@
       return `<article class="alert-card ${esc(
         a.scope==='paldang-upstream'
           ? 'upstream'
-          : a.source==='internal'
-            ? 'internal'
-            : a.level
+          : a.scope==='official-unclassified'
+            ? 'official-reference'
+            : a.source==='internal'
+              ? 'internal'
+              : a.level
       )}">
         <div class="alert-top">
           <div>
@@ -802,7 +833,9 @@
 
         ${a.scope==='paldang-upstream'
           ? '<div class="alert-scope-note">운항중지 직접판정에는 반영하지 않고 팔당댐 방류 증가 가능성 참고자료로 사용합니다.</div>'
-          : '<div class="alert-scope-note direct">서울 직접특보로 운항판정에 반영합니다.</div>'}
+          : a.scope==='official-unclassified'
+            ? '<div class="alert-scope-note">기상청 공식 발표는 확인됐으나 상세지역 해석이 필요해 운항중지에는 직접 반영하지 않습니다.</div>'
+            : '<div class="alert-scope-note direct">서울 직접특보로 운항판정에 반영합니다.</div>'}
 
         <details class="alert-original">
           <summary>기상청 발표 원문 보기</summary>

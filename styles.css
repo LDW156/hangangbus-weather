@@ -4035,3 +4035,19 @@ details.rain-contribution-box {
     font-size:20px !important;
   }
 }
+
+
+/* v80 공식 기상특보 API 프런트 연결 */
+.alert-card.official-reference {
+  border-color:#7ba9bd;
+  background:#f1f8fb;
+}
+
+.alert-card.official-reference h3 {
+  color:#175f82;
+}
+
+.alert-level-tag.reference {
+  color:#155f7d;
+  background:#dff2fa;
+}

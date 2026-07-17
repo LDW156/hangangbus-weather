@@ -190,6 +190,469 @@
   }
 
 
+  async function fetchWorkerJson(path, params, proxyBase) {
+    const url = new URL(`${proxyBase}/${path}`);
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+
+    url.searchParams.set('_ts', Date.now());
+
+    let response;
+
+    try {
+      response = await fetch(url.toString(), {
+        method:'GET',
+        cache:'no-store'
+      });
+    } catch (error) {
+      throw new Error(`공식 기상특보 호출 실패: ${error.message}`);
+    }
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        `${path} HTTP ${response.status} · ${
+          text.replace(/\s+/g,' ').slice(0,180)
+        }`
+      );
+    }
+
+    let parsed;
+
+    try {
+      parsed = JSON.parse(text);
+    } catch (_) {
+      throw new Error(
+        `공식 기상특보 JSON 파싱 실패 · ${text.slice(0,140)}`
+      );
+    }
+
+    if (parsed?.ok === false) {
+      throw new Error(
+        parsed.error ||
+        parsed.upstreamBody ||
+        '공식 기상특보 Worker 오류'
+      );
+    }
+
+    const responseBody = parsed?.response;
+
+    if (responseBody) {
+      const code = responseBody?.header?.resultCode;
+
+      if (code && code !== '00') {
+        throw new Error(
+          `공식 기상특보 API 오류 ${code}: ${
+            responseBody?.header?.resultMsg || '알 수 없음'
+          }`
+        );
+      }
+
+      return responseBody?.body || {};
+    }
+
+    return parsed;
+  }
+
+  function addKstDateDays(dateKey, offset) {
+    const year = Number(dateKey.slice(0,4));
+    const month = Number(dateKey.slice(4,6));
+    const day = Number(dateKey.slice(6,8));
+    const date = new Date(
+      Date.UTC(year, month - 1, day + offset, 3, 0, 0)
+    );
+    return formatDate(date);
+  }
+
+  function recordText(record) {
+    const excluded = new Set([
+      'pageNo', 'numOfRows', 'totalCount', 'dataType',
+      'stnId', 'tmSeq', 'tmFc', 'title'
+    ]);
+    const values = [];
+
+    const walk = value => {
+      if (value === null || value === undefined) return;
+
+      if (Array.isArray(value)) {
+        value.forEach(walk);
+        return;
+      }
+
+      if (typeof value === 'object') {
+        Object.entries(value).forEach(([key, child]) => {
+          if (!excluded.has(key)) walk(child);
+        });
+        return;
+      }
+
+      const text = cleanText(value);
+
+      if (
+        text &&
+        !values.includes(text) &&
+        !/^(00|NORMAL_SERVICE|JSON|XML)$/.test(text)
+      ) {
+        values.push(text);
+      }
+    };
+
+    walk(record);
+    return values.join('\n');
+  }
+
+  function recordTime(record) {
+    return (
+      parseSituationTime(record?.tmFc) ||
+      parseSituationTime(record?.tm) ||
+      parseSituationTime(record?.announceTime) ||
+      null
+    );
+  }
+
+  function recordMatchesList(detail, listItem) {
+    const detailTm = String(detail?.tmFc || '').replace(/\D/g,'');
+    const listTm = String(listItem?.tmFc || '').replace(/\D/g,'');
+    const detailSeq = String(detail?.tmSeq ?? '');
+    const listSeq = String(listItem?.tmSeq ?? '');
+
+    if (detailTm && listTm && detailTm !== listTm) return false;
+    if (detailSeq && listSeq && detailSeq !== listSeq) return false;
+
+    return Boolean(detailTm || detailSeq);
+  }
+
+  function mergeListAndDetail(listItem, details) {
+    const matched = details.filter(
+      detail => recordMatchesList(detail, listItem)
+    );
+
+    const selected = matched.length
+      ? matched
+      : details.filter(detail => {
+          const detailDate = String(detail?.tmFc || '').slice(0,8);
+          const listDate = String(listItem?.tmFc || '').slice(0,8);
+          return detailDate && detailDate === listDate;
+        });
+
+    return {
+      ...listItem,
+      officialDetailRecords:selected,
+      officialDetailText:selected
+        .map(recordText)
+        .filter(Boolean)
+        .join('\n')
+    };
+  }
+
+  function officialUnclassifiedAlert({
+    source,
+    record,
+    detailText
+  }) {
+    const preliminary = source === 'preliminary';
+    const issuedAt = recordTime(record);
+
+    return {
+      source,
+      scope:'official-unclassified',
+      operationImpact:false,
+      level:preliminary ? 'watch' : 'advisory',
+      levelLabel:preliminary ? '예비특보' : '특보',
+      weatherTypes:extractWeatherTypes(
+        `${record?.title || ''} ${detailText || ''}`
+      ),
+      area:'수도권 발표관서 109',
+      title:
+        record?.title ||
+        (preliminary
+          ? '수도권 공식 예비특보'
+          : '수도권 공식 기상특보'),
+      message:
+        detailText ||
+        '기상청 공식 목록에서 발표가 확인되었습니다. 상세지역은 원문 확인이 필요합니다.',
+      issuedAt,
+      effectiveAt:null,
+      effectiveEndAt:null,
+      periodText:'상세 발효시간은 공식 통보문 확인',
+      periods:[],
+      official:true
+    };
+  }
+
+  function alertsFromOfficialRecords({
+    source,
+    list,
+    details
+  }) {
+    const now = new Date();
+    const sorted = [...list].sort(
+      (a,b) =>
+        String(b?.tmFc || '').localeCompare(
+          String(a?.tmFc || '')
+        )
+    );
+
+    const recent = sorted.filter(record => {
+      const issuedAt = recordTime(record);
+      if (!issuedAt) return false;
+
+      const age = now - new Date(issuedAt);
+      const limit = source === 'preliminary'
+        ? 36 * 60 * 60000
+        : 18 * 60 * 60000;
+
+      return age >= -60 * 60000 && age <= limit;
+    }).slice(0,4);
+
+    const alerts = [];
+
+    recent.forEach(listItem => {
+      const merged = mergeListAndDetail(listItem, details);
+      const detailText = cleanText(
+        merged.officialDetailText || ''
+      );
+      const combinedText = [
+        listItem?.title,
+        detailText
+      ].filter(Boolean).join('\n');
+
+      const scoped = buildAlert({
+        source,
+        text:combinedText,
+        issuedAt:recordTime(listItem)
+      });
+
+      if (scoped.length) {
+        scoped.forEach(alert => {
+          alert.official = true;
+          alert.officialTitle = listItem?.title || '';
+          alert.stationId = String(listItem?.stnId || '');
+          alert.tmSeq = listItem?.tmSeq ?? null;
+        });
+        alerts.push(...scoped);
+      } else {
+        alerts.push(officialUnclassifiedAlert({
+          source,
+          record:listItem,
+          detailText
+        }));
+      }
+    });
+
+    return alerts;
+  }
+
+  function statusAlertsFromItems(statusItems) {
+    const alerts = [];
+
+    statusItems.forEach(item => {
+      const text = [
+        item?.title,
+        recordText(item)
+      ].filter(Boolean).join('\n');
+
+      if (!extractWeatherTypes(text).length) return;
+      if (/해제|특보\s*없음|발효\s*없음/.test(text)) return;
+
+      const scoped = buildAlert({
+        source:'official',
+        text,
+        issuedAt:recordTime(item) || new Date().toISOString()
+      });
+
+      scoped.forEach(alert => {
+        alert.official = true;
+        alert.currentStatus = true;
+      });
+
+      alerts.push(...scoped);
+    });
+
+    return alerts;
+  }
+
+  async function fetchOfficialWarningSituation(proxyBase) {
+    const today = formatDate(new Date());
+    const fromSixDays = addKstDateDays(today, -6);
+    const fromTwoDays = addKstDateDays(today, -2);
+    const common = {
+      pageNo:1,
+      numOfRows:100,
+      dataType:'JSON',
+      stnId:109
+    };
+
+    const results = await Promise.allSettled([
+      fetchWorkerJson(
+        'kma-warning/preliminary-list',
+        {
+          ...common,
+          fromTmFc:fromSixDays,
+          toTmFc:today
+        },
+        proxyBase
+      ),
+      fetchWorkerJson(
+        'kma-warning/preliminary',
+        {
+          ...common,
+          fromTmFc:fromSixDays,
+          toTmFc:today
+        },
+        proxyBase
+      ),
+      fetchWorkerJson(
+        'kma-warning/list',
+        {
+          ...common,
+          fromTmFc:fromTwoDays,
+          toTmFc:today
+        },
+        proxyBase
+      ),
+      fetchWorkerJson(
+        'kma-warning/message',
+        {
+          ...common,
+          fromTmFc:fromTwoDays,
+          toTmFc:today
+        },
+        proxyBase
+      ),
+      fetchWorkerJson(
+        'kma-warning/status',
+        { dataType:'JSON' },
+        proxyBase
+      )
+    ]);
+
+    const fulfilled = index =>
+      results[index].status === 'fulfilled'
+        ? results[index].value
+        : null;
+
+    const preliminaryListBody = fulfilled(0);
+    const preliminaryDetailBody = fulfilled(1);
+    const warningListBody = fulfilled(2);
+    const warningMessageBody = fulfilled(3);
+    const statusBody = fulfilled(4);
+
+    if (!preliminaryListBody && !warningListBody && !statusBody) {
+      const errors = results
+        .filter(result => result.status === 'rejected')
+        .map(result => result.reason?.message)
+        .filter(Boolean);
+
+      throw new Error(
+        errors.join(' / ') ||
+        '공식 기상특보 응답 없음'
+      );
+    }
+
+    const preliminaryList = items(preliminaryListBody);
+    const preliminaryDetails = items(preliminaryDetailBody);
+    const warningList = items(warningListBody);
+    const warningDetails = items(warningMessageBody);
+    const statusItems = items(statusBody);
+
+    const officialAlerts = dedupeAlerts([
+      ...statusAlertsFromItems(statusItems),
+      ...alertsFromOfficialRecords({
+        source:'official',
+        list:warningList,
+        details:warningDetails
+      }),
+      ...alertsFromOfficialRecords({
+        source:'preliminary',
+        list:preliminaryList,
+        details:preliminaryDetails
+      })
+    ]).sort((a,b) => {
+      const priority = {
+        warning:0,
+        advisory:1,
+        watch:2,
+        reference:3
+      };
+
+      return (
+        (priority[a.level] ?? 9) -
+        (priority[b.level] ?? 9) ||
+        new Date(b.issuedAt || 0) -
+        new Date(a.issuedAt || 0)
+      );
+    });
+
+    const directOfficial = officialAlerts.filter(
+      alert =>
+        alert.scope === 'seoul-direct' &&
+        alert.source === 'official'
+    );
+    const directPreliminary = officialAlerts.filter(
+      alert =>
+        alert.scope === 'seoul-direct' &&
+        alert.source === 'preliminary'
+    );
+    const upstream = officialAlerts.filter(
+      alert => alert.scope === 'paldang-upstream'
+    );
+    const unclassified = officialAlerts.filter(
+      alert => alert.scope === 'official-unclassified'
+    );
+
+    const latestIssuedAt = officialAlerts
+      .map(alert => alert.issuedAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1) || null;
+
+    return {
+      issuedAt:latestIssuedAt,
+      alerts:officialAlerts,
+      status:{
+        sourceMode:'official-warning-api',
+        area:'서울특별시·팔당 상류권',
+        warning:directOfficial.length
+          ? directOfficial.map(alert => alert.title).join(' · ')
+          : '서울 발효 특보 없음',
+        preliminary:directPreliminary.length
+          ? directPreliminary.map(alert => alert.title).join(' · ')
+          : '서울 예비특보 없음',
+        upstream:upstream.length
+          ? upstream.map(alert => alert.title).join(' · ')
+          : '팔당 상류 영향특보 없음',
+        unclassified:unclassified.length
+          ? unclassified.map(alert => alert.title).join(' · ')
+          : '',
+        message:
+          '기상청 기상특보 조회서비스 공식 목록·통보문·특보현황 기준'
+      },
+      diagnostics:{
+        preliminaryListCount:preliminaryList.length,
+        preliminaryDetailCount:preliminaryDetails.length,
+        warningListCount:warningList.length,
+        warningDetailCount:warningDetails.length,
+        statusCount:statusItems.length,
+        failedPaths:results
+          .map((result,index) => ({
+            index,
+            failed:result.status === 'rejected',
+            reason:
+              result.status === 'rejected'
+                ? result.reason?.message
+                : ''
+          }))
+          .filter(row => row.failed)
+      }
+    };
+  }
+
   async function fetchTextUrl(path, params, proxyBase) {
     const url = new URL(`${proxyBase}/${path}`);
     Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
@@ -1143,7 +1606,21 @@
       return [sector,rainfall];
     });
 
-    const situation=await fetchSituation(proxyBase);
+    let situation;
+
+    try {
+      situation=await fetchOfficialWarningSituation(proxyBase);
+    } catch (officialError) {
+      situation=await fetchSituation(proxyBase);
+      situation.status={
+        ...(situation.status||{}),
+        sourceMode:'forecast-message-fallback',
+        officialError:officialError.message,
+        message:
+          `공식 특보 API 호출 실패 · 통보문 보조조회 사용 · ${officialError.message}`
+      };
+    }
+
     const observedTimes=windStations.map(x=>new Date(x.observedAt).getTime()).filter(Number.isFinite);
     const observedAt=observedTimes.length?new Date(Math.max(...observedTimes)).toISOString():null;
     const forecastIssuedAt=rainEntries.map(([,r])=>r.forecastIssuedAt).filter(Boolean).sort().at(-1)||null;
@@ -1485,14 +1962,22 @@
     const {proxyBase}=getSettings();
     if(!proxyBase) throw new Error('기상청 중계 Worker 주소가 없습니다.');
     const test=await fetchNowcastForGrid({nx:60,ny:127},proxyBase,0);
-    const situation=await fetchSituation(proxyBase);
+    let situation;
+
+    try {
+      situation=await fetchOfficialWarningSituation(proxyBase);
+    } catch (_) {
+      situation=await fetchSituation(proxyBase);
+    }
+
     return {
       ok:true,
       observedAt:test.observedAt,
       speed:test.speed,
       direction:test.direction,
       rain1h:test.rain1h,
-      alertCount:situation.alerts.length
+      alertCount:situation.alerts.length,
+      alertSource:situation.status?.sourceMode || 'unknown'
     };
   }
 
