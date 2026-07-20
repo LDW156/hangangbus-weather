@@ -589,12 +589,18 @@
         : clearanceDelta10m<-0.004
           ? 'fall'
           : 'flat';
-    const clearanceTrendLabel=
+    const clearanceTrendSymbol=
       clearanceTrendClass==='rise'
-        ? '▲ 상승'
+        ? '▲'
         : clearanceTrendClass==='fall'
-          ? '▼ 하락'
-          : '― 보합';
+          ? '▼'
+          : '―';
+    const clearanceTrendWord=
+      clearanceTrendClass==='rise'
+        ? '상승'
+        : clearanceTrendClass==='fall'
+          ? '하락'
+          : '보합';
 
     const changeCard=(label,steps)=>{
       const point=historyPoint(h,steps);
@@ -630,8 +636,11 @@
             <b>${fmt(c.clearance,2)}m</b>
 
             <div class="clearance-stock-trend ${clearanceTrendClass}">
-              <span>${clearanceTrendLabel}</span>
-              <strong>${signed(clearanceDelta10m,2,'m')}</strong>
+              <strong>
+                ${clearanceTrendSymbol}
+                ${signed(clearanceDelta10m,2,'m')}
+                ${clearanceTrendWord}
+              </strong>
               <em>10분 전 대비</em>
             </div>
           </div>

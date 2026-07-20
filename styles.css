@@ -4210,3 +4210,72 @@ details.rain-contribution-box {
     margin-left:auto;
   }
 }
+
+
+/* =========================================================
+   v83 잠수교 통과높이 등락표시 텍스트형
+========================================================= */
+
+.clearance-value-row {
+  align-items:flex-end !important;
+}
+
+.clearance-stock-trend {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:center !important;
+  min-width:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  text-align:right !important;
+}
+
+.clearance-stock-trend strong {
+  display:block !important;
+  font-size:13px !important;
+  font-weight:950 !important;
+  line-height:1.1 !important;
+  letter-spacing:-.25px !important;
+  white-space:nowrap !important;
+}
+
+.clearance-stock-trend em {
+  display:block !important;
+  margin-top:4px !important;
+  color:#768994 !important;
+  font-size:7px !important;
+  font-style:normal !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+}
+
+.clearance-stock-trend.rise {
+  color:#d32637 !important;
+}
+
+.clearance-stock-trend.fall {
+  color:#176fb0 !important;
+}
+
+.clearance-stock-trend.flat {
+  color:#667b87 !important;
+}
+
+@media (max-width:680px) {
+  .clearance-value-row {
+    align-items:flex-start !important;
+  }
+
+  .clearance-stock-trend {
+    align-items:flex-start !important;
+    width:auto !important;
+    text-align:left !important;
+  }
+
+  .clearance-stock-trend em {
+    margin-left:0 !important;
+  }
+}
