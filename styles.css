@@ -4304,3 +4304,36 @@ details.rain-contribution-box {
 .detail-dashboard-return:hover {
   background:#0c6d9b;
 }
+
+
+/* =========================================================
+   v86 상세화면 내부 복귀 버튼
+========================================================= */
+
+.embedded-dashboard-back {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:7px 11px;
+  color:#ffffff;
+  background:#145f88;
+  border:1px solid #145f88;
+  border-radius:8px;
+  box-shadow:0 3px 9px rgba(17,74,104,.16);
+  font-size:9px;
+  font-weight:950;
+  white-space:nowrap;
+  cursor:pointer;
+}
+
+.embedded-dashboard-back:hover {
+  background:#0f759f;
+}
+
+@media (max-width:760px) {
+  .embedded-dashboard-back {
+    order:-1;
+    width:100%;
+  }
+}

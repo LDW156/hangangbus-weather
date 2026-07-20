@@ -221,6 +221,8 @@
       refresh.disabled = false;
       refresh.textContent = '↻ 최신 데이터';
     }
+
+    scheduleDetailPreload();
   }
 
   function computeDashboard() {
@@ -705,6 +707,192 @@
       </div>
     `).join('');
   }
+
+
+  const detailTitles = {
+    '':'전체 상세화면',
+    route:'노선 운항판정',
+    jamsu:'잠수교 통과높이',
+    dam:'팔당댐 방류량',
+    river:'한강 수위',
+    alerts:'운항 관련 기상특보',
+    rain:'강수 예보',
+    wind:'풍향·풍속',
+    tide:'인천 조석'
+  };
+
+  let detailFrameLoaded=false;
+  let detailFrameLoading=false;
+  let pendingDetailSection='';
+  let detailPreloadScheduled=false;
+
+  function activateMenu(link){
+    document.querySelectorAll('.side-nav a').forEach(item=>{
+      item.classList.toggle('active',item===link);
+    });
+  }
+
+  function detailMessage(payload){
+    const frame=$('detailFrame');
+    if(!detailFrameLoaded||!frame?.contentWindow)return;
+    frame.contentWindow.postMessage(payload,window.location.origin);
+  }
+
+  function pushDashboardDataToDetail(){
+    if(!data)return;
+    detailMessage({
+      type:'hangangbus-prefill-data',
+      data
+    });
+  }
+
+  function scrollDetail(section=''){
+    pendingDetailSection=section;
+    if(!detailFrameLoaded)return;
+    detailMessage({
+      type:'hangangbus-scroll-section',
+      section
+    });
+  }
+
+  function setDetailLoading(visible){
+    const overlay=$('detailLoadingOverlay');
+    if(!overlay)return;
+    overlay.hidden=!visible;
+  }
+
+  function ensureDetailFrame(){
+    const frame=$('detailFrame');
+    if(!frame||detailFrameLoaded||detailFrameLoading)return;
+
+    detailFrameLoading=true;
+    const source=frame.dataset.src||'./detail.html?v=86';
+    frame.setAttribute('src',source);
+  }
+
+  function scheduleDetailPreload(){
+    if(detailPreloadScheduled||detailFrameLoaded||detailFrameLoading)return;
+    detailPreloadScheduled=true;
+
+    const preload=()=>ensureDetailFrame();
+
+    if('requestIdleCallback' in window){
+      requestIdleCallback(preload,{timeout:1800});
+    }else{
+      setTimeout(preload,900);
+    }
+  }
+
+  function showDashboard(link=null){
+    $('dashboardView').classList.add('active');
+    $('detailView').classList.remove('active');
+    $('detailView').setAttribute('aria-hidden','true');
+
+    activateMenu(
+      link || document.querySelector('.side-nav a[href="./index.html"]')
+    );
+
+    sessionStorage.setItem('hangangbus-view','dashboard');
+  }
+
+  function showDetail(section='',link=null){
+    $('dashboardView').classList.remove('active');
+    $('detailView').classList.add('active');
+    $('detailView').setAttribute('aria-hidden','false');
+    $('detailViewTitle').textContent=detailTitles[section]||'상세 모니터링';
+
+    pendingDetailSection=section;
+    setDetailLoading(!detailFrameLoaded);
+    ensureDetailFrame();
+
+    if(detailFrameLoaded){
+      pushDashboardDataToDetail();
+      scrollDetail(section);
+    }
+
+    if(link)activateMenu(link);
+
+    sessionStorage.setItem(
+      'hangangbus-view',
+      JSON.stringify({view:'detail',section})
+    );
+  }
+
+  const detailFrame=$('detailFrame');
+  detailFrame?.addEventListener('load',()=>{
+    const current=detailFrame.getAttribute('src')||'';
+    if(!current.includes('detail.html'))return;
+
+    detailFrameLoading=false;
+    detailFrameLoaded=true;
+    setDetailLoading(false);
+    pushDashboardDataToDetail();
+    scrollDetail(pendingDetailSection);
+  });
+
+  window.addEventListener('message',event=>{
+    if(event.origin!==window.location.origin)return;
+    const message=event.data||{};
+
+    if(message.type==='hangangbus-detail-ready'){
+      detailFrameLoaded=true;
+      detailFrameLoading=false;
+      setDetailLoading(false);
+      pushDashboardDataToDetail();
+      scrollDetail(pendingDetailSection);
+    }
+
+    if(message.type==='hangangbus-open-dashboard'){
+      showDashboard();
+    }
+  });
+
+  document.querySelectorAll('.side-nav a').forEach(link=>{
+    const href=link.getAttribute('href')||'';
+
+    if(href==='#'||link.classList.contains('disabled'))return;
+
+    link.addEventListener('click',event=>{
+      if(href.includes('detail.html')){
+        event.preventDefault();
+        const section=href.includes('#')?href.split('#')[1]:'';
+        showDetail(section,link);
+      }else if(href.includes('index.html')){
+        event.preventDefault();
+        showDashboard(link);
+      }
+    });
+  });
+
+  document.querySelectorAll('a[href^="./detail.html"]').forEach(link=>{
+    if(link.closest('.side-nav'))return;
+
+    link.addEventListener('click',event=>{
+      event.preventDefault();
+      const href=link.getAttribute('href')||'';
+      const section=href.includes('#')?href.split('#')[1]:'';
+      const menuLink=document.querySelector(
+        `.side-nav a[href="./detail.html${section?`#${section}`:''}"]`
+      );
+      showDetail(section,menuLink);
+    });
+  });
+
+  $('backToDashboard')?.addEventListener('click',()=>showDashboard());
+
+  try{
+    const saved=sessionStorage.getItem('hangangbus-view');
+    if(saved&&saved!=='dashboard'){
+      const state=JSON.parse(saved);
+      if(state?.view==='detail'){
+        const section=state.section||'';
+        const menuLink=document.querySelector(
+          `.side-nav a[href="./detail.html${section?`#${section}`:''}"]`
+        );
+        showDetail(section,menuLink);
+      }
+    }
+  }catch(_){}
 
   $('dashboardRefresh')?.addEventListener('click', loadDashboardData);
 

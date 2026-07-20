@@ -8,21 +8,9 @@
   <title>한강버스 상세 모니터링</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=84">
-  <script>
-    // 새 배포 파일을 즉시 받도록 이전 한강버스 캐시를 정리합니다.
-    if ('caches' in window) {
-      caches.keys().then((keys) => Promise.all(
-        keys.filter((key) => key.startsWith('hangangbus-') && key !== 'hangangbus-logo-tooltip-v60')
-            .map((key) => caches.delete(key))
-      )).catch(() => {});
-    }
-  </script>
+  <link rel="stylesheet" href="styles.css?v=86">
 </head>
 <body>
-  <a class="detail-dashboard-return" href="./index.html" aria-label="종합 대시보드로 이동">
-    <span>←</span> 종합 대시보드
-  </a>
   <header class="app-header">
     <div class="brand-lockup">
       <div class="brand-mark official-logo" aria-label="한강버스 공식 로고">
@@ -38,6 +26,7 @@
       </div>
     </div>
     <div class="header-right">
+      <button id="embeddedDashboardBack" class="embedded-dashboard-back" type="button">← 종합 대시보드</button>
       <div class="refresh-control"><button id="refreshBtn" class="refresh-btn" type="button"><span class="refresh-icon">↻</span> 최신 데이터 업데이트</button><small id="refreshNote">자동 갱신 5분</small></div>
       <span id="modeBadge" class="mode-badge">DEMO</span>
       <span id="updatedAt" class="updated">갱신 확인 중</span>
@@ -191,6 +180,18 @@
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=81"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=83"></script>
+  <script src="app.js?v=86"></script>
+  <script>
+    (() => {
+      const back = document.getElementById('embeddedDashboardBack');
+      back?.addEventListener('click', () => {
+        if (window.parent !== window) {
+          window.parent.postMessage({type:'hangangbus-open-dashboard'}, window.location.origin);
+        } else {
+          window.location.href = './?v=86';
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -1,12 +1,12 @@
-const CACHE='hangangbus-control-room-dashboard-v84';
+const CACHE='hangangbus-fast-detail-navigation-v86';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
-  './dashboard.css?v=84',
-  './dashboard.js?v=84',
-  './styles.css?v=84',
-  './app.js?v=83',
+  './dashboard.css?v=86',
+  './dashboard.js?v=86',
+  './styles.css?v=86',
+  './app.js?v=86',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',

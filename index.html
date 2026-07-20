@@ -8,15 +8,7 @@
   <title>한강버스 종합 상황 대시보드</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="dashboard.css?v=84">
-  <script>
-    if ('caches' in window) {
-      caches.keys().then((keys) => Promise.all(
-        keys.filter((key) => key.startsWith('hangangbus-'))
-          .map((key) => caches.delete(key))
-      )).catch(() => {});
-    }
-  </script>
+  <link rel="stylesheet" href="dashboard.css?v=86">
 </head>
 <body class="dashboard-body">
   <div class="control-shell">
@@ -99,6 +91,7 @@
     </aside>
 
     <main class="control-main">
+      <section id="dashboardView" class="main-view dashboard-view active">
       <header class="control-header">
         <div>
           <p>HANGANG BUS CONTROL DASHBOARD</p>
@@ -267,6 +260,32 @@
         <span>공식기관 자료 취합 운항 참고화면 · 실제 운항판단은 회사 지침과 현장 확인 우선</span>
         <span>자동 갱신 5분</span>
       </footer>
+      </section>
+
+      <section id="detailView" class="main-view detail-view" aria-hidden="true">
+        <header class="detail-shell-header">
+          <div>
+            <span>상세 모니터링</span>
+            <h1 id="detailViewTitle">전체 상세화면</h1>
+          </div>
+          <button id="backToDashboard" type="button">← 종합 대시보드</button>
+        </header>
+
+        <div id="detailLoadingOverlay" class="detail-loading-overlay" hidden>
+          <div class="detail-loading-spinner"></div>
+          <b>상세 모니터링 준비 중</b>
+          <span>화면은 먼저 표시하고 최신 자료는 병렬로 갱신합니다.</span>
+        </div>
+
+        <iframe
+          id="detailFrame"
+          class="detail-frame"
+          title="한강버스 상세 모니터링"
+          src="about:blank"
+          data-src="./detail.html?v=86"
+          loading="lazy"
+        ></iframe>
+      </section>
     </main>
   </div>
 
@@ -278,6 +297,6 @@
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=81"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="dashboard.js?v=84"></script>
+  <script src="dashboard.js?v=86"></script>
 </body>
 </html>
