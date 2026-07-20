@@ -1,8 +1,8 @@
-const CACHE='hangangbus-critical-alerts-only-v81';
+const CACHE='hangangbus-jamsu-clearance-trend-v82';
 const ASSETS=[
   './',
   './index.html',
-  './styles.css?v=81',
+  './styles.css?v=82',
   './shared-config.js?v=61',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
@@ -10,7 +10,7 @@ const ASSETS=[
   './hrfco.js?v=62',
   './kma.js?v=81',
   './ocean.js?v=69',
-  './app.js?v=81',
+  './app.js?v=82',
   './data/demo-data.js?v=62',
   './manifest.webmanifest',
   './assets/hangangbus-logo.png?v=62',

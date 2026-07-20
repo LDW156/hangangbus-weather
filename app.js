@@ -569,6 +569,33 @@
     const h=j.history;
     const cur=j.waterLevelM;
 
+    /*
+     * 통과높이는 수위와 반대로 움직입니다.
+     * 현재 통과높이와 10분 전 통과높이를 비교합니다.
+     * 국내 주식 시세 방식:
+     * - 상승: 적색
+     * - 하락: 청색
+     */
+    const previousLevel10m=historyValue(h,1);
+    const previousClearance10m=
+      Number.isFinite(previousLevel10m)
+        ? cfg.STRUCTURE_HEIGHT_M-previousLevel10m
+        : c.clearance;
+    const clearanceDelta10m=
+      c.clearance-previousClearance10m;
+    const clearanceTrendClass=
+      clearanceDelta10m>0.004
+        ? 'rise'
+        : clearanceDelta10m<-0.004
+          ? 'fall'
+          : 'flat';
+    const clearanceTrendLabel=
+      clearanceTrendClass==='rise'
+        ? '▲ 상승'
+        : clearanceTrendClass==='fall'
+          ? '▼ 하락'
+          : '― 보합';
+
     const changeCard=(label,steps)=>{
       const point=historyPoint(h,steps);
       const previous=historyValue(h,steps);
@@ -598,7 +625,17 @@
       <div class="jamsu-primary-grid">
         <div class="jamsu-primary clearance-primary">
           <span>현재 잠수교 통과높이</span>
-          <b>${fmt(c.clearance,2)}m</b>
+
+          <div class="clearance-value-row">
+            <b>${fmt(c.clearance,2)}m</b>
+
+            <div class="clearance-stock-trend ${clearanceTrendClass}">
+              <span>${clearanceTrendLabel}</span>
+              <strong>${signed(clearanceDelta10m,2,'m')}</strong>
+              <em>10분 전 대비</em>
+            </div>
+          </div>
+
           <em>${statusText[c.jamsu]}</em>
         </div>
 

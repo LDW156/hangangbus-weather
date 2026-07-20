@@ -4109,3 +4109,104 @@ details.rain-contribution-box {
     min-height:auto;
   }
 }
+
+
+/* =========================================================
+   v82 잠수교 통과높이 주식식 등락표시
+========================================================= */
+
+.clearance-value-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+}
+
+.clearance-value-row > b {
+  flex:0 0 auto;
+  margin:3px 0 1px;
+  color:#064f78;
+  font-size:31px;
+  font-weight:950;
+  letter-spacing:-.04em;
+  white-space:nowrap;
+}
+
+.clearance-stock-trend {
+  display:grid;
+  grid-template-columns:auto auto;
+  align-items:center;
+  column-gap:5px;
+  row-gap:1px;
+  min-width:94px;
+  padding:7px 9px;
+  border:1px solid;
+  border-radius:10px;
+  text-align:right;
+}
+
+.clearance-stock-trend span,
+.clearance-stock-trend strong,
+.clearance-stock-trend em {
+  display:block;
+}
+
+.clearance-stock-trend span {
+  font-size:9px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.clearance-stock-trend strong {
+  font-size:14px;
+  font-weight:1000;
+  letter-spacing:-.35px;
+  white-space:nowrap;
+}
+
+.clearance-stock-trend em {
+  grid-column:1/-1;
+  color:#6f8490;
+  font-size:7px;
+  font-style:normal;
+  font-weight:800;
+}
+
+.clearance-stock-trend.rise {
+  color:#cf2738;
+  background:#fff1f2;
+  border-color:#e3a0a7;
+}
+
+.clearance-stock-trend.fall {
+  color:#176fb0;
+  background:#edf6fd;
+  border-color:#8ebdde;
+}
+
+.clearance-stock-trend.flat {
+  color:#667b87;
+  background:#f3f6f8;
+  border-color:#c8d4da;
+}
+
+@media (max-width:680px) {
+  .clearance-value-row {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .clearance-stock-trend {
+    grid-template-columns:auto auto auto;
+    width:100%;
+    text-align:left;
+  }
+
+  .clearance-stock-trend em {
+    grid-column:auto;
+    align-self:center;
+    margin-left:auto;
+  }
+}
