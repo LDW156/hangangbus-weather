@@ -4279,3 +4279,28 @@ details.rain-contribution-box {
     margin-left:0 !important;
   }
 }
+
+
+/* v84 상세화면에서 종합 대시보드 복귀 */
+.detail-dashboard-return {
+  position:fixed;
+  left:10px;
+  bottom:12px;
+  z-index:160;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 11px;
+  color:#ffffff;
+  background:#174f73;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  box-shadow:0 6px 20px rgba(10,42,60,.25);
+  font-size:9px;
+  font-weight:900;
+  text-decoration:none;
+}
+
+.detail-dashboard-return:hover {
+  background:#0c6d9b;
+}
