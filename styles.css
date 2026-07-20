@@ -4337,3 +4337,235 @@ details.rain-contribution-box {
     width:100%;
   }
 }
+
+
+/* =========================================================
+   v87 특보 생명주기·우선순위
+========================================================= */
+
+.alert-list-section-head,
+.alert-release-section-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 8px;
+  padding:8px 10px;
+  border-radius:9px;
+}
+
+.alert-list-section-head {
+  color:#244e63;
+  background:#eef5f8;
+  border:1px solid #c7d9e2;
+}
+
+.alert-list-section-head b,
+.alert-list-section-head span,
+.alert-release-section-head b,
+.alert-release-section-head span {
+  display:block;
+}
+
+.alert-list-section-head b,
+.alert-release-section-head b {
+  font-size:9.5px;
+  font-weight:950;
+}
+
+.alert-list-section-head span,
+.alert-release-section-head span {
+  margin-top:3px;
+  font-size:7.5px;
+  font-weight:750;
+}
+
+.alert-list-section-head em,
+.alert-release-section-head em {
+  padding:4px 7px;
+  border-radius:999px;
+  font-size:7.5px;
+  font-style:normal;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.alert-list-section-head em {
+  color:#17648a;
+  background:#ffffff;
+  border:1px solid #a8c9da;
+}
+
+/* 중요도 시각 구분: 경보 적색, 주의보·예비특보 황색 */
+.alert-card.warning {
+  border-width:2px !important;
+  border-color:#d85a67 !important;
+  background:#fff0f2 !important;
+}
+
+.alert-card.warning h3 {
+  color:#ad1d2c !important;
+}
+
+.alert-card.advisory {
+  border-width:2px !important;
+  border-color:#d9a21a !important;
+  background:#fff7dc !important;
+}
+
+.alert-card.advisory h3 {
+  color:#7b5700 !important;
+}
+
+.alert-card.watch {
+  border-color:#e1bf59 !important;
+  background:#fffbee !important;
+}
+
+.alert-card.watch h3 {
+  color:#705400 !important;
+}
+
+/* 해제·취소는 현재특보와 완전히 분리 */
+.alert-release-section {
+  margin-top:12px;
+  padding-top:12px;
+  border-top:2px solid #bdd4e0;
+}
+
+.alert-release-section-head {
+  color:#175e82;
+  background:#eaf6fb;
+  border:1px solid #91c2d9;
+}
+
+.alert-release-section-head em {
+  color:#17658c;
+  background:#ffffff;
+  border:1px solid #9ec9dc;
+}
+
+.alert-release-list {
+  display:grid;
+  gap:7px;
+}
+
+.alert-release-notice {
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr);
+  align-items:start;
+  gap:9px;
+  padding:10px 11px;
+  color:#1b5875;
+  background:#f0f8fc;
+  border:1px solid #8ebdd3;
+  border-left:4px solid #2783ad;
+  border-radius:10px;
+}
+
+.alert-release-symbol {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:27px;
+  height:27px;
+  color:#ffffff;
+  background:#2381aa;
+  border-radius:50%;
+  font-size:14px;
+  font-weight:1000;
+}
+
+.alert-release-notice.cancelled {
+  color:#65551d;
+  background:#fff9e9;
+  border-color:#d9bd69;
+  border-left-color:#c89a11;
+}
+
+.alert-release-notice.cancelled .alert-release-symbol {
+  background:#c59409;
+}
+
+.alert-release-copy {
+  min-width:0;
+}
+
+.alert-release-copy > div {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.alert-release-copy b {
+  min-width:0;
+  font-size:9.5px;
+  font-weight:950;
+  line-height:1.35;
+}
+
+.alert-release-copy strong {
+  flex:0 0 auto;
+  padding:3px 6px;
+  color:#17658b;
+  background:#ffffff;
+  border:1px solid #9bc5d8;
+  border-radius:999px;
+  font-size:7.5px;
+  white-space:nowrap;
+}
+
+.alert-release-notice.cancelled .alert-release-copy strong {
+  color:#7a5a00;
+  border-color:#d8bd68;
+}
+
+.alert-release-copy p {
+  margin:5px 0 0;
+  color:#5d7887;
+  font-size:8px;
+  font-weight:800;
+  line-height:1.45;
+}
+
+.alert-release-copy details {
+  margin-top:6px;
+  padding-top:5px;
+  border-top:1px dashed rgba(74,126,151,.28);
+}
+
+.alert-release-copy summary {
+  color:#547889;
+  cursor:pointer;
+  font-size:7.5px;
+  font-weight:900;
+}
+
+.alert-release-copy details span {
+  display:block;
+  margin-top:6px;
+  color:#5f7784;
+  font-size:8px;
+  line-height:1.55;
+  white-space:pre-line;
+}
+
+@media (max-width:680px) {
+  .alert-release-notice {
+    grid-template-columns:25px minmax(0,1fr);
+    padding:9px;
+  }
+
+  .alert-release-symbol {
+    width:24px;
+    height:24px;
+    font-size:12px;
+  }
+
+  .alert-release-copy > div {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+}

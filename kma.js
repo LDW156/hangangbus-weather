@@ -385,6 +385,224 @@
     };
   }
 
+  function isReleaseOrCancellationText(text) {
+    const source = String(text || '');
+    return (
+      extractWeatherTypes(source).length > 0 &&
+      /해제|취소/.test(source)
+    );
+  }
+
+  function releaseAction(text) {
+    return /취소/.test(String(text || ''))
+      ? 'cancelled'
+      : 'released';
+  }
+
+  function releaseActionLabel(action) {
+    return action === 'cancelled' ? '취소' : '해제';
+  }
+
+  function releaseScope(text) {
+    if (containsSeoulDirectArea(text)) {
+      return {
+        scope:'seoul-direct',
+        area:'서울특별시'
+      };
+    }
+
+    const upstreamAreas = matchedPaldangUpstreamAreas(text);
+
+    if (upstreamAreas.length) {
+      return {
+        scope:'paldang-upstream',
+        area:`경기 동부 · ${upstreamAreas.join('·')}`
+      };
+    }
+
+    return {
+      scope:'official-unclassified',
+      area:'수도권 발표관서 109'
+    };
+  }
+
+  function releaseTitle(text, action) {
+    const source = String(text || '');
+    const matches = [];
+    const pattern =
+      /(호우|강풍|태풍)\s*(주의보|경보|예비특보|특보)?[^.\n]{0,30}?(해제|취소)/g;
+
+    for (const match of source.matchAll(pattern)) {
+      const weatherType = match[1];
+      const level = match[2] || '특보';
+      const label = `${weatherType}${level} ${releaseActionLabel(action)}`;
+
+      if (!matches.includes(label)) {
+        matches.push(label);
+      }
+    }
+
+    if (matches.length) {
+      return matches.join(' · ');
+    }
+
+    const types = extractWeatherTypes(source);
+
+    if (types.length) {
+      return types
+        .map(type => `${type}특보 ${releaseActionLabel(action)}`)
+        .join(' · ');
+    }
+
+    return `기상특보 ${releaseActionLabel(action)}`;
+  }
+
+  function releaseNoticeFromRecord({
+    source,
+    record,
+    detailText
+  }) {
+    const issuedAt = recordTime(record);
+    const combinedText = [
+      record?.title,
+      detailText
+    ].filter(Boolean).join('\n');
+
+    if (!issuedAt || !isReleaseOrCancellationText(combinedText)) {
+      return null;
+    }
+
+    const action = releaseAction(combinedText);
+    const scoped = releaseScope(combinedText);
+
+    return {
+      kind:'release',
+      source,
+      scope:scoped.scope,
+      area:scoped.area,
+      action,
+      actionLabel:releaseActionLabel(action),
+      title:releaseTitle(combinedText, action),
+      weatherTypes:extractWeatherTypes(combinedText),
+      issuedAt,
+      message:
+        detailText ||
+        cleanText(record?.title) ||
+        `${releaseTitle(combinedText, action)} 발표`,
+      officialTitle:record?.title || '',
+      stationId:String(record?.stnId || ''),
+      tmSeq:record?.tmSeq ?? null
+    };
+  }
+
+  function releaseNoticesFromOfficialRecords({
+    source,
+    list,
+    details,
+    maxAgeHours = 24
+  }) {
+    const now = new Date();
+    const notices = [];
+
+    [...list]
+      .sort(
+        (a,b) =>
+          String(b?.tmFc || '').localeCompare(
+            String(a?.tmFc || '')
+          )
+      )
+      .forEach(listItem => {
+        const issuedAt = recordTime(listItem);
+
+        if (!issuedAt) return;
+
+        const age = now - new Date(issuedAt);
+
+        if (
+          age < -60 * 60000 ||
+          age > maxAgeHours * 60 * 60000
+        ) {
+          return;
+        }
+
+        const merged = mergeListAndDetail(listItem, details);
+        const detailText = cleanText(
+          merged.officialDetailText || ''
+        );
+
+        const notice = releaseNoticeFromRecord({
+          source,
+          record:listItem,
+          detailText
+        });
+
+        if (notice) {
+          notices.push(notice);
+        }
+      });
+
+    const keys = new Set();
+
+    return notices.filter(notice => {
+      const key = [
+        notice.action,
+        notice.scope,
+        notice.title,
+        notice.issuedAt
+      ].join('|');
+
+      if (keys.has(key)) return false;
+      keys.add(key);
+      return true;
+    });
+  }
+
+  function releaseMatchesAlert(alert, release) {
+    if (!alert || !release) return false;
+
+    const alertIssued = new Date(alert.issuedAt || 0).getTime();
+    const releaseIssued = new Date(release.issuedAt || 0).getTime();
+
+    if (
+      !Number.isFinite(alertIssued) ||
+      !Number.isFinite(releaseIssued) ||
+      releaseIssued < alertIssued
+    ) {
+      return false;
+    }
+
+    const alertTypes = Array.isArray(alert.weatherTypes)
+      ? alert.weatherTypes
+      : [];
+    const releaseTypes = Array.isArray(release.weatherTypes)
+      ? release.weatherTypes
+      : [];
+
+    const typeOverlap = alertTypes.some(
+      type => releaseTypes.includes(type)
+    );
+
+    if (!typeOverlap) return false;
+
+    if (
+      release.scope === 'official-unclassified' ||
+      alert.scope === 'official-unclassified'
+    ) {
+      return true;
+    }
+
+    return release.scope === alert.scope;
+  }
+
+  function filterActiveAlertsByReleases(alerts, releases) {
+    return alerts.filter(
+      alert =>
+        !releases.some(
+          release => releaseMatchesAlert(alert, release)
+        )
+    );
+  }
+
   function alertsFromOfficialRecords({
     source,
     list,
@@ -422,8 +640,12 @@
         detailText
       ].filter(Boolean).join('\n');
 
-      // 호우·강풍·태풍이 아닌 공식 발표는 표시하지 않습니다.
-      if (!extractWeatherTypes(combinedText).length) {
+      // 호우·강풍·태풍이 아닌 발표와 해제·취소 발표는
+      // 현재 유효 특보 목록에서 제외합니다.
+      if (
+        !extractWeatherTypes(combinedText).length ||
+        isReleaseOrCancellationText(combinedText)
+      ) {
         return;
       }
 
@@ -440,7 +662,12 @@
           alert.stationId = String(listItem?.stnId || '');
           alert.tmSeq = listItem?.tmSeq ?? null;
         });
-        alerts.push(...scoped);
+
+        const activeScoped = source === 'preliminary'
+          ? scoped.filter(alert => isRecentPreliminary(alert, now))
+          : scoped;
+
+        alerts.push(...activeScoped);
       } else if (extractWeatherTypes(combinedText).length) {
         alerts.push(officialUnclassifiedAlert({
           source,
@@ -566,18 +793,54 @@
     const warningDetails = items(warningMessageBody);
     const statusItems = items(statusBody);
 
-    const officialAlerts = dedupeAlerts([
-      ...statusAlertsFromItems(statusItems),
-      ...alertsFromOfficialRecords({
+    const releaseNotices = [
+      ...releaseNoticesFromOfficialRecords({
         source:'official',
         list:warningList,
-        details:warningDetails
+        details:warningDetails,
+        maxAgeHours:24
       }),
-      ...alertsFromOfficialRecords({
+      ...releaseNoticesFromOfficialRecords({
         source:'preliminary',
         list:preliminaryList,
-        details:preliminaryDetails
+        details:preliminaryDetails,
+        maxAgeHours:24
       })
+    ].sort(
+      (a,b) =>
+        new Date(b.issuedAt || 0) -
+        new Date(a.issuedAt || 0)
+    ).slice(0,6);
+
+    /*
+     * 실제 발효 주의보·경보는 현재특보현황 API만 사용합니다.
+     * 과거 목록의 해제 전 기록이 다시 현재 특보로 노출되는 것을 막습니다.
+     */
+    const currentOfficialAlerts = statusBody
+      ? statusAlertsFromItems(statusItems)
+      : alertsFromOfficialRecords({
+          source:'official',
+          list:warningList,
+          details:warningDetails
+        });
+
+    const preliminaryCandidates = alertsFromOfficialRecords({
+      source:'preliminary',
+      list:preliminaryList,
+      details:preliminaryDetails
+    });
+
+    const activePreliminaryAlerts =
+      filterActiveAlertsByReleases(
+        preliminaryCandidates,
+        releaseNotices.filter(
+          notice => notice.source === 'preliminary'
+        )
+      );
+
+    const officialAlerts = dedupeAlerts([
+      ...currentOfficialAlerts,
+      ...activePreliminaryAlerts
     ]).sort((a,b) => {
       const priority = {
         warning:0,
@@ -585,10 +848,17 @@
         watch:2,
         reference:3
       };
+      const scopePriority = {
+        'seoul-direct':0,
+        'paldang-upstream':1,
+        'official-unclassified':2
+      };
 
       return (
         (priority[a.level] ?? 9) -
         (priority[b.level] ?? 9) ||
+        (scopePriority[a.scope] ?? 9) -
+        (scopePriority[b.scope] ?? 9) ||
         new Date(b.issuedAt || 0) -
         new Date(a.issuedAt || 0)
       );
@@ -620,6 +890,7 @@
     return {
       issuedAt:latestIssuedAt,
       alerts:officialAlerts,
+      releaseNotices,
       status:{
         sourceMode:'official-warning-api',
         area:'서울특별시·팔당 상류권',
@@ -644,6 +915,7 @@
         warningListCount:warningList.length,
         warningDetailCount:warningDetails.length,
         statusCount:statusItems.length,
+        releaseNoticeCount:releaseNotices.length,
         failedPaths:results
           .map((result,index) => ({
             index,
@@ -1518,9 +1790,45 @@
       alert=>alert.scope==='paldang-upstream'
     );
 
+    const fallbackReleaseNotices = list
+      .map(item => {
+        const issuedAt = parseSituationTime(item.tmFc);
+        const text = [
+          officialWarningTextFromItem(item),
+          preliminaryTextFromItem(item)
+        ].filter(Boolean).join('\n');
+
+        if (!issuedAt || !isReleaseOrCancellationText(text)) {
+          return null;
+        }
+
+        const action = releaseAction(text);
+        const scoped = releaseScope(text);
+
+        return {
+          kind:'release',
+          source:/예비특보/.test(text) ? 'preliminary' : 'official',
+          scope:scoped.scope,
+          area:scoped.area,
+          action,
+          actionLabel:releaseActionLabel(action),
+          title:releaseTitle(text, action),
+          weatherTypes:extractWeatherTypes(text),
+          issuedAt,
+          message:text
+        };
+      })
+      .filter(Boolean)
+      .filter(notice => {
+        const age = Date.now() - new Date(notice.issuedAt).getTime();
+        return age >= 0 && age <= 24 * 60 * 60000;
+      })
+      .slice(0,4);
+
     return {
       issuedAt:latestIssuedAt,
       alerts:uniqueAlerts,
+      releaseNotices:fallbackReleaseNotices,
       status:{
         sourceMode:'forecast-message-fallback',
         area:'서울특별시',
@@ -1637,7 +1945,9 @@
 
     return {
       weather:{windStations,rainfall:Object.fromEntries(rainEntries)},
-      alerts:situation.alerts, alertStatus:situation.status,
+      alerts:situation.alerts,
+      alertReleases:situation.releaseNotices || [],
+      alertStatus:situation.status,
       observedAt, forecastIssuedAt, fetchedAt:new Date().toISOString(),
       sourceLabel:'기상청 API허브',
       warnings:[]

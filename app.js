@@ -139,6 +139,7 @@
         if(task.type==='weather'){
           data.weather=live.weather;
           data.alerts=live.alerts;
+          data.alertReleases=live.alertReleases||[];
           data.alertStatus=live.alertStatus;
           data.meta.dataTimes.weatherObservation=live.observedAt;
           data.meta.dataTimes.weatherForecastIssued=live.forecastIssuedAt;
@@ -195,6 +196,7 @@
       if(task.type==='weather'&&previousData?.weather){
         data.weather=previousData.weather;
         data.alerts=previousData.alerts||[];
+        data.alertReleases=previousData.alertReleases||[];
         data.alertStatus=previousData.alertStatus;
         data.meta.dataTimes.weatherObservation=previousData.meta?.dataTimes?.weatherObservation;
         data.meta.dataTimes.weatherForecastIssued=previousData.meta?.dataTimes?.weatherForecastIssued;
@@ -773,10 +775,89 @@
   }
 
   function alertPriority(alert){
-    if(alert?.source==='official'&&alert?.level==='warning')return 0;
-    if(alert?.source==='official'&&alert?.level==='advisory')return 1;
-    if(alert?.source==='preliminary')return 2;
-    return 9;
+    if(alert?.level==='warning')return 0;
+    if(alert?.level==='advisory')return 1;
+    if(alert?.source==='preliminary'||alert?.level==='watch')return 2;
+    if(alert?.scope==='paldang-upstream'||alert?.level==='reference')return 3;
+    return 8;
+  }
+
+  function alertScopePriority(alert){
+    if(alert?.scope==='seoul-direct')return 0;
+    if(alert?.scope==='paldang-upstream')return 1;
+    return 2;
+  }
+
+  function releaseMatchesActiveAlert(alert,release){
+    if(!alert||!release)return false;
+
+    const alertTime=new Date(alert.issuedAt||0).getTime();
+    const releaseTime=new Date(release.issuedAt||0).getTime();
+
+    if(
+      !Number.isFinite(alertTime)||
+      !Number.isFinite(releaseTime)||
+      releaseTime<alertTime
+    ){
+      return false;
+    }
+
+    const alertTypes=Array.isArray(alert.weatherTypes)
+      ? alert.weatherTypes
+      : [];
+    const releaseTypes=Array.isArray(release.weatherTypes)
+      ? release.weatherTypes
+      : [];
+
+    if(!alertTypes.some(type=>releaseTypes.includes(type))){
+      return false;
+    }
+
+    if(
+      release.scope==='official-unclassified'||
+      alert.scope==='official-unclassified'
+    ){
+      return true;
+    }
+
+    return release.scope===alert.scope;
+  }
+
+  function activeOperationAlerts(){
+    const releases=data.alertReleases||[];
+
+    return [...(data.alerts||[])]
+      .filter(isImportantOperationAlert)
+      .filter(alert=>
+        !releases.some(release=>
+          releaseMatchesActiveAlert(alert,release)
+        )
+      )
+      .sort((a,b)=>
+        alertPriority(a)-alertPriority(b)||
+        alertScopePriority(a)-alertScopePriority(b)||
+        new Date(b.issuedAt||0)-new Date(a.issuedAt||0)
+      );
+  }
+
+  function recentReleaseNotices(){
+    return [...(data.alertReleases||[])]
+      .filter(release=>
+        isImportantOperationAlert(release)
+      )
+      .filter(release=>{
+        const time=new Date(release.issuedAt||0).getTime();
+        const age=Date.now()-time;
+        return Number.isFinite(time)&&
+          age>=0&&
+          age<=24*60*60000;
+      })
+      .sort(
+        (a,b)=>
+          new Date(b.issuedAt||0)-
+          new Date(a.issuedAt||0)
+      )
+      .slice(0,4);
   }
 
   function alertEffectiveLabel(alert){
@@ -798,29 +879,16 @@
 
   function renderWeatherAlertBanner(){
     const root=$('weatherAlertBanner');
-    const directAlerts=[...(data.alerts||[])]
-      .filter(
-        alert=>
-          alert.scope==='seoul-direct' &&
-          isImportantOperationAlert(alert)
-      )
-      .sort((a,b)=>alertPriority(a)-alertPriority(b));
+    const allActiveAlerts=activeOperationAlerts();
 
-    const upstreamAlerts=[...(data.alerts||[])]
-      .filter(
-        alert=>
-          alert.scope==='paldang-upstream' &&
-          isImportantOperationAlert(alert)
-      )
-      .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
+    const directAlerts=allActiveAlerts
+      .filter(alert=>alert.scope==='seoul-direct');
 
-    const unclassifiedAlerts=[...(data.alerts||[])]
-      .filter(
-        alert=>
-          alert.scope==='official-unclassified' &&
-          isImportantOperationAlert(alert)
-      )
-      .sort((a,b)=>new Date(b.issuedAt||0)-new Date(a.issuedAt||0));
+    const upstreamAlerts=allActiveAlerts
+      .filter(alert=>alert.scope==='paldang-upstream');
+
+    const unclassifiedAlerts=allActiveAlerts
+      .filter(alert=>alert.scope==='official-unclassified');
 
     const alerts=directAlerts.length
       ? directAlerts
@@ -876,15 +944,96 @@
 
   function renderAlerts(){
     const root=$('alertList');
+    const alerts=activeOperationAlerts();
+    const releases=recentReleaseNotices();
+    const status=data.alertStatus||{};
+    const area=status.area||'서울특별시·수도권';
+    const issuedAt=
+      data.meta.dataTimes.weatherForecastIssued||
+      data.meta.generatedAt;
 
-    if(!data.alerts.length){
-      const status=data.alertStatus||{};
-      const area=status.area||'서울특별시·수도권';
-      const issuedAt=
-        data.meta.dataTimes.weatherForecastIssued||
-        data.meta.generatedAt;
+    const activeMarkup=alerts.length
+      ? `
+        <div class="alert-list-section-head">
+          <div>
+            <b>현재 발효·예정 특보</b>
+            <span>경보 → 주의보 → 예비특보 순</span>
+          </div>
+          <em>${alerts.length}건</em>
+        </div>
 
-      root.innerHTML=`
+        ${alerts.map(a=>{
+          const sourceLabel=
+            a.scope==='paldang-upstream'
+              ? '팔당 상류 참고'
+              : a.scope==='official-unclassified'
+                ? '기상청 공식 발표'
+                : a.source==='official'
+                  ? '서울 기상청 공식'
+                  : a.source==='preliminary'
+                    ? '서울 기상청 예비'
+                    : '한강버스 내부';
+
+          const levelLabel=
+            a.levelLabel||
+            (a.level==='warning'
+              ? '경보'
+              : a.level==='advisory'
+                ? '주의보'
+                : '예비특보');
+
+          const effectiveLabel=alertEffectiveLabel(a);
+          const periodTitle=
+            a.source==='preliminary'
+              ? '발효예정'
+              : '발효시각';
+
+          return `<article class="alert-card ${esc(
+            a.scope==='paldang-upstream'
+              ? 'upstream'
+              : a.scope==='official-unclassified'
+                ? 'official-reference'
+                : a.source==='internal'
+                  ? 'internal'
+                  : a.level
+          )}">
+            <div class="alert-top">
+              <div>
+                <div class="alert-tags">
+                  <span class="tag ${a.source==='internal'?'internal':''}">${sourceLabel}</span>
+                  <span class="tag alert-level-tag ${esc(a.level)}">${esc(levelLabel)}</span>
+                  <span class="tag">${esc(a.area)}</span>
+                </div>
+                <h3>${esc(a.title)}</h3>
+              </div>
+              <span class="alert-time">발표 ${dateTimeText(a.issuedAt)}</span>
+            </div>
+
+            <div class="alert-time-grid">
+              <div>
+                <span>발표시각</span>
+                <b>${fullDateTimeText(a.issuedAt)}</b>
+              </div>
+              <div>
+                <span>${periodTitle}</span>
+                <b>${esc(effectiveLabel)}</b>
+              </div>
+            </div>
+
+            ${a.scope==='paldang-upstream'
+              ? '<div class="alert-scope-note">운항중지 직접판정에는 반영하지 않고 팔당댐 방류 증가 가능성 참고자료로 사용합니다.</div>'
+              : a.scope==='official-unclassified'
+                ? '<div class="alert-scope-note">기상청 공식 발표는 확인됐으나 상세지역 해석이 필요해 운항중지에는 직접 반영하지 않습니다.</div>'
+                : '<div class="alert-scope-note direct">서울 직접특보로 운항판정에 반영합니다.</div>'}
+
+            <details class="alert-original">
+              <summary>기상청 발표 원문 보기</summary>
+              <p>${esc(a.message)}</p>
+            </details>
+          </article>`;
+        }).join('')}
+      `
+      : `
         <article class="alert-card clear">
           <div class="alert-top">
             <div>
@@ -892,93 +1041,63 @@
                 <span class="tag">기상청 공식</span>
                 <span class="tag">${esc(area)}</span>
               </div>
-              <h3>${esc(status.warning||'운항 관련 발효 특보 없음')}</h3>
+              <h3>현재 유효한 운항 관련 특보 없음</h3>
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>서울 호우·강풍·태풍 예비특보 없음 · 팔당 상류 호우·태풍 영향특보 없음</p>
+          <p>서울 호우·강풍·태풍 발효특보 및 예비특보 기준</p>
           <div class="alert-period ${status.sourceMode==='official-warning-api'?'':'alert-source-warning'}">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
             <b>호우·강풍·태풍만 표시</b>
           </div>
-        </article>`;
-      return;
-    }
+        </article>
+      `;
 
-    const alerts=[...data.alerts]
-      .filter(isImportantOperationAlert)
-      .sort((a,b)=>alertPriority(a)-alertPriority(b));
-
-    root.innerHTML=alerts.map(a=>{
-      const sourceLabel=
-        a.scope==='paldang-upstream'
-          ? '팔당 상류 참고'
-          : a.scope==='official-unclassified'
-            ? '기상청 공식 발표'
-            : a.source==='official'
-              ? '서울 기상청 공식'
-              : a.source==='preliminary'
-                ? '서울 기상청 예비'
-                : '한강버스 내부';
-
-      const levelLabel=
-        a.levelLabel ||
-        (a.level==='warning'
-          ? '경보'
-          : a.level==='advisory'
-            ? '주의보'
-            : '예비특보');
-
-      const effectiveLabel=alertEffectiveLabel(a);
-      const periodTitle=
-        a.source==='preliminary'
-          ? '발효예정'
-          : '발효시각';
-
-      return `<article class="alert-card ${esc(
-        a.scope==='paldang-upstream'
-          ? 'upstream'
-          : a.scope==='official-unclassified'
-            ? 'official-reference'
-            : a.source==='internal'
-              ? 'internal'
-              : a.level
-      )}">
-        <div class="alert-top">
-          <div>
-            <div class="alert-tags">
-              <span class="tag ${a.source==='internal'?'internal':''}">${sourceLabel}</span>
-              <span class="tag alert-level-tag ${esc(a.level)}">${esc(levelLabel)}</span>
-              <span class="tag">${esc(a.area)}</span>
+    const releaseMarkup=releases.length
+      ? `
+        <div class="alert-release-section">
+          <div class="alert-release-section-head">
+            <div>
+              <b>최근 해제·취소 발표</b>
+              <span>현재 특보 목록에서는 제거된 항목</span>
             </div>
-            <h3>${esc(a.title)}</h3>
+            <em>24시간 이내</em>
           </div>
-          <span class="alert-time">발표 ${dateTimeText(a.issuedAt)}</span>
+
+          <div class="alert-release-list">
+            ${releases.map(release=>{
+              const action=release.action==='cancelled'
+                ? '취소됨'
+                : '해제됨';
+
+              return `
+                <article class="alert-release-notice ${esc(release.action||'released')}">
+                  <span class="alert-release-symbol">
+                    ${release.action==='cancelled'?'×':'✓'}
+                  </span>
+                  <div class="alert-release-copy">
+                    <div>
+                      <b>${esc(release.title||`기상특보 ${action}`)}</b>
+                      <strong>${action}</strong>
+                    </div>
+                    <p>
+                      ${esc(release.area||'상세지역 확인')}
+                      · ${fullDateTimeText(release.issuedAt)} 해제·취소 발표
+                    </p>
+                    <details>
+                      <summary>발표 원문 확인</summary>
+                      <span>${esc(release.message||release.officialTitle||'-')}</span>
+                    </details>
+                  </div>
+                </article>
+              `;
+            }).join('')}
+          </div>
         </div>
+      `
+      : '';
 
-        <div class="alert-time-grid">
-          <div>
-            <span>발표시각</span>
-            <b>${fullDateTimeText(a.issuedAt)}</b>
-          </div>
-          <div>
-            <span>${periodTitle}</span>
-            <b>${esc(effectiveLabel)}</b>
-          </div>
-        </div>
-
-        ${a.scope==='paldang-upstream'
-          ? '<div class="alert-scope-note">운항중지 직접판정에는 반영하지 않고 팔당댐 방류 증가 가능성 참고자료로 사용합니다.</div>'
-          : a.scope==='official-unclassified'
-            ? '<div class="alert-scope-note">기상청 공식 발표는 확인됐으나 상세지역 해석이 필요해 운항중지에는 직접 반영하지 않습니다.</div>'
-            : '<div class="alert-scope-note direct">서울 직접특보로 운항판정에 반영합니다.</div>'}
-
-        <details class="alert-original">
-          <summary>기상청 발표 원문 보기</summary>
-          <p>${esc(a.message)}</p>
-        </details>
-      </article>`;
-    }).join('');
+    root.innerHTML=activeMarkup+releaseMarkup;
   }
 
   function compactRainSource(value){

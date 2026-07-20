@@ -134,6 +134,7 @@
         const live = await window.KMA.loadWeather();
         data.weather = live.weather;
         data.alerts = live.alerts;
+        data.alertReleases = live.alertReleases || [];
         data.alertStatus = live.alertStatus;
         data.health = (data.health || []).filter(
           item => !['기상관측','기상예보','기상특보'].includes(item.name)
@@ -166,6 +167,7 @@
         if (previousData?.weather) {
           data.weather = previousData.weather;
           data.alerts = previousData.alerts || [];
+          data.alertReleases = previousData.alertReleases || [];
           data.alertStatus = previousData.alertStatus;
           liveSources.push('기상 직전값');
         } else {
