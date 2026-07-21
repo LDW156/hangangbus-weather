@@ -768,7 +768,7 @@
     if(!frame||detailFrameLoaded||detailFrameLoading)return;
 
     detailFrameLoading=true;
-    const source=frame.dataset.src||'./detail.html?v=86';
+    const source=frame.dataset.src||'./detail.html?v=88';
     frame.setAttribute('src',source);
   }
 

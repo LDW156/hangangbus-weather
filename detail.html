@@ -7,8 +7,10 @@
   <meta name="description" content="한강버스 기상·수문·조석 및 운항판단 모니터링">
   <title>한강버스 상세 모니터링</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=87">
+  <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
+  <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
+  <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
+  <link rel="stylesheet" href="styles.css?v=88">
 </head>
 <body>
   <header class="app-header">
@@ -128,7 +130,9 @@
       <article class="panel chart-panel top-gap tide-chart-panel">
         <div class="panel-title"><h3>인천 24시간 예측조위·만간조</h3><span>시각·조위 고정표시 · 10분 단위 마우스·터치 조회</span></div>
         <div id="tideEventStrip" class="tide-event-strip"></div>
-        <svg id="tideChart" viewBox="0 0 1100 300" role="img" aria-label="인천 예측조위와 만조 간조 그래프"></svg>
+        <div class="tide-chart-scroll" role="region" aria-label="인천 조석 그래프 좌우 이동">
+          <svg id="tideChart" viewBox="0 0 1100 300" role="img" aria-label="인천 예측조위와 만조 간조 그래프"></svg>
+        </div>
         <div class="chart-legend tide-chart-legend"><span class="line water"></span>예측조위 <span class="tide-now-line"></span>현재시각 <span class="tide-high-line"></span>만조 <span class="tide-low-line"></span>간조</div>
       </article>
       <article class="panel table-panel top-gap">
@@ -180,7 +184,7 @@
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=87"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=87"></script>
+  <script src="app.js?v=88"></script>
   <script>
     (() => {
       const back = document.getElementById('embeddedDashboardBack');

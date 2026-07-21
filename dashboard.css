@@ -1138,3 +1138,153 @@ button {
 @keyframes detail-spin {
   to { transform:rotate(360deg); }
 }
+
+
+/* =========================================================
+   v88 모바일 단일주소 화면·상세 iframe 폭 수정
+   데스크톱 종합대시보드 구성은 변경하지 않음
+========================================================= */
+
+@media (max-width:760px) {
+  html,
+  body {
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden !important;
+  }
+
+  .control-shell {
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:auto minmax(0,1fr);
+    width:100% !important;
+    min-width:0 !important;
+    min-height:100dvh !important;
+    height:100dvh !important;
+  }
+
+  .control-sidebar {
+    position:relative;
+    z-index:180;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:center;
+    gap:7px;
+    width:100%;
+    min-width:0;
+    height:auto;
+    padding:7px 8px;
+    overflow:hidden;
+  }
+
+  .side-brand {
+    min-width:0;
+    padding:0 7px 0 0;
+    border-bottom:0;
+    border-right:1px solid rgba(255,255,255,.13);
+  }
+
+  .side-brand img {
+    width:29px;
+    height:29px;
+  }
+
+  .side-brand > div {
+    display:none;
+  }
+
+  .side-nav {
+    display:flex;
+    align-items:center;
+    gap:4px;
+    min-width:0;
+    margin:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .side-nav p,
+  .side-nav .disabled,
+  .side-legend,
+  .side-credit {
+    display:none !important;
+  }
+
+  .side-nav a {
+    flex:0 0 auto;
+    grid-template-columns:18px auto;
+    gap:4px;
+    min-height:30px;
+    margin:0;
+    padding:5px 8px;
+    border:1px solid rgba(255,255,255,.10);
+    font-size:8px;
+    white-space:nowrap;
+  }
+
+  .side-nav a em {
+    display:none;
+  }
+
+  .side-icon {
+    width:17px;
+    height:17px;
+    font-size:10px;
+  }
+
+  .control-main {
+    width:100%;
+    min-width:0 !important;
+    min-height:0 !important;
+    height:100%;
+    padding:0 5px;
+    overflow:hidden;
+  }
+
+  .main-view {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+
+  .detail-view {
+    grid-template-rows:49px minmax(0,1fr) !important;
+    width:100%;
+    min-width:0;
+    height:100%;
+  }
+
+  .detail-shell-header {
+    min-width:0;
+    padding:0 8px;
+  }
+
+  .detail-shell-header h1 {
+    max-width:58vw;
+    overflow:hidden;
+    font-size:14px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .detail-shell-header button {
+    flex:0 0 auto;
+    padding:6px 8px;
+    font-size:7.5px;
+  }
+
+  .detail-frame {
+    display:block;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:100% !important;
+  }
+
+  .detail-loading-overlay {
+    left:5px;
+    right:5px;
+  }
+}

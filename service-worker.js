@@ -1,12 +1,12 @@
-const CACHE='hangangbus-alert-lifecycle-v87';
+const CACHE='hangangbus-favicon-mobile-tide-v88';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
-  './dashboard.css?v=87',
-  './dashboard.js?v=87',
-  './styles.css?v=87',
-  './app.js?v=87',
+  './dashboard.css?v=88',
+  './dashboard.js?v=88',
+  './styles.css?v=88',
+  './app.js?v=88',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
@@ -15,7 +15,7 @@ const ASSETS=[
   './hrfco.js?v=62',
   './kma.js?v=87',
   './ocean.js?v=69',
-  './assets/hangangbus-logo.png?v=62'
+  './assets/hangangbus-logo.png?v=88'
 ];
 
 self.addEventListener('install',event=>{
