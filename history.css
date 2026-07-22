@@ -674,3 +674,50 @@
     min-width:820px;
   }
 }
+
+
+/* =========================================================
+   v90.1 과거자료 화면 높이 잘림 수정
+========================================================= */
+
+/*
+ * control-main에는 기존 대시보드용 4개 grid row가 남아 있습니다.
+ * 내부 화면을 별도 row에 자동배치하면 첫 61px row에만 들어가므로,
+ * 모든 main-view가 control-main 전체 영역을 차지하도록 고정합니다.
+ */
+.control-main > .main-view {
+  grid-column:1 / -1 !important;
+  grid-row:1 / -1 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+}
+
+.history-view {
+  grid-template-rows:61px minmax(0,1fr) !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+.history-scroll {
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+@media (max-height:820px) {
+  .history-view {
+    grid-template-rows:55px minmax(0,1fr) !important;
+  }
+}
+
+@media (max-width:760px) {
+  .history-view {
+    grid-template-rows:51px minmax(0,1fr) !important;
+  }
+}

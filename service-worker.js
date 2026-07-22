@@ -1,10 +1,10 @@
-const CACHE='hangangbus-history-search-v90';
+const CACHE='hangangbus-history-layout-fix-v90-1';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
   './dashboard.css?v=90',
-  './dashboard.js?v=90',
+  './dashboard.js?v=90.1',
   './styles.css?v=88',
   './app.js?v=88',
   './shared-config.js?v=62',
@@ -16,9 +16,9 @@ const ASSETS=[
   './kma.js?v=87',
   './ocean.js?v=69',
   './assets/hangangbus-logo.png?v=88',
-  './history.css?v=90',
-  './history-config.js?v=90',
-  './history.js?v=90'
+  './history.css?v=90.1',
+  './history-config.js?v=90.1',
+  './history.js?v=90.1'
 ];
 
 self.addEventListener('install',event=>{
