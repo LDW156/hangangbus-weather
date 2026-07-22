@@ -1,0 +1,38 @@
+name: HRFCO History Collector
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 매시 07, 17, 27, 37, 47, 57분
+    # 정각 부하시간을 피하면서 10분 간격으로 실행
+    - cron: "7-59/10 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hrfco-history-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Collect HRFCO and save to D1
+        env:
+          HRFCO_PALDANG_URL: ${{ secrets.HRFCO_PALDANG_URL }}
+          HRFCO_JAMSU_URL: ${{ secrets.HRFCO_JAMSU_URL }}
+          HRFCO_HANGANG_URL: ${{ secrets.HRFCO_HANGANG_URL }}
+          HISTORY_API_URL: ${{ secrets.HISTORY_API_URL }}
+          HISTORY_INGEST_TOKEN: ${{ secrets.HISTORY_INGEST_TOKEN }}
+        run: node scripts/hrfco-history-collector.mjs
