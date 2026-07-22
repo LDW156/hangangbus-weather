@@ -1,10 +1,10 @@
-const CACHE='hangangbus-favicon-mobile-tide-v88';
+const CACHE='hangangbus-history-search-v90';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
-  './dashboard.css?v=88',
-  './dashboard.js?v=88',
+  './dashboard.css?v=90',
+  './dashboard.js?v=90',
   './styles.css?v=88',
   './app.js?v=88',
   './shared-config.js?v=62',
@@ -15,7 +15,10 @@ const ASSETS=[
   './hrfco.js?v=62',
   './kma.js?v=87',
   './ocean.js?v=69',
-  './assets/hangangbus-logo.png?v=88'
+  './assets/hangangbus-logo.png?v=88',
+  './history.css?v=90',
+  './history-config.js?v=90',
+  './history.js?v=90'
 ];
 
 self.addEventListener('install',event=>{

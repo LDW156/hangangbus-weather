@@ -10,7 +10,8 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="dashboard.css?v=88">
+  <link rel="stylesheet" href="dashboard.css?v=90">
+  <link rel="stylesheet" href="history.css?v=90">
 </head>
 <body class="dashboard-body">
   <div class="control-shell">
@@ -70,10 +71,9 @@
         </a>
 
         <p>데이터 분석</p>
-        <a class="disabled" href="#" aria-disabled="true">
+        <a href="./index.html#history" data-main-view="history">
           <span class="side-icon">⌁</span>
-          <span>장기 수문 데이터</span>
-          <em>준비</em>
+          <span>과거 수문 데이터</span>
         </a>
         <a class="disabled" href="#" aria-disabled="true">
           <span class="side-icon">▥</span>
@@ -288,6 +288,150 @@
           loading="lazy"
         ></iframe>
       </section>
+
+      <section id="historyView" class="main-view history-view" aria-hidden="true">
+        <header class="history-shell-header">
+          <div>
+            <span>HISTORICAL HYDROLOGY DATABASE</span>
+            <h1>과거 수문 데이터 조회</h1>
+          </div>
+          <div class="history-header-actions">
+            <span id="historyApiStatus" class="history-api-status loading">연결 확인 중</span>
+            <button id="historyBackDashboard" type="button">← 종합 대시보드</button>
+          </div>
+        </header>
+
+        <div class="history-scroll">
+          <section class="history-search-panel">
+            <div class="history-source-tabs" role="tablist" aria-label="자료구분">
+              <button class="active" type="button" data-history-source="bridge">
+                교량 수위
+              </button>
+              <button type="button" data-history-source="dam">
+                팔당댐 운영
+              </button>
+              <button type="button" disabled>
+                통합 비교분석 <em>다음 단계</em>
+              </button>
+            </div>
+
+            <div class="history-search-grid">
+              <label>
+                <span id="historyTargetLabel">교량 선택</span>
+                <select id="historyTarget">
+                  <option value="jamsu">잠수교</option>
+                  <option value="hangang">한강대교</option>
+                </select>
+              </label>
+
+              <fieldset class="history-mode-group">
+                <legend>조회단위</legend>
+                <label>
+                  <input type="radio" name="historyMode" value="hourly" checked>
+                  <span>시간별</span>
+                  <small>10분 원자료</small>
+                </label>
+                <label>
+                  <input type="radio" name="historyMode" value="daily">
+                  <span>일별</span>
+                  <small>월간 일 통계</small>
+                </label>
+                <label>
+                  <input type="radio" name="historyMode" value="monthly">
+                  <span>월별</span>
+                  <small>연간 월 통계</small>
+                </label>
+              </fieldset>
+
+              <label id="historyDateField">
+                <span>조회일</span>
+                <input id="historyDate" type="date">
+              </label>
+
+              <div class="history-search-actions">
+                <button id="historySearch" class="primary" type="button">
+                  조회
+                </button>
+                <button id="historyExport" type="button" disabled>
+                  CSV 다운로드
+                </button>
+              </div>
+            </div>
+
+            <div class="history-range-status">
+              <div>
+                <b id="historyRangeTitle">저장자료 확인 중</b>
+                <span id="historyRangeDescription">D1 데이터베이스 연결상태를 확인합니다.</span>
+              </div>
+              <span id="historyQueryStatus">대기</span>
+            </div>
+          </section>
+
+          <section id="historySummary" class="history-summary-grid">
+            <article>
+              <span>조회 건수</span>
+              <b>-</b>
+              <em>자료 조회 전</em>
+            </article>
+            <article>
+              <span>최근·평균값</span>
+              <b>-</b>
+              <em>-</em>
+            </article>
+            <article>
+              <span>최고값</span>
+              <b>-</b>
+              <em>-</em>
+            </article>
+            <article>
+              <span>최저값</span>
+              <b>-</b>
+              <em>-</em>
+            </article>
+          </section>
+
+          <section class="history-panel history-chart-panel">
+            <div class="history-panel-title">
+              <div>
+                <span id="historyChartEyebrow">교량 수위 통계</span>
+                <h2 id="historyChartTitle">잠수교 수위 그래프</h2>
+              </div>
+              <div id="historyLegend" class="history-legend"></div>
+            </div>
+
+            <div id="historyChartWrap" class="history-chart-wrap">
+              <svg
+                id="historyChart"
+                viewBox="0 0 1200 340"
+                role="img"
+                aria-label="과거 수문자료 그래프"
+              ></svg>
+              <div id="historyTooltip" class="history-tooltip" hidden></div>
+            </div>
+          </section>
+
+          <section class="history-panel history-table-panel">
+            <div class="history-panel-title">
+              <div>
+                <span>검색결과</span>
+                <h2 id="historyTableTitle">목록(0)</h2>
+              </div>
+              <span id="historyTableNote">DB 저장 시작 이후 자료</span>
+            </div>
+
+            <div class="history-table-scroll">
+              <table id="historyTable">
+                <thead></thead>
+                <tbody>
+                  <tr>
+                    <td class="history-empty-cell">조회조건을 선택하고 검색하십시오.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -299,6 +443,8 @@
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=87"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="dashboard.js?v=88"></script>
+  <script src="history-config.js?v=90"></script>
+  <script src="history.js?v=90"></script>
+  <script src="dashboard.js?v=90"></script>
 </body>
 </html>

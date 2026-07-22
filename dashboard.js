@@ -789,6 +789,8 @@
     $('dashboardView').classList.add('active');
     $('detailView').classList.remove('active');
     $('detailView').setAttribute('aria-hidden','true');
+    $('historyView')?.classList.remove('active');
+    $('historyView')?.setAttribute('aria-hidden','true');
 
     activateMenu(
       link || document.querySelector('.side-nav a[href="./index.html"]')
@@ -799,6 +801,8 @@
 
   function showDetail(section='',link=null){
     $('dashboardView').classList.remove('active');
+    $('historyView')?.classList.remove('active');
+    $('historyView')?.setAttribute('aria-hidden','true');
     $('detailView').classList.add('active');
     $('detailView').setAttribute('aria-hidden','false');
     $('detailViewTitle').textContent=detailTitles[section]||'상세 모니터링';
@@ -817,6 +821,27 @@
     sessionStorage.setItem(
       'hangangbus-view',
       JSON.stringify({view:'detail',section})
+    );
+  }
+
+  function showHistory(link=null){
+    $('dashboardView').classList.remove('active');
+    $('detailView').classList.remove('active');
+    $('detailView').setAttribute('aria-hidden','true');
+    $('historyView')?.classList.add('active');
+    $('historyView')?.setAttribute('aria-hidden','false');
+
+    activateMenu(
+      link ||
+      document.querySelector(
+        '.side-nav a[data-main-view="history"]'
+      )
+    );
+
+    sessionStorage.setItem('hangangbus-view','history');
+
+    window.dispatchEvent(
+      new CustomEvent('hangangbus-history-open')
     );
   }
 
@@ -855,7 +880,10 @@
     if(href==='#'||link.classList.contains('disabled'))return;
 
     link.addEventListener('click',event=>{
-      if(href.includes('detail.html')){
+      if(link.dataset.mainView==='history'||href.includes('#history')){
+        event.preventDefault();
+        showHistory(link);
+      }else if(href.includes('detail.html')){
         event.preventDefault();
         const section=href.includes('#')?href.split('#')[1]:'';
         showDetail(section,link);
@@ -881,10 +909,17 @@
   });
 
   $('backToDashboard')?.addEventListener('click',()=>showDashboard());
+  $('historyBackDashboard')?.addEventListener('click',()=>showDashboard());
 
   try{
     const saved=sessionStorage.getItem('hangangbus-view');
-    if(saved&&saved!=='dashboard'){
+    if(saved==='history'){
+      showHistory(
+        document.querySelector(
+          '.side-nav a[data-main-view="history"]'
+        )
+      );
+    }else if(saved&&saved!=='dashboard'){
       const state=JSON.parse(saved);
       if(state?.view==='detail'){
         const section=state.section||'';
