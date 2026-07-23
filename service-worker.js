@@ -1,12 +1,12 @@
-const CACHE='hangangbus-history-layout-fix-v90-1';
+const CACHE='hangangbus-east-stop-rule-v90-2';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
   './dashboard.css?v=90',
-  './dashboard.js?v=90.1',
+  './dashboard.js?v=90.2',
   './styles.css?v=88',
-  './app.js?v=88',
+  './app.js?v=90.2',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',

@@ -371,10 +371,10 @@
       ));
     }
 
-    if(out>=t.paldang.eastStopCms && rising){
+    if(out>=t.paldang.eastStopCms){
       east='stop';
       eastReasons.push(reason(
-        `팔당댐 방류량 ${fmt(out)}㎥/s · ${fmt(t.paldang.eastStopCms)}㎥/s 이상이며 증가 추세`,
+        `팔당댐 방류량 ${fmt(out)}㎥/s · 동부선 운항중지 기준 ${fmt(t.paldang.eastStopCms)}㎥/s 이상`,
         'danger','운항중지'
       ));
     }else if(out>=t.paldang.eastCautionCms){

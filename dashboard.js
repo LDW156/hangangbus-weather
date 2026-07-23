@@ -268,11 +268,12 @@
       Number(outflowHistory[Math.max(0, outflowHistory.length - 7)]?.outflow);
 
     if (
-      outflow >= thresholds.paldang.eastStopCms &&
-      rising
+      outflow >= thresholds.paldang.eastStopCms
     ) {
       east = 'stop';
-      reasons.push(`동부선 팔당 방류 ${fmt(outflow)}㎥/s 증가`);
+      reasons.push(
+        `동부선 팔당 방류 ${fmt(outflow)}㎥/s · 운항중지 기준 ${fmt(thresholds.paldang.eastStopCms)}㎥/s 이상`
+      );
     } else if (outflow >= thresholds.paldang.eastCautionCms) {
       if (east === 'normal') east = 'caution';
       reasons.push(`동부선 팔당 방류 기준 접근`);
