@@ -1,24 +1,24 @@
-const CACHE='hangangbus-ui-cleanup-v90-5';
+const CACHE='hangangbus-data-analysis-v91-0';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
   './dashboard.css?v=90',
-  './dashboard.js?v=90.4',
-  './styles.css?v=90.4',
-  './app.js?v=90.5',
+  './dashboard.js?v=91.0',
+  './styles.css?v=88',
+  './app.js?v=90.2',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
   './config.js?v=62',
   './data/demo-data.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=90.4',
+  './kma.js?v=87',
   './ocean.js?v=69',
   './assets/hangangbus-logo.png?v=88',
-  './history.css?v=90.1',
+  './history.css?v=91.0',
   './history-config.js?v=90.1',
-  './history.js?v=90.1'
+  './history.js?v=91.0'
 ];
 
 self.addEventListener('install',event=>{

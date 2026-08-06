@@ -333,7 +333,7 @@
 
     const importantAlerts = (data.alerts || []).filter(alert => {
       const text = `${alert.title || ''} ${alert.message || ''}`;
-      return ['호우','강풍','태풍','폭염'].some(type => text.includes(type));
+      return ['호우','강풍','태풍'].some(type => text.includes(type));
     });
 
     const directOfficial = importantAlerts.filter(
@@ -586,7 +586,7 @@
       root.innerHTML = `
         <div class="dashboard-alert-empty blue">
           <b>운항 관련 특보 없음</b>
-          <span>서울 호우·강풍·태풍·폭염 기준</span>
+          <span>서울 호우·강풍·태풍 기준</span>
         </div>
       `;
       return;
@@ -825,24 +825,38 @@
     );
   }
 
-  function showHistory(link=null){
+  function showHistory(link=null,entry=null){
     $('dashboardView').classList.remove('active');
     $('detailView').classList.remove('active');
     $('detailView').setAttribute('aria-hidden','true');
     $('historyView')?.classList.add('active');
     $('historyView')?.setAttribute('aria-hidden','false');
 
-    activateMenu(
+    const resolvedEntry =
+      entry ||
+      link?.dataset.historyEntry ||
+      'bridge';
+
+    const resolvedLink =
       link ||
       document.querySelector(
+        `.side-nav a[data-history-entry="${resolvedEntry}"]`
+      ) ||
+      document.querySelector(
         '.side-nav a[data-main-view="history"]'
-      )
+      );
+
+    activateMenu(resolvedLink);
+
+    sessionStorage.setItem(
+      'hangangbus-view',
+      JSON.stringify({view:'history',entry:resolvedEntry})
     );
 
-    sessionStorage.setItem('hangangbus-view','history');
-
     window.dispatchEvent(
-      new CustomEvent('hangangbus-history-open')
+      new CustomEvent('hangangbus-history-open',{
+        detail:{entry:resolvedEntry}
+      })
     );
   }
 
@@ -883,7 +897,7 @@
     link.addEventListener('click',event=>{
       if(link.dataset.mainView==='history'||href.includes('#history')){
         event.preventDefault();
-        showHistory(link);
+        showHistory(link,link.dataset.historyEntry||'bridge');
       }else if(href.includes('detail.html')){
         event.preventDefault();
         const section=href.includes('#')?href.split('#')[1]:'';
@@ -915,14 +929,12 @@
   try{
     const saved=sessionStorage.getItem('hangangbus-view');
     if(saved==='history'){
-      showHistory(
-        document.querySelector(
-          '.side-nav a[data-main-view="history"]'
-        )
-      );
+      showHistory(null,'bridge');
     }else if(saved&&saved!=='dashboard'){
       const state=JSON.parse(saved);
-      if(state?.view==='detail'){
+      if(state?.view==='history'){
+        showHistory(null,state.entry||'bridge');
+      }else if(state?.view==='detail'){
         const section=state.section||'';
         const menuLink=document.querySelector(
           `.side-nav a[href="./detail.html${section?`#${section}`:''}"]`

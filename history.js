@@ -13,7 +13,13 @@
     chartRows: [],
     chartSeries: [],
     exportUrl: '',
-    stats: null
+    stats: null,
+    rawRows: [],
+    annotatedRows: [],
+    tableFilter: 'all',
+    entry: 'bridge',
+    anomalyCutoff: null,
+    anomalyMethod: 'iqr'
   };
 
   const COLORS = {
@@ -37,6 +43,13 @@
   const number = value => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const optionalNumber = value => {
+    if (value === null || value === undefined || String(value).trim() === '') {
+      return null;
+    }
+    return number(value);
   };
 
   const fmt = (value, digits = 2) => {
@@ -101,6 +114,282 @@
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
   };
 
+  function isClearanceVisible() {
+    return state.source === 'bridge' && currentTarget() === 'jamsu';
+  }
+
+  function headerMeta() {
+    if (state.entry === 'search') {
+      return {
+        eyebrow: 'HYDROLOGY DATA SEARCH',
+        title: '조건별 수문 데이터 검색',
+        description: '기간·기준값·통계적 특이점을 조합하여 필요한 자료만 추출합니다.'
+      };
+    }
+
+    if (state.entry === 'dam') {
+      return {
+        eyebrow: 'DAM DISCHARGE ANALYSIS',
+        title: '댐 방류량 데이터 분석',
+        description: '팔당댐 방류량·유입량 장기 추세와 변화구간을 분석합니다.'
+      };
+    }
+
+    return {
+      eyebrow: 'BRIDGE WATER LEVEL ANALYSIS',
+      title: '교량 수위 데이터 분석',
+      description: '잠수교·한강대교 수위와 변화구간을 분석합니다.'
+    };
+  }
+
+  function updateHeaderMeta() {
+    const meta = headerMeta();
+    $('historyHeaderEyebrow').textContent = meta.eyebrow;
+    $('historyMainTitle').textContent = meta.title;
+    $('historyHeaderDescription').textContent = meta.description;
+  }
+
+  function filterLabels() {
+    if (state.source === 'bridge') {
+      return {
+        all: '전체',
+        flagged: '특이점만',
+        up: '상승 특이',
+        down: '하강 특이'
+      };
+    }
+
+    return {
+      all: '전체',
+      flagged: '특이점만',
+      up: '증가 특이',
+      down: '감소 특이'
+    };
+  }
+
+  function changeThresholds() {
+    if (state.source === 'bridge') {
+      return state.mode === 'hourly'
+        ? { notable: 0.10, spike: 0.18 }
+        : { notable: 0.12, spike: 0.22 };
+    }
+
+    return state.mode === 'hourly'
+      ? { notable: 120, spike: 250 }
+      : { notable: 180, spike: 350 };
+  }
+
+  function percentile(values, ratio) {
+    if (!values.length) return null;
+    const sorted = [...values].sort((a, b) => a - b);
+    const index = (sorted.length - 1) * ratio;
+    const lower = Math.floor(index);
+    const upper = Math.ceil(index);
+    if (lower === upper) return sorted[lower];
+    const weight = index - lower;
+    return sorted[lower] * (1 - weight) + sorted[upper] * weight;
+  }
+
+  function anomalyMethod() {
+    if (state.entry !== 'search') return 'iqr';
+    const selected = $('historyStatFilter')?.value || 'all';
+    return selected === 'all' ? 'iqr' : selected;
+  }
+
+  function anomalyCutoff(values, method) {
+    const valid = values
+      .map(value => Math.abs(number(value)))
+      .filter(value => value !== null && value > 0);
+
+    if (valid.length < 4) return null;
+
+    if (method === 'top5') return percentile(valid, 0.95);
+    if (method === 'top10') return percentile(valid, 0.90);
+
+    const q1 = percentile(valid, 0.25);
+    const q3 = percentile(valid, 0.75);
+    const iqr = q3 - q1;
+    const cutoff = q3 + 1.5 * iqr;
+
+    return cutoff > 0
+      ? cutoff
+      : percentile(valid, 0.95);
+  }
+
+  function rowDelta(row, rows, index) {
+    const aggregated = state.mode !== 'hourly';
+
+    if (state.source === 'bridge') {
+      if (!aggregated) {
+        return {
+          delta: number(row.change_10m_m),
+          basis: '10분 수위변화'
+        };
+      }
+
+      const current = number(row.avg_water_level_m);
+      const previous = index > 0
+        ? number(rows[index - 1].avg_water_level_m)
+        : null;
+
+      return {
+        delta: current !== null && previous !== null
+          ? current - previous
+          : null,
+        basis: state.mode === 'daily'
+          ? '전일 평균수위 대비'
+          : '전월 평균수위 대비'
+      };
+    }
+
+    if (!aggregated) {
+      return {
+        delta: number(row.outflow_change_10m),
+        basis: '10분 방류변화'
+      };
+    }
+
+    const current = number(row.avg_outflow_cms);
+    const previous = index > 0
+      ? number(rows[index - 1].avg_outflow_cms)
+      : null;
+
+    return {
+      delta: current !== null && previous !== null
+        ? current - previous
+        : null,
+      basis: state.mode === 'daily'
+        ? '전일 평균방류량 대비'
+        : '전월 평균방류량 대비'
+    };
+  }
+
+  function annotateRows(rows) {
+    const threshold = changeThresholds();
+    const method = anomalyMethod();
+    const deltas = rows.map((row, index) => rowDelta(row, rows, index));
+    const cutoff = anomalyCutoff(
+      deltas.map(item => item.delta),
+      method
+    );
+
+    state.anomalyCutoff = cutoff;
+    state.anomalyMethod = method;
+
+    return rows.map((row, index) => {
+      const { delta, basis } = deltas[index];
+      const absolute = delta === null ? null : Math.abs(delta);
+      const statistical =
+        absolute !== null &&
+        cutoff !== null &&
+        absolute >= cutoff;
+
+      let label = '정상';
+      let direction = 'normal';
+      let className = '';
+
+      if (delta !== null && delta !== 0) {
+        direction = delta > 0 ? 'up' : 'down';
+      }
+
+      if (statistical) {
+        label = '통계적 특이';
+        className = delta >= 0
+          ? 'history-row-spike-up'
+          : 'history-row-spike-down';
+      } else if (absolute !== null && absolute >= threshold.spike) {
+        label = state.source === 'bridge'
+          ? (delta > 0 ? '급상승' : '급하강')
+          : (delta > 0 ? '급증' : '급감');
+        className = delta > 0
+          ? 'history-row-spike-up'
+          : 'history-row-spike-down';
+      } else if (absolute !== null && absolute >= threshold.notable) {
+        label = '변화 큼';
+        className = 'history-row-emphasis';
+      }
+
+      if ((row.quality_flag && row.quality_flag !== 'valid') && label === '정상') {
+        className = 'history-row-quality';
+        label = '자료확인';
+      }
+
+      return {
+        ...row,
+        _anomaly: {
+          delta,
+          basis,
+          label,
+          direction,
+          className,
+          statistical,
+          cutoff,
+          method,
+          noteworthy: label !== '정상'
+        }
+      };
+    });
+  }
+
+  function applyAdvancedFilters(rows) {
+    if (state.entry !== 'search') return rows;
+
+    const minWater = optionalNumber($('historyWaterMin')?.value);
+    const maxClearance = optionalNumber($('historyClearanceMax')?.value);
+    const minOutflow = optionalNumber($('historyOutflowMin')?.value);
+    const statFilter = $('historyStatFilter')?.value || 'all';
+    const aggregated = state.mode !== 'hourly';
+
+    return rows.filter(row => {
+      if (state.source === 'bridge') {
+        const water = number(
+          aggregated ? row.max_water_level_m : row.water_level_m
+        );
+        if (minWater !== null && (water === null || water < minWater)) {
+          return false;
+        }
+
+        if (currentTarget() === 'jamsu' && maxClearance !== null) {
+          const clearance = number(
+            aggregated
+              ? row.min_clearance_height_m
+              : row.clearance_height_m
+          );
+          if (clearance === null || clearance > maxClearance) {
+            return false;
+          }
+        }
+      } else {
+        const outflow = number(
+          aggregated ? row.max_outflow_cms : row.outflow_cms
+        );
+        if (minOutflow !== null && (outflow === null || outflow < minOutflow)) {
+          return false;
+        }
+      }
+
+      if (statFilter !== 'all' && !row._anomaly?.statistical) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  function filteredRows() {
+    const rows = state.annotatedRows || [];
+    switch (state.tableFilter) {
+      case 'flagged':
+        return rows.filter(row => row._anomaly?.noteworthy);
+      case 'up':
+        return rows.filter(row => row._anomaly?.direction === 'up' && row._anomaly?.noteworthy);
+      case 'down':
+        return rows.filter(row => row._anomaly?.direction === 'down' && row._anomaly?.noteworthy);
+      default:
+        return rows;
+    }
+  }
+
   function apiUrl(path, params = {}) {
     const base = String(cfg.API_BASE || '').replace(/\/+$/, '');
     const url = new URL(`${base}${path}`);
@@ -160,6 +449,74 @@
     return localDateKey(date).slice(0, 7);
   }
 
+  function setAdvancedDates() {
+    const to = new Date();
+    const from = new Date(to.getTime() - 30 * 24 * 3600000);
+    const fromInput = $('historyFromDate');
+    const toInput = $('historyToDate');
+
+    if (fromInput && !fromInput.value) {
+      fromInput.value = localDateKey(from);
+      fromInput.min = '2020-01-01';
+      fromInput.max = localDateKey(to);
+    }
+
+    if (toInput && !toInput.value) {
+      toInput.value = localDateKey(to);
+      toInput.min = '2020-01-01';
+      toInput.max = localDateKey(to);
+    }
+  }
+
+  function updateAdvancedFieldVisibility() {
+    const bridge = state.source === 'bridge';
+    const clearanceAvailable = bridge && currentTarget() === 'jamsu';
+
+    $('historyWaterMinField').hidden = !bridge;
+    $('historyClearanceMaxField').hidden = !bridge;
+    $('historyOutflowMinField').hidden = bridge;
+
+    const clearance = $('historyClearanceMax');
+    if (clearance) {
+      clearance.disabled = !clearanceAvailable;
+      if (!clearanceAvailable) clearance.value = '';
+    }
+  }
+
+  function applyEntry(entry) {
+    const next = ['bridge', 'dam', 'search'].includes(entry)
+      ? entry
+      : 'bridge';
+
+    state.entry = next;
+    state.tableFilter = 'all';
+
+    if (next === 'bridge') state.source = 'bridge';
+    if (next === 'dam') state.source = 'dam';
+
+    const sourceTabs = $('historySourceTabs');
+    const advancedPanel = $('historyAdvancedPanel');
+    const dateField = $('historyDateField');
+
+    sourceTabs?.classList.toggle('is-fixed-source', next !== 'search');
+    if (advancedPanel) advancedPanel.hidden = next !== 'search';
+    if (dateField) dateField.hidden = next === 'search';
+
+    document.querySelectorAll('[data-history-source]').forEach(button => {
+      button.classList.toggle(
+        'active',
+        button.dataset.historySource === state.source
+      );
+    });
+
+    setTargetOptions();
+    setDateInput();
+    setAdvancedDates();
+    updateAdvancedFieldVisibility();
+    updateHeaderMeta();
+    updateStoredRange();
+  }
+
   function setDateInput() {
     const field = $('historyDateField');
     const input = $('historyDate');
@@ -209,6 +566,32 @@
   }
 
   function rangeForMode() {
+    if (state.entry === 'search') {
+      const from = $('historyFromDate').value || localDateKey();
+      const to = $('historyToDate').value || localDateKey();
+      const interval = state.mode === 'hourly'
+        ? '10m'
+        : state.mode === 'daily'
+          ? '1d'
+          : '1mo';
+      const label = state.mode === 'hourly'
+        ? '10분 원자료'
+        : state.mode === 'daily'
+          ? '일별 통계'
+          : '월별 통계';
+
+      if (from > to) {
+        throw new Error('시작일은 종료일보다 늦을 수 없습니다.');
+      }
+
+      return {
+        interval,
+        from,
+        to,
+        display: `${from} ~ ${to} ${label}`
+      };
+    }
+
     const raw = $('historyDate').value;
 
     if (state.mode === 'hourly') {
@@ -249,6 +632,68 @@
   function sourceName() {
     if (state.source === 'dam') return '팔당댐';
     return currentTarget() === 'hangang' ? '한강대교' : '잠수교';
+  }
+
+  function renderLegendNote() {
+    const element = $('historyLegendNote');
+    if (!element) return;
+
+    if (state.source === 'bridge') {
+      element.innerHTML = isClearanceVisible()
+        ? `
+          <span><i style="background:${COLORS.water}"></i>파란색 = 수위</span>
+          <span><i style="background:${COLORS.clearance}"></i>주황색 = 통과높이</span>
+        `
+        : `
+          <span><i style="background:${COLORS.water}"></i>파란색 = 수위</span>
+          <span class="muted">한강대교는 통과높이를 표시하지 않습니다.</span>
+        `;
+      return;
+    }
+
+    element.innerHTML = `
+      <span><i style="background:${COLORS.outflow}"></i>파란색 = 방류량</span>
+      <span><i style="background:${COLORS.inflow}"></i>주황색 = 유입량</span>
+      <span><i style="background:${COLORS.reservoir}"></i>빨간색 = 댐 수위</span>
+    `;
+  }
+
+  function renderAnomalyToolbar() {
+    const bar = $('historyAnomalyToolbar');
+    const summary = $('historyAnomalyCount');
+    const guide = $('historyAnomalyGuide');
+    const filtersWrap = $('historyAnomalyFilters');
+    if (!bar || !summary || !guide || !filtersWrap) return;
+
+    const rows = state.annotatedRows || [];
+    const labels = filterLabels();
+    const counts = {
+      all: rows.length,
+      flagged: rows.filter(row => row._anomaly?.noteworthy).length,
+      up: rows.filter(row => row._anomaly?.direction === 'up' && row._anomaly?.noteworthy).length,
+      down: rows.filter(row => row._anomaly?.direction === 'down' && row._anomaly?.noteworthy).length
+    };
+
+    summary.textContent = `특이점 ${counts.flagged.toLocaleString('ko-KR')}건`;
+
+    const cutoff = state.anomalyCutoff;
+    const methodLabel = state.anomalyMethod === 'top5'
+      ? '변화량 상위 5%'
+      : state.anomalyMethod === 'top10'
+        ? '변화량 상위 10%'
+        : 'IQR 기준';
+
+    if (cutoff === null) {
+      guide.textContent = '통계적 특이점을 계산할 수 있는 변화자료가 부족합니다.';
+    } else if (state.source === 'bridge') {
+      guide.textContent = `${methodLabel} · 절대 수위변화 ${fmt(cutoff, 2)}m 이상을 통계적 특이점으로 표시합니다.`;
+    } else {
+      guide.textContent = `${methodLabel} · 절대 방류변화 ${fmt(cutoff, 0)}㎥/s 이상을 통계적 특이점으로 표시합니다.`;
+    }
+
+    filtersWrap.innerHTML = ['all', 'flagged', 'up', 'down'].map(key => `
+      <button type="button" data-history-filter="${key}" class="${state.tableFilter === key ? 'active' : ''}">${labels[key]} (${counts[key].toLocaleString('ko-KR')})</button>
+    `).join('');
   }
 
   function updateApiStatus(kind, text) {
@@ -313,18 +758,30 @@
             station: target,
             interval: range.interval,
             from: range.from,
-            to: range.to
+            to: range.to,
+            minWater: state.entry === 'search'
+              ? $('historyWaterMin').value
+              : '',
+            maxClearance: state.entry === 'search' && target === 'jamsu'
+              ? $('historyClearanceMax').value
+              : ''
           }
         : {
             dam: target,
             interval: range.interval,
             from: range.from,
-            to: range.to
+            to: range.to,
+            minOutflow: state.entry === 'search'
+              ? $('historyOutflowMin').value
+              : ''
           };
 
       const result = await fetchJson(path, params);
       state.response = result;
-      state.rows = Array.isArray(result.rows) ? result.rows : [];
+      state.rawRows = Array.isArray(result.rows) ? result.rows : [];
+      const annotated = annotateRows(state.rawRows);
+      state.annotatedRows = applyAdvancedFilters(annotated);
+      state.rows = state.annotatedRows;
 
       const exportPath = state.source === 'bridge'
         ? '/api/export/bridges.csv'
@@ -335,10 +792,14 @@
 
       renderAll(range);
 
-      status.textContent = `${state.rows.length.toLocaleString('ko-KR')}건 조회`;
+      status.textContent = state.entry === 'search'
+        ? `원자료 ${state.rawRows.length.toLocaleString('ko-KR')}건 · 조건충족 ${state.rows.length.toLocaleString('ko-KR')}건`
+        : `${state.rows.length.toLocaleString('ko-KR')}건 조회`;
       status.className = 'normal';
     } catch (error) {
       state.rows = [];
+      state.rawRows = [];
+      state.annotatedRows = [];
       state.response = null;
       state.exportUrl = '';
       $('historyExport').disabled = true;
@@ -422,19 +883,19 @@
 
     renderSummary(normalized, range);
     renderChart(normalized);
+    renderLegendNote();
+    renderAnomalyToolbar();
     renderTable();
     updateStoredRange();
 
     $('historyChartEyebrow').textContent =
       state.source === 'bridge'
-        ? '교량 수위 통계'
-        : '댐 운영 통계';
+        ? '교량 수위 장기추세'
+        : '댐 방류량 장기추세';
     $('historyChartTitle').textContent =
       `${sourceName()} ${range.display}`;
-    $('historyTableTitle').textContent =
-      `목록(${state.rows.length.toLocaleString('ko-KR')})`;
     $('historyTableNote').textContent =
-      `${sourceName()} · ${range.display}`;
+      `${sourceName()} · ${range.display} · 하이라이트 행은 변화가 큰 구간`;
   }
 
   function values(rows, key) {
@@ -483,6 +944,7 @@
     if (state.source === 'bridge') {
       const water = values(rows, 'water');
       const latest = rows.at(-1);
+      const clearanceVisible = isClearanceVisible();
 
       summaryCard(
         1,
@@ -490,25 +952,25 @@
         state.mode === 'hourly'
           ? fmtAuto(latest.water, 'm')
           : fmtAuto(averageValue(water), 'm'),
-        latest.clearance !== null
+        clearanceVisible && latest.clearance !== null
           ? `통과높이 ${fmtAuto(latest.clearance, 'm')}`
-          : sourceName()
+          : `${sourceName()} 장기 수위`
       );
       summaryCard(
         2,
         '최고 수위',
         fmtAuto(maxValue(water), 'm'),
-        `최저 통과높이 ${
-          latest.clearance !== null
-            ? fmtAuto(minValue(values(rows, 'clearance')), 'm')
-            : '-'
-        }`
+        clearanceVisible
+          ? `최저 통과높이 ${fmtAuto(minValue(values(rows, 'clearance')), 'm')}`
+          : `평균 ${fmtAuto(averageValue(water), 'm')}`
       );
       summaryCard(
         3,
         '최저 수위',
         fmtAuto(minValue(water), 'm'),
-        `평균 ${fmtAuto(averageValue(water), 'm')}`
+        clearanceVisible
+          ? `평균 ${fmtAuto(averageValue(water), 'm')}`
+          : `변동폭 ${fmtAuto(maxValue(water) - minValue(water), 'm')}`
       );
       return;
     }
@@ -551,7 +1013,7 @@
         }
       ];
 
-      if (rows.some(row => row.clearance !== null)) {
+      if (isClearanceVisible() && rows.some(row => row.clearance !== null)) {
         series.push({
           key: 'clearance',
           label: '통과높이',
@@ -866,36 +1328,55 @@
 
   function tableDefinition() {
     const aggregated = state.mode !== 'hourly';
+    const clearanceVisible = isClearanceVisible();
 
     if (state.source === 'bridge') {
       if (!aggregated) {
-        return [
+        const definition = [
           ['관측시각', row => formatDateTime(row.observed_at)],
-          ['수위(m)', row => fmt(row.water_level_m, 2)],
-          ['통과높이(m)', row => fmt(row.clearance_height_m, 2)],
+          ['수위(m)', row => fmt(row.water_level_m, 2)]
+        ];
+
+        if (clearanceVisible) {
+          definition.push(['통과높이(m)', row => fmt(row.clearance_height_m, 2)]);
+        }
+
+        definition.push(
+          ['특이', row => row._anomaly?.label || '정상'],
           ['10분 변화', row => signed(row.change_10m_m, 2, 'm')],
           ['30분 변화', row => signed(row.change_30m_m, 2, 'm')],
           ['1시간 변화', row => signed(row.change_60m_m, 2, 'm')],
           ['자료상태', row => row.quality_flag || '-'],
           ['수집시각', row => formatDateTime(row.collected_at)]
-        ];
+        );
+
+        return definition;
       }
 
-      return [
+      const definition = [
         ['구간', row => formatDateTime(row.bucket)],
+        ['특이', row => row._anomaly?.label || '정상'],
         ['표본', row => fmt(row.sample_count, 0)],
         ['최저수위', row => fmt(row.min_water_level_m, 2)],
         ['평균수위', row => fmt(row.avg_water_level_m, 2)],
-        ['최고수위', row => fmt(row.max_water_level_m, 2)],
-        ['최저 통과높이', row => fmt(row.min_clearance_height_m, 2)],
-        ['평균 통과높이', row => fmt(row.avg_clearance_height_m, 2)],
-        ['최고 통과높이', row => fmt(row.max_clearance_height_m, 2)]
+        ['최고수위', row => fmt(row.max_water_level_m, 2)]
       ];
+
+      if (clearanceVisible) {
+        definition.push(
+          ['최저 통과높이', row => fmt(row.min_clearance_height_m, 2)],
+          ['평균 통과높이', row => fmt(row.avg_clearance_height_m, 2)],
+          ['최고 통과높이', row => fmt(row.max_clearance_height_m, 2)]
+        );
+      }
+
+      return definition;
     }
 
     if (!aggregated) {
       return [
         ['관측시각', row => formatDateTime(row.observed_at)],
+        ['특이', row => row._anomaly?.label || '정상'],
         ['댐수위(m)', row => fmt(row.reservoir_level_m, 2)],
         ['유입량(㎥/s)', row => fmt(row.inflow_cms, 0)],
         ['방류량(㎥/s)', row => fmt(row.outflow_cms, 0)],
@@ -909,6 +1390,7 @@
 
     return [
       ['구간', row => formatDateTime(row.bucket)],
+      ['특이', row => row._anomaly?.label || '정상'],
       ['표본', row => fmt(row.sample_count, 0)],
       ['평균 댐수위', row => fmt(row.avg_reservoir_level_m, 2)],
       ['최저 유입량', row => fmt(row.min_inflow_cms, 0)],
@@ -925,6 +1407,11 @@
     const head = table.querySelector('thead');
     const body = table.querySelector('tbody');
     const definition = tableDefinition();
+    const visibleRows = filteredRows();
+
+    $('historyTableTitle').textContent = state.tableFilter === 'all'
+      ? `목록(${visibleRows.length.toLocaleString('ko-KR')})`
+      : `목록(${visibleRows.length.toLocaleString('ko-KR')} / ${state.annotatedRows.length.toLocaleString('ko-KR')})`;
 
     head.innerHTML = `
       <tr>
@@ -932,22 +1419,51 @@
       </tr>
     `;
 
-    if (!state.rows.length) {
+    if (!visibleRows.length) {
       body.innerHTML = `
         <tr>
           <td class="history-empty-cell" colspan="${definition.length}">
-            조회된 자료가 없습니다.
+            현재 필터 조건에 해당하는 자료가 없습니다.
           </td>
         </tr>
       `;
       return;
     }
 
-    body.innerHTML = state.rows.slice(0, 1000).map(row => `
-      <tr>
+    body.innerHTML = visibleRows.slice(0, 1000).map(row => `
+      <tr class="${row._anomaly?.className || ''}">
         ${definition.map(([, getter]) => `<td>${escapeHtml(getter(row))}</td>`).join('')}
       </tr>
     `).join('');
+  }
+
+  function csvCell(value) {
+    const text = String(value ?? '');
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  function downloadFilteredCsv() {
+    const definition = tableDefinition();
+    const rows = filteredRows();
+    const lines = [
+      definition.map(([label]) => csvCell(label)).join(','),
+      ...rows.map(row =>
+        definition.map(([, getter]) => csvCell(getter(row))).join(',')
+      )
+    ];
+
+    const blob = new Blob(
+      ['\uFEFF' + lines.join('\r\n')],
+      { type: 'text/csv;charset=utf-8' }
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `hangangbus_${state.source}_${currentTarget()}_${Date.now()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   function renderError(message) {
@@ -962,6 +1478,10 @@
     `;
 
     $('historyLegend').innerHTML = '';
+    $('historyLegendNote').innerHTML = '';
+    $('historyAnomalyCount').textContent = '특이점 0건';
+    $('historyAnomalyGuide').textContent = '변화가 큰 자료를 따로 골라볼 수 있습니다.';
+    $('historyAnomalyFilters').innerHTML = '';
     $('historyTable').querySelector('thead').innerHTML = '';
     $('historyTable').querySelector('tbody').innerHTML = `
       <tr>
@@ -973,6 +1493,8 @@
 
   function sourceChanged(source) {
     state.source = source;
+    state.tableFilter = 'all';
+    updateHeaderMeta();
 
     document.querySelectorAll('[data-history-source]').forEach(button => {
       button.classList.toggle(
@@ -982,6 +1504,7 @@
     });
 
     setTargetOptions();
+    updateAdvancedFieldVisibility();
     updateStoredRange();
     $('historyExport').disabled = true;
     state.exportUrl = '';
@@ -989,6 +1512,7 @@
 
   function modeChanged(mode) {
     state.mode = mode;
+    state.tableFilter = 'all';
     setDateInput();
     $('historyExport').disabled = true;
     state.exportUrl = '';
@@ -998,8 +1522,7 @@
     if (state.initialized) return;
     state.initialized = true;
 
-    setTargetOptions();
-    setDateInput();
+    applyEntry('bridge');
     bindChartPointer();
 
     document.querySelectorAll('[data-history-source]').forEach(button => {
@@ -1018,14 +1541,29 @@
     });
 
     $('historyTarget').addEventListener('change', () => {
+      updateAdvancedFieldVisibility();
       updateStoredRange();
       $('historyExport').disabled = true;
       state.exportUrl = '';
     });
 
+    $('historyAnomalyFilters').addEventListener('click', event => {
+      const button = event.target.closest('button[data-history-filter]');
+      if (!button) return;
+      state.tableFilter = button.dataset.historyFilter || 'all';
+      renderAnomalyToolbar();
+      renderTable();
+    });
+
     $('historySearch').addEventListener('click', searchHistory);
 
     $('historyExport').addEventListener('click', () => {
+      if (state.entry === 'search') {
+        if (!state.annotatedRows.length) return;
+        downloadFilteredCsv();
+        return;
+      }
+
       if (!state.exportUrl) return;
       window.open(state.exportUrl, '_blank', 'noopener');
     });
@@ -1033,15 +1571,10 @@
     loadStats();
   }
 
-  let firstOpen = true;
-
-  window.addEventListener('hangangbus-history-open', () => {
+  window.addEventListener('hangangbus-history-open', event => {
     init();
-
-    if (firstOpen) {
-      firstOpen = false;
-      searchHistory();
-    }
+    applyEntry(event.detail?.entry || 'bridge');
+    searchHistory();
   });
 
   init();

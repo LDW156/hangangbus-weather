@@ -11,7 +11,7 @@
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
   <link rel="stylesheet" href="dashboard.css?v=90">
-  <link rel="stylesheet" href="history.css?v=90.1">
+  <link rel="stylesheet" href="history.css?v=91.0">
 </head>
 <body class="dashboard-body">
   <div class="control-shell">
@@ -71,14 +71,17 @@
         </a>
 
         <p>데이터 분석</p>
-        <a href="./index.html#history" data-main-view="history">
-          <span class="side-icon">⌁</span>
-          <span>과거 수문 데이터</span>
+        <a href="./index.html#analysis-dam" data-main-view="history" data-history-entry="dam">
+          <span class="side-icon">≋</span>
+          <span>댐 방류량</span>
         </a>
-        <a class="disabled" href="#" aria-disabled="true">
-          <span class="side-icon">▥</span>
-          <span>운항 분석자료</span>
-          <em>준비</em>
+        <a href="./index.html#analysis-bridge" data-main-view="history" data-history-entry="bridge">
+          <span class="side-icon">⌁</span>
+          <span>교량 수위 정보</span>
+        </a>
+        <a href="./index.html#analysis-search" data-main-view="history" data-history-entry="search">
+          <span class="side-icon">⌕</span>
+          <span>조건별 데이터 검색</span>
         </a>
       </nav>
 
@@ -200,7 +203,7 @@
           <div class="card-heading">
             <div>
               <span>운항 관련 특보</span>
-              <h2>호우·강풍·태풍·폭염</h2>
+              <h2>호우·강풍·태풍</h2>
             </div>
             <a href="./detail.html#alerts">상세보기</a>
           </div>
@@ -292,8 +295,9 @@
       <section id="historyView" class="main-view history-view" aria-hidden="true">
         <header class="history-shell-header">
           <div>
-            <span>HISTORICAL HYDROLOGY DATABASE</span>
-            <h1>과거 수문 데이터 조회</h1>
+            <span id="historyHeaderEyebrow">BRIDGE WATER LEVEL ARCHIVE</span>
+            <h1 id="historyMainTitle">교량 수위 이력 조회</h1>
+            <p id="historyHeaderDescription" class="history-header-description">잠수교·한강대교 장기 수위와 특이변화 자료를 조회합니다.</p>
           </div>
           <div class="history-header-actions">
             <span id="historyApiStatus" class="history-api-status loading">연결 확인 중</span>
@@ -303,19 +307,19 @@
 
         <div class="history-scroll">
           <section class="history-search-panel">
-            <div class="history-source-tabs" role="tablist" aria-label="자료구분">
+            <div id="historySourceTabs" class="history-source-tabs" role="tablist" aria-label="자료구분">
               <button class="active" type="button" data-history-source="bridge">
-                교량 수위
+                교량 수위 이력
               </button>
               <button type="button" data-history-source="dam">
-                팔당댐 운영
+                댐 방류량 이력
               </button>
               <button type="button" disabled>
                 통합 비교분석 <em>다음 단계</em>
               </button>
             </div>
 
-            <div class="history-search-grid">
+            <div id="historySearchGrid" class="history-search-grid">
               <label>
                 <span id="historyTargetLabel">교량 선택</span>
                 <select id="historyTarget">
@@ -357,6 +361,85 @@
                 </button>
               </div>
             </div>
+
+            <section id="historyAdvancedPanel" class="history-advanced-panel" hidden>
+              <div class="history-advanced-head">
+                <div>
+                  <span>ADVANCED FILTER</span>
+                  <h2>조건별 데이터 검색</h2>
+                </div>
+                <p>기간·기준값·통계적 특이점을 조합하여 조건에 맞는 자료만 추출합니다.</p>
+              </div>
+
+              <div class="history-advanced-grid">
+                <label>
+                  <span>시작일</span>
+                  <input id="historyFromDate" type="date">
+                </label>
+                <label>
+                  <span>종료일</span>
+                  <input id="historyToDate" type="date">
+                </label>
+                <label id="historyWaterMinField">
+                  <span>수위 기준</span>
+                  <select id="historyWaterMin">
+                    <option value="">전체 수위</option>
+                    <option value="1">1.00m 이상</option>
+                    <option value="2">2.00m 이상</option>
+                    <option value="3">3.00m 이상</option>
+                    <option value="4">4.00m 이상</option>
+                    <option value="4.1">4.10m 이상</option>
+                    <option value="4.46">4.46m 이상</option>
+                    <option value="5">5.00m 이상</option>
+                  </select>
+                </label>
+                <label id="historyClearanceMaxField">
+                  <span>잠수교 통과높이</span>
+                  <select id="historyClearanceMax">
+                    <option value="">전체 통과높이</option>
+                    <option value="8">8.00m 이하</option>
+                    <option value="7.66">7.66m 이하</option>
+                    <option value="7.3">7.30m 이하</option>
+                    <option value="7">7.00m 이하</option>
+                    <option value="6.5">6.50m 이하</option>
+                  </select>
+                </label>
+                <label id="historyOutflowMinField">
+                  <span>방류량 기준</span>
+                  <select id="historyOutflowMin">
+                    <option value="">전체 방류량</option>
+                    <option value="1000">1,000㎥/s 이상</option>
+                    <option value="2000">2,000㎥/s 이상</option>
+                    <option value="2500">2,500㎥/s 이상</option>
+                    <option value="3000">3,000㎥/s 이상</option>
+                    <option value="4000">4,000㎥/s 이상</option>
+                    <option value="5000">5,000㎥/s 이상</option>
+                  </select>
+                </label>
+                <label>
+                  <span>통계적 특이점</span>
+                  <select id="historyStatFilter">
+                    <option value="all">전체자료·특이점 하이라이트</option>
+                    <option value="iqr">IQR 통계적 특이점만</option>
+                    <option value="top10">변화량 상위 10%만</option>
+                    <option value="top5">변화량 상위 5%만</option>
+                  </select>
+                </label>
+                <label class="history-tide-filter">
+                  <span>조석 단계</span>
+                  <select id="historyTidePhase" disabled>
+                    <option value="">조석 이력 연계 대기</option>
+                    <option value="spring">대조기</option>
+                    <option value="neap">소조기</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="history-data-note">
+                <b>조석 단계 검색은 아직 비활성화</b>
+                <span>현재 D1에는 과거 조석 단계가 저장되지 않아 대조기·소조기 필터는 적용하지 않습니다. 조석 이력 테이블 연계 후 활성화합니다.</span>
+              </div>
+            </section>
 
             <div class="history-range-status">
               <div>
@@ -408,6 +491,7 @@
               ></svg>
               <div id="historyTooltip" class="history-tooltip" hidden></div>
             </div>
+            <div id="historyLegendNote" class="history-legend-note"></div>
           </section>
 
           <section class="history-panel history-table-panel">
@@ -417,6 +501,14 @@
                 <h2 id="historyTableTitle">목록(0)</h2>
               </div>
               <span id="historyTableNote">DB 저장 시작 이후 자료</span>
+            </div>
+
+            <div id="historyAnomalyToolbar" class="history-anomaly-toolbar">
+              <div class="history-anomaly-summary">
+                <b id="historyAnomalyCount">특이점 0건</b>
+                <span id="historyAnomalyGuide">변화가 큰 자료를 따로 골라볼 수 있습니다.</span>
+              </div>
+              <div id="historyAnomalyFilters" class="history-anomaly-filters" role="tablist" aria-label="특이점 필터"></div>
             </div>
 
             <div class="history-table-scroll">
@@ -441,10 +533,10 @@
   <script src="config.js?v=62"></script>
   <script src="data/demo-data.js?v=62"></script>
   <script src="hrfco.js?v=62"></script>
-  <script src="kma.js?v=90.4"></script>
+  <script src="kma.js?v=87"></script>
   <script src="ocean.js?v=69"></script>
   <script src="history-config.js?v=90.1"></script>
-  <script src="history.js?v=90.1"></script>
-  <script src="dashboard.js?v=90.4"></script>
+  <script src="history.js?v=91.0"></script>
+  <script src="dashboard.js?v=91.0"></script>
 </body>
 </html>
