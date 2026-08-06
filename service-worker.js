@@ -1,4 +1,4 @@
-const CACHE='hangangbus-east-stop-rule-v90-2';
+const CACHE='hangangbus-seoul-alert-filter-v90-3';
 const ASSETS=[
   './',
   './index.html',
@@ -13,7 +13,7 @@ const ASSETS=[
   './config.js?v=62',
   './data/demo-data.js?v=62',
   './hrfco.js?v=62',
-  './kma.js?v=87',
+  './kma.js?v=90.3',
   './ocean.js?v=69',
   './assets/hangangbus-logo.png?v=88',
   './history.css?v=90.1',
