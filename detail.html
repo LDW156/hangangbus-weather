@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=88">
+  <link rel="stylesheet" href="styles.css?v=90.4">
 </head>
 <body>
   <header class="app-header">
@@ -88,7 +88,7 @@
     <section id="alerts" class="section">
       <div class="section-head">
         <div><span>04</span><h2>운항 관련 기상특보</h2></div>
-        <small>호우·강풍·태풍만 표시</small>
+        <small>호우·강풍·태풍·폭염 표시</small>
       </div>
 
       <div class="alert-operation-criteria">
@@ -96,9 +96,13 @@
           <b>운항중지</b>
           <span>호우경보 · 강풍주의보 이상 · 태풍주의보 이상</span>
         </div>
+        <div class="heat-major">
+          <b>운항조정</b>
+          <span>폭염중대경보 · 단축운항 및 승객·승무원 보호조치 검토</span>
+        </div>
         <div>
           <b>사전검토</b>
-          <span>서울 호우·강풍·태풍 예비특보</span>
+          <span>서울 예비특보 · 폭염주의보·경보</span>
         </div>
         <div>
           <b>상류참고</b>
@@ -182,9 +186,9 @@
   <script src="config.js?v=62"></script>
   <script src="data/demo-data.js?v=62"></script>
   <script src="hrfco.js?v=62"></script>
-  <script src="kma.js?v=87"></script>
+  <script src="kma.js?v=90.4"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=90.2"></script>
+  <script src="app.js?v=90.4"></script>
   <script>
     (() => {
       const back = document.getElementById('embeddedDashboardBack');

@@ -4059,7 +4059,7 @@ details.rain-contribution-box {
 
 .alert-operation-criteria {
   display:grid;
-  grid-template-columns:1.35fr 1fr 1fr;
+  grid-template-columns:1.25fr 1.25fr 1fr 1fr;
   gap:8px;
   margin:0 0 10px;
 }
@@ -4090,6 +4090,15 @@ details.rain-contribution-box {
 
 .alert-operation-criteria > div:first-child b {
   color:#b31f2d;
+}
+
+.alert-operation-criteria > div.heat-major {
+  border-color:#e3a640;
+  background:#fff8e8;
+}
+
+.alert-operation-criteria > div.heat-major b {
+  color:#a85e00;
 }
 
 .alert-operation-criteria span {

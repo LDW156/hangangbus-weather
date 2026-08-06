@@ -430,7 +430,7 @@
     const source = String(text || '');
     const matches = [];
     const pattern =
-      /(호우|강풍|태풍)\s*(주의보|경보|예비특보|특보)?[^.\n]{0,30}?(해제|취소)/g;
+      /(호우|강풍|태풍|폭염)\s*(주의보|중대경보|경보|예비특보|특보)?[^.\n]{0,30}?(해제|취소)/g;
 
     for (const match of source.matchAll(pattern)) {
       const weatherType = match[1];
@@ -653,7 +653,7 @@
         detailText
       ].filter(Boolean).join('\n');
 
-      // 호우·강풍·태풍이 아닌 발표와 해제·취소 발표는
+      // 호우·강풍·태풍·폭염이 아닌 발표와 해제·취소 발표는
       // 현재 유효 특보 목록에서 제외합니다.
       if (
         !extractWeatherTypes(combinedText).length ||
@@ -919,7 +919,7 @@
           ? unclassified.map(alert => alert.title).join(' · ')
           : '',
         message:
-          '운항 관련 특보만 표시: 호우·강풍·태풍'
+          '운항 관련 특보만 표시: 호우·강풍·태풍·폭염'
       },
       diagnostics:{
         preliminaryListCount:preliminaryList.length,
@@ -1229,12 +1229,14 @@
 
   /*
    * 한강버스 운항 관련 핵심 특보만 표시합니다.
-   * 폭염·건조·한파·황사·대설·풍랑·폭풍해일은 화면에서 제외합니다.
+   * 폭염은 승객·승무원 온열질환 보호 및 단축운항 검토 대상에 포함합니다.
+   * 건조·한파·황사·대설·풍랑·폭풍해일은 화면에서 제외합니다.
    */
   const WEATHER_ALERT_TYPES = [
     '호우',
     '강풍',
-    '태풍'
+    '태풍',
+    '폭염'
   ];
 
   /*
@@ -1280,6 +1282,7 @@
   const KMA_ALERT_LEVELS = [
     '예비특보',
     '주의보',
+    '중대경보',
     '경보',
     '특보'
   ];
@@ -1431,8 +1434,8 @@
     const source = String(text || '');
     const typePattern = WEATHER_ALERT_TYPES.join('|');
     return new RegExp(
-      `(?:${typePattern}).{0,24}(?:주의보|경보|예비특보)|` +
-      `(?:주의보|경보|예비특보).{0,24}(?:${typePattern})`
+      `(?:${typePattern}).{0,24}(?:주의보|중대경보|경보|예비특보)|` +
+      `(?:주의보|중대경보|경보|예비특보).{0,24}(?:${typePattern})`
     ).test(source);
   }
 
@@ -1458,8 +1461,8 @@
     const source = String(text || '');
     const typePattern = WEATHER_ALERT_TYPES.join('|');
     const pattern = new RegExp(
-      `(${typePattern})\\s*(주의보|경보|예비특보)|` +
-      `(주의보|경보|예비특보)\\s*(${typePattern})`,
+      `(${typePattern})\\s*(주의보|중대경보|경보|예비특보)|` +
+      `(주의보|중대경보|경보|예비특보)\\s*(${typePattern})`,
       'g'
     );
 
@@ -1612,12 +1615,13 @@
 
   function alertLevel(text, source) {
     if (source === 'preliminary') return 'watch';
-    if (/경보/.test(text)) return 'warning';
+    if (/중대경보|경보/.test(text)) return 'warning';
     return 'advisory';
   }
 
   function alertLevelLabel(text, source) {
     if (source === 'preliminary') return '예비특보';
+    if (/중대경보/.test(text)) return '중대경보';
     if (/경보/.test(text)) return '경보';
     if (/주의보/.test(text)) return '주의보';
     return '특보';

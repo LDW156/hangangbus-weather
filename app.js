@@ -303,7 +303,8 @@
   const IMPORTANT_OPERATION_ALERT_TYPES = [
     '호우',
     '강풍',
-    '태풍'
+    '태풍',
+    '폭염'
   ];
 
   function isImportantOperationAlert(alert){
@@ -517,6 +518,14 @@
       const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
       return alertKeywords.some(keyword=>text.includes(String(keyword).replace(/\s+/g,'')));
     });
+    const heatMajorAlerts=officialAlerts.filter(a=>{
+      const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
+      return text.includes('폭염중대경보');
+    });
+    const heatAlerts=officialAlerts.filter(a=>{
+      const text=`${a.title||''} ${a.message||''}`;
+      return text.includes('폭염');
+    });
 
     if(stopAlerts.length){
       const names=[...new Set(stopAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
@@ -528,12 +537,25 @@
       );
       eastReasons.push(alertReason);
       westReasons.push({...alertReason});
+    }else if(heatMajorAlerts.length){
+      const names=[...new Set(heatMajorAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
+      if(east==='normal')east='caution';
+      if(west==='normal')west='caution';
+      const heatReason=reason(
+        `폭염중대경보 발효 · ${names||'서울특별시'} · 단축운항 및 승객·승무원 온열질환 보호조치 검토`,
+        'warning','운항조정'
+      );
+      eastReasons.push(heatReason);
+      westReasons.push({...heatReason});
     }else if(officialAlerts.length){
       const names=[...new Set(officialAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
       if(east==='normal')east='caution';
       if(west==='normal')west='caution';
-      eastReasons.push(reason(`기상특보 발표 중 · ${names}`,'warning','특보확인'));
-      westReasons.push(reason(`기상특보 발표 중 · ${names}`,'warning','특보확인'));
+      const heatNote=heatAlerts.length
+        ? ' · 온열질환 예방조치 강화'
+        : '';
+      eastReasons.push(reason(`기상특보 발표 중 · ${names}${heatNote}`,'warning','특보확인'));
+      westReasons.push(reason(`기상특보 발표 중 · ${names}${heatNote}`,'warning','특보확인'));
     }else if(preliminaryAlerts.length){
       if(east==='normal')east='caution';
       if(west==='normal')west='caution';
@@ -541,8 +563,8 @@
       eastReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
       westReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
     }else{
-      eastReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 없음','normal','정상'));
-      westReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 없음','normal','정상'));
+      eastReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 및 폭염 운항조정 특보 없음','normal','정상'));
+      westReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 및 폭염 운항조정 특보 없음','normal','정상'));
     }
 
     if(upstreamAlerts.length){
@@ -921,9 +943,11 @@
         ? '공식 특보 발표'
         : alert.source==='preliminary'
           ? '예비특보'
-          : alert.level==='warning'
-            ? '경보'
-            : '주의보';
+          : alert.levelLabel||(
+              alert.level==='warning'
+                ? '경보'
+                : '주의보'
+            );
 
     root.hidden=false;
     root.className=`weather-alert-banner ${bannerClass}`;
@@ -957,7 +981,7 @@
         <div class="alert-list-section-head">
           <div>
             <b>현재 발효·예정 특보</b>
-            <span>경보 → 주의보 → 예비특보 순</span>
+            <span>중대경보 → 경보 → 주의보 → 예비특보 순</span>
           </div>
           <em>${alerts.length}건</em>
         </div>
@@ -1045,10 +1069,10 @@
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>서울 호우·강풍·태풍 발효특보 및 예비특보 기준</p>
+          <p>서울 호우·강풍·태풍·폭염 발효특보 및 예비특보 기준</p>
           <div class="alert-period ${status.sourceMode==='official-warning-api'?'':'alert-source-warning'}">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
-            <b>호우·강풍·태풍만 표시</b>
+            <b>호우·강풍·태풍·폭염 표시</b>
           </div>
         </article>
       `;

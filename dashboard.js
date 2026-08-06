@@ -333,7 +333,7 @@
 
     const importantAlerts = (data.alerts || []).filter(alert => {
       const text = `${alert.title || ''} ${alert.message || ''}`;
-      return ['호우','강풍','태풍'].some(type => text.includes(type));
+      return ['호우','강풍','태풍','폭염'].some(type => text.includes(type));
     });
 
     const directOfficial = importantAlerts.filter(
@@ -586,7 +586,7 @@
       root.innerHTML = `
         <div class="dashboard-alert-empty blue">
           <b>운항 관련 특보 없음</b>
-          <span>서울 호우·강풍·태풍 기준</span>
+          <span>서울 호우·강풍·태풍·폭염 기준</span>
         </div>
       `;
       return;
