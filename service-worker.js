@@ -1,4 +1,4 @@
-const CACHE='hangangbus-data-analysis-v91-0';
+const CACHE='hangangbus-data-analysis-v91-1';
 const ASSETS=[
   './',
   './index.html',
@@ -16,9 +16,9 @@ const ASSETS=[
   './kma.js?v=87',
   './ocean.js?v=69',
   './assets/hangangbus-logo.png?v=88',
-  './history.css?v=91.0',
+  './history.css?v=91.1',
   './history-config.js?v=90.1',
-  './history.js?v=91.0'
+  './history.js?v=91.1'
 ];
 
 self.addEventListener('install',event=>{

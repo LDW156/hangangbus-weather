@@ -19,7 +19,7 @@
     tableFilter: 'all',
     entry: 'bridge',
     anomalyCutoff: null,
-    anomalyMethod: 'iqr'
+    anomalyMethod: null
   };
 
   const COLORS = {
@@ -123,7 +123,7 @@
       return {
         eyebrow: 'HYDROLOGY DATA SEARCH',
         title: '조건별 수문 데이터 검색',
-        description: '기간·기준값·통계적 특이점을 조합하여 필요한 자료만 추출합니다.'
+        description: '기간·기준값·변화량 순위를 조합하여 필요한 자료만 추출합니다.'
       };
     }
 
@@ -167,18 +167,6 @@
     };
   }
 
-  function changeThresholds() {
-    if (state.source === 'bridge') {
-      return state.mode === 'hourly'
-        ? { notable: 0.10, spike: 0.18 }
-        : { notable: 0.12, spike: 0.22 };
-    }
-
-    return state.mode === 'hourly'
-      ? { notable: 120, spike: 250 }
-      : { notable: 180, spike: 350 };
-  }
-
   function percentile(values, ratio) {
     if (!values.length) return null;
     const sorted = [...values].sort((a, b) => a - b);
@@ -191,29 +179,20 @@
   }
 
   function anomalyMethod() {
-    if (state.entry !== 'search') return 'iqr';
+    if (state.entry !== 'search') return 'top10';
     const selected = $('historyStatFilter')?.value || 'all';
-    return selected === 'all' ? 'iqr' : selected;
+    return selected === 'all' ? null : selected;
   }
 
   function anomalyCutoff(values, method) {
+    if (method !== 'top5' && method !== 'top10') return null;
+
     const valid = values
       .map(value => Math.abs(number(value)))
       .filter(value => value !== null && value > 0);
 
     if (valid.length < 4) return null;
-
-    if (method === 'top5') return percentile(valid, 0.95);
-    if (method === 'top10') return percentile(valid, 0.90);
-
-    const q1 = percentile(valid, 0.25);
-    const q3 = percentile(valid, 0.75);
-    const iqr = q3 - q1;
-    const cutoff = q3 + 1.5 * iqr;
-
-    return cutoff > 0
-      ? cutoff
-      : percentile(valid, 0.95);
+    return percentile(valid, method === 'top5' ? 0.95 : 0.90);
   }
 
   function rowDelta(row, rows, index) {
@@ -265,7 +244,6 @@
   }
 
   function annotateRows(rows) {
-    const threshold = changeThresholds();
     const method = anomalyMethod();
     const deltas = rows.map((row, index) => rowDelta(row, rows, index));
     const cutoff = anomalyCutoff(
@@ -293,20 +271,12 @@
       }
 
       if (statistical) {
-        label = '통계적 특이';
+        label = method === 'top5'
+          ? '변화량 상위 5%'
+          : '변화량 상위 10%';
         className = delta >= 0
           ? 'history-row-spike-up'
           : 'history-row-spike-down';
-      } else if (absolute !== null && absolute >= threshold.spike) {
-        label = state.source === 'bridge'
-          ? (delta > 0 ? '급상승' : '급하강')
-          : (delta > 0 ? '급증' : '급감');
-        className = delta > 0
-          ? 'history-row-spike-up'
-          : 'history-row-spike-down';
-      } else if (absolute !== null && absolute >= threshold.notable) {
-        label = '변화 큼';
-        className = 'history-row-emphasis';
       }
 
       if ((row.quality_flag && row.quality_flag !== 'valid') && label === '정상') {
@@ -678,17 +648,17 @@
 
     const cutoff = state.anomalyCutoff;
     const methodLabel = state.anomalyMethod === 'top5'
-      ? '변화량 상위 5%'
+      ? '선택 기간 변화량 상위 5%'
       : state.anomalyMethod === 'top10'
-        ? '변화량 상위 10%'
-        : 'IQR 기준';
+        ? '선택 기간 변화량 상위 10%'
+        : null;
 
-    if (cutoff === null) {
-      guide.textContent = '통계적 특이점을 계산할 수 있는 변화자료가 부족합니다.';
-    } else if (state.source === 'bridge') {
-      guide.textContent = `${methodLabel} · 절대 수위변화 ${fmt(cutoff, 2)}m 이상을 통계적 특이점으로 표시합니다.`;
+    if (!methodLabel) {
+      guide.textContent = '변화량 순위 필터를 적용하지 않고 전체 자료를 표시합니다.';
+    } else if (cutoff === null) {
+      guide.textContent = `${methodLabel}를 계산할 수 있는 변화자료가 부족합니다.`;
     } else {
-      guide.textContent = `${methodLabel} · 절대 방류변화 ${fmt(cutoff, 0)}㎥/s 이상을 통계적 특이점으로 표시합니다.`;
+      guide.textContent = `${methodLabel} 구간을 하이라이트합니다. 임의의 고정 방류량 기준은 사용하지 않습니다.`;
     }
 
     filtersWrap.innerHTML = ['all', 'flagged', 'up', 'down'].map(key => `
