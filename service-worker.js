@@ -1,4 +1,4 @@
-const CACHE='hangangbus-heat-alert-v90-4';
+const CACHE='hangangbus-ui-cleanup-v90-5';
 const ASSETS=[
   './',
   './index.html',
@@ -6,7 +6,7 @@ const ASSETS=[
   './dashboard.css?v=90',
   './dashboard.js?v=90.4',
   './styles.css?v=90.4',
-  './app.js?v=90.4',
+  './app.js?v=90.5',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',

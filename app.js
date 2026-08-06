@@ -64,7 +64,6 @@
     // 빈 화면을 기다리지 않도록 기본 화면을 즉시 먼저 표시합니다.
     updateTideOverlapRisk();
     render();
-    $('modeBadge').textContent='LOADING';
     setBanner('demo','기본 화면 표시 완료 · 수문·기상·조석 최신자료를 동시에 조회 중입니다.');
 
     const liveSources=[];
@@ -237,10 +236,9 @@
     const hasSource=name=>liveSources.some(source=>source.startsWith(name));
 
     if(liveSources.length){
-      $('modeBadge').textContent='HYBRID';
       const liveText=`실데이터: ${liveSources.join('·')}`;
       const demoList=['수문','기상','조석'].filter(x=>!hasSource(x));
-      const demoText=demoList.length?`데모 유지: ${demoList.join('·')}`:'';
+      const demoText=demoList.length?`미연동 자료: ${demoList.join('·')}`:'';
       const parts=[liveText,demoText].filter(Boolean);
 
       if(errors.length){
@@ -251,11 +249,9 @@
         setBanner('live',`${parts.join(' / ')}. 각 카드의 관측·예보 시각을 확인하십시오.`);
       }
     }else if(errors.length){
-      $('modeBadge').textContent='ERROR';
-      setBanner('error',`${errors.join(' | ')} · 현재 표시값은 데모이므로 운항판단에 사용하지 마십시오.`);
+      setBanner('error',`${errors.join(' | ')} · 미갱신 항목은 운항판단에 사용하지 마십시오.`);
     }else{
-      $('modeBadge').textContent=setupSources.length?'SETUP':'DEMO';
-      setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. 공용 설정파일을 확인하십시오.`);
+      setBanner('demo',`${setupSources.join('·')} 실데이터가 연결되지 않았습니다. 공용 설정파일을 확인하십시오.`);
     }
 
     render();
@@ -635,7 +631,6 @@
     const westBasis=`자료기준 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)} · 조석 ${timeText(data.tide.referenceAt)}`;
     $('eastRoute').className=`route-card ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons,eastBasis);
     $('westRoute').className=`route-card ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons,westBasis);
-    if(cfg.SHOW_DEMO_CONTROLS&&cfg.DATA_MODE==='demo'){$('demoControls').hidden=false;document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.toggle('active',b.dataset.scenario===scenario));}
   }
 
   function comparisonCell(label,time,current,previous,digits=2,unit='m',inverse=false){
@@ -2226,7 +2221,6 @@
       data.meta=data.meta||{};
       updateTideOverlapRisk();
       render();
-      $('modeBadge').textContent='SHARED';
       setBanner('live','메인 대시보드 수신자료를 즉시 표시했습니다. 상세자료는 백그라운드에서 갱신 중입니다.');
     }catch(_){}
   }
@@ -2261,7 +2255,6 @@
     );
   }
 
-  document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData('scenario');});
   $('refreshBtn')?.addEventListener('click',()=>loadData('manual'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastRefreshStartedAt&&Date.now()-lastRefreshStartedAt.getTime()>cfg.REFRESH_MS)loadData('resume');});
   if('serviceWorker' in navigator&&window.parent===window){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}

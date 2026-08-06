@@ -30,7 +30,6 @@
     <div class="header-right">
       <button id="embeddedDashboardBack" class="embedded-dashboard-back" type="button">← 종합 대시보드</button>
       <div class="refresh-control"><button id="refreshBtn" class="refresh-btn" type="button"><span class="refresh-icon">↻</span> 최신 데이터 업데이트</button><small id="refreshNote">자동 갱신 5분</small></div>
-      <span id="modeBadge" class="mode-badge">DEMO</span>
       <span id="updatedAt" class="updated">갱신 확인 중</span>
     </div>
   </header>
@@ -50,12 +49,6 @@
       <div class="route-grid">
         <article id="eastRoute" class="route-card"></article>
         <article id="westRoute" class="route-card"></article>
-      </div>
-      <div id="demoControls" class="scenario-controls" hidden>
-        <span>데모 시나리오</span>
-        <button data-scenario="normal">정상</button>
-        <button data-scenario="caution">주의</button>
-        <button data-scenario="stop">운항불가</button>
       </div>
     </section>
 
@@ -188,7 +181,7 @@
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=90.4"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=90.4"></script>
+  <script src="app.js?v=90.5"></script>
   <script>
     (() => {
       const back = document.getElementById('embeddedDashboardBack');
