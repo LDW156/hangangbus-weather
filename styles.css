@@ -4059,7 +4059,7 @@ details.rain-contribution-box {
 
 .alert-operation-criteria {
   display:grid;
-  grid-template-columns:1.25fr 1.25fr 1fr 1fr;
+  grid-template-columns:1.35fr 1fr 1fr;
   gap:8px;
   margin:0 0 10px;
 }
@@ -4090,15 +4090,6 @@ details.rain-contribution-box {
 
 .alert-operation-criteria > div:first-child b {
   color:#b31f2d;
-}
-
-.alert-operation-criteria > div.heat-major {
-  border-color:#e3a640;
-  background:#fff8e8;
-}
-
-.alert-operation-criteria > div.heat-major b {
-  color:#a85e00;
 }
 
 .alert-operation-criteria span {
@@ -4819,5 +4810,170 @@ details.rain-contribution-box {
     min-width:700px !important;
     height:235px !important;
     min-height:235px !important;
+  }
+}
+
+
+/* =========================================================
+   v91.2 상세 모니터링: 전체 스크롤 / 항목별 전용화면 분리
+========================================================= */
+
+.detail-page-context {
+  max-width:1148px;
+  margin:10px auto 12px;
+  padding:18px;
+  background:linear-gradient(135deg,#ffffff 0%,#eef7fb 100%);
+  border:1px solid #b9d2df;
+  border-radius:15px;
+  box-shadow:var(--shadow-strong);
+}
+
+.detail-page-context[hidden],
+.section[hidden],
+.quick-nav[hidden] {
+  display:none !important;
+}
+
+.detail-context-heading {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.detail-context-heading span,
+.detail-context-heading h2,
+.detail-context-heading p {
+  display:block;
+  margin:0;
+}
+
+.detail-context-heading span {
+  color:var(--primary);
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+
+.detail-context-heading h2 {
+  margin-top:5px;
+  color:#153f59;
+  font-size:24px;
+  letter-spacing:-.045em;
+}
+
+.detail-context-heading p {
+  margin-top:7px;
+  max-width:760px;
+  color:#607b8a;
+  font-size:11px;
+  font-weight:750;
+  line-height:1.65;
+}
+
+.detail-context-heading button,
+.detail-related-links button {
+  color:#12658e;
+  background:#ffffff;
+  border:1px solid #8dbbd2;
+  border-radius:9px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.detail-context-heading button {
+  flex:0 0 auto;
+  padding:9px 12px;
+  font-size:9px;
+}
+
+.detail-context-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:15px;
+}
+
+.detail-context-grid article {
+  min-width:0;
+  padding:12px 13px;
+  background:rgba(255,255,255,.88);
+  border:1px solid #d3e1e8;
+  border-radius:11px;
+}
+
+.detail-context-grid span {
+  color:#166c96;
+  font-size:9px;
+  font-weight:950;
+}
+
+.detail-context-grid p {
+  margin:6px 0 0;
+  color:#4f6877;
+  font-size:10px;
+  font-weight:760;
+  line-height:1.65;
+}
+
+.detail-related-links {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin-top:13px;
+  padding-top:12px;
+  border-top:1px solid #d4e2e9;
+}
+
+.detail-related-links b {
+  margin-right:3px;
+  color:#67818f;
+  font-size:8px;
+}
+
+.detail-related-links button {
+  padding:6px 9px;
+  font-size:8px;
+}
+
+.detail-focus .container {
+  padding-top:0;
+}
+
+.detail-focus .section {
+  margin-top:0;
+  border-top:0;
+}
+
+.embedded-detail .app-header,
+.embedded-detail footer {
+  display:none;
+}
+
+.embedded-detail .system-banner {
+  margin-top:10px;
+}
+
+.embedded-detail.detail-focus .weather-alert-banner:not([hidden]) {
+  margin-top:8px;
+}
+
+@media (max-width:760px) {
+  .detail-page-context {
+    margin:7px;
+    padding:13px;
+  }
+
+  .detail-context-heading {
+    flex-direction:column;
+  }
+
+  .detail-context-heading h2 {
+    font-size:19px;
+  }
+
+  .detail-context-grid {
+    grid-template-columns:1fr;
   }
 }

@@ -1,12 +1,12 @@
-const CACHE='hangangbus-data-analysis-v91-1';
+const CACHE='hangangbus-detail-pages-v91-2';
 const ASSETS=[
   './',
   './index.html',
   './detail.html',
-  './dashboard.css?v=90',
-  './dashboard.js?v=91.0',
-  './styles.css?v=88',
-  './app.js?v=90.2',
+  './dashboard.css?v=91.2',
+  './dashboard.js?v=91.2',
+  './styles.css?v=91.2',
+  './app.js?v=91.2',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',

@@ -64,6 +64,7 @@
     // 빈 화면을 기다리지 않도록 기본 화면을 즉시 먼저 표시합니다.
     updateTideOverlapRisk();
     render();
+    $('modeBadge').textContent='LOADING';
     setBanner('demo','기본 화면 표시 완료 · 수문·기상·조석 최신자료를 동시에 조회 중입니다.');
 
     const liveSources=[];
@@ -236,9 +237,10 @@
     const hasSource=name=>liveSources.some(source=>source.startsWith(name));
 
     if(liveSources.length){
+      $('modeBadge').textContent='HYBRID';
       const liveText=`실데이터: ${liveSources.join('·')}`;
       const demoList=['수문','기상','조석'].filter(x=>!hasSource(x));
-      const demoText=demoList.length?`미연동 자료: ${demoList.join('·')}`:'';
+      const demoText=demoList.length?`데모 유지: ${demoList.join('·')}`:'';
       const parts=[liveText,demoText].filter(Boolean);
 
       if(errors.length){
@@ -249,9 +251,11 @@
         setBanner('live',`${parts.join(' / ')}. 각 카드의 관측·예보 시각을 확인하십시오.`);
       }
     }else if(errors.length){
-      setBanner('error',`${errors.join(' | ')} · 미갱신 항목은 운항판단에 사용하지 마십시오.`);
+      $('modeBadge').textContent='ERROR';
+      setBanner('error',`${errors.join(' | ')} · 현재 표시값은 데모이므로 운항판단에 사용하지 마십시오.`);
     }else{
-      setBanner('demo',`${setupSources.join('·')} 실데이터가 연결되지 않았습니다. 공용 설정파일을 확인하십시오.`);
+      $('modeBadge').textContent=setupSources.length?'SETUP':'DEMO';
+      setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. 공용 설정파일을 확인하십시오.`);
     }
 
     render();
@@ -299,8 +303,7 @@
   const IMPORTANT_OPERATION_ALERT_TYPES = [
     '호우',
     '강풍',
-    '태풍',
-    '폭염'
+    '태풍'
   ];
 
   function isImportantOperationAlert(alert){
@@ -514,14 +517,6 @@
       const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
       return alertKeywords.some(keyword=>text.includes(String(keyword).replace(/\s+/g,'')));
     });
-    const heatMajorAlerts=officialAlerts.filter(a=>{
-      const text=`${a.title||''} ${a.message||''}`.replace(/\s+/g,'');
-      return text.includes('폭염중대경보');
-    });
-    const heatAlerts=officialAlerts.filter(a=>{
-      const text=`${a.title||''} ${a.message||''}`;
-      return text.includes('폭염');
-    });
 
     if(stopAlerts.length){
       const names=[...new Set(stopAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
@@ -533,25 +528,12 @@
       );
       eastReasons.push(alertReason);
       westReasons.push({...alertReason});
-    }else if(heatMajorAlerts.length){
-      const names=[...new Set(heatMajorAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
-      if(east==='normal')east='caution';
-      if(west==='normal')west='caution';
-      const heatReason=reason(
-        `폭염중대경보 발효 · ${names||'서울특별시'} · 단축운항 및 승객·승무원 온열질환 보호조치 검토`,
-        'warning','운항조정'
-      );
-      eastReasons.push(heatReason);
-      westReasons.push({...heatReason});
     }else if(officialAlerts.length){
       const names=[...new Set(officialAlerts.map(a=>a.title).filter(Boolean))].join(' · ');
       if(east==='normal')east='caution';
       if(west==='normal')west='caution';
-      const heatNote=heatAlerts.length
-        ? ' · 온열질환 예방조치 강화'
-        : '';
-      eastReasons.push(reason(`기상특보 발표 중 · ${names}${heatNote}`,'warning','특보확인'));
-      westReasons.push(reason(`기상특보 발표 중 · ${names}${heatNote}`,'warning','특보확인'));
+      eastReasons.push(reason(`기상특보 발표 중 · ${names}`,'warning','특보확인'));
+      westReasons.push(reason(`기상특보 발표 중 · ${names}`,'warning','특보확인'));
     }else if(preliminaryAlerts.length){
       if(east==='normal')east='caution';
       if(west==='normal')west='caution';
@@ -559,8 +541,8 @@
       eastReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
       westReasons.push(reason(`예비특보 발표 · ${names}`,'warning','사전검토'));
     }else{
-      eastReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 및 폭염 운항조정 특보 없음','normal','정상'));
-      westReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 및 폭염 운항조정 특보 없음','normal','정상'));
+      eastReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 없음','normal','정상'));
+      westReasons.push(reason('서울 호우·강풍·태풍 운항중지 특보 없음','normal','정상'));
     }
 
     if(upstreamAlerts.length){
@@ -631,6 +613,7 @@
     const westBasis=`자료기준 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)} · 조석 ${timeText(data.tide.referenceAt)}`;
     $('eastRoute').className=`route-card ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons,eastBasis);
     $('westRoute').className=`route-card ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons,westBasis);
+    if(cfg.SHOW_DEMO_CONTROLS&&cfg.DATA_MODE==='demo'){$('demoControls').hidden=false;document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.toggle('active',b.dataset.scenario===scenario));}
   }
 
   function comparisonCell(label,time,current,previous,digits=2,unit='m',inverse=false){
@@ -938,11 +921,9 @@
         ? '공식 특보 발표'
         : alert.source==='preliminary'
           ? '예비특보'
-          : alert.levelLabel||(
-              alert.level==='warning'
-                ? '경보'
-                : '주의보'
-            );
+          : alert.level==='warning'
+            ? '경보'
+            : '주의보';
 
     root.hidden=false;
     root.className=`weather-alert-banner ${bannerClass}`;
@@ -976,7 +957,7 @@
         <div class="alert-list-section-head">
           <div>
             <b>현재 발효·예정 특보</b>
-            <span>중대경보 → 경보 → 주의보 → 예비특보 순</span>
+            <span>경보 → 주의보 → 예비특보 순</span>
           </div>
           <em>${alerts.length}건</em>
         </div>
@@ -1064,10 +1045,10 @@
             </div>
             <span class="alert-time">확인 ${dateTimeText(issuedAt)}</span>
           </div>
-          <p>서울 호우·강풍·태풍·폭염 발효특보 및 예비특보 기준</p>
+          <p>서울 호우·강풍·태풍 발효특보 및 예비특보 기준</p>
           <div class="alert-period ${status.sourceMode==='official-warning-api'?'':'alert-source-warning'}">
             <span>조회 기준 ${fullDateTimeText(data.meta.generatedAt)}</span>
-            <b>호우·강풍·태풍·폭염 표시</b>
+            <b>호우·강풍·태풍만 표시</b>
           </div>
         </article>
       `;
@@ -2213,6 +2194,163 @@
       $('hydrologyTestResult').className='settings-result';$('hydrologyTestResult').textContent='저장값을 삭제했습니다.';
     });
   }
+  const DETAIL_PAGE_CONFIG={
+    route:{
+      eyebrow:'운항판정',
+      title:'노선 운항판정 상세',
+      description:'동부선·서부선의 현재 운항 가능 여부와 판정에 반영된 핵심 근거를 한 화면에서 확인합니다.',
+      cards:[
+        ['판정 목적','수문·기상·특보를 종합해 현재 노선별 운항 위험도를 빠르게 확인합니다.'],
+        ['확인 항목','잠수교 통과높이, 팔당댐 방류량, 강수·풍속, 운항 관련 특보, 조석 중첩을 함께 봅니다.'],
+        ['판정 유의','화면 판정은 참고값입니다. 회사 지침, 선박 상태, 현장 시계·유속과 선장의 판단을 우선합니다.']
+      ],
+      related:[['jamsu','잠수교 통과높이'],['dam','팔당댐 방류량'],['alerts','운항 관련 특보']]
+    },
+    jamsu:{
+      eyebrow:'수문 핵심지표',
+      title:'잠수교 통과높이 상세',
+      description:'잠수교 수위가 상승할수록 선박이 통과할 수 있는 여유 높이는 감소합니다.',
+      cards:[
+        ['핵심 관계','잠수교 통과높이는 기준 구조물 높이에서 관측 수위를 차감해 산정하며 수위와 반대로 움직입니다.'],
+        ['확인 항목','현재 통과높이, 10·30·60분 변화, 주의·운항중지 기준과의 여유를 함께 확인합니다.'],
+        ['운항 적용','기준 접근 시 잠수교 도달 예상시각의 방류량·조석·수위 추세와 실제 통항 가능 높이를 재확인합니다.']
+      ],
+      related:[['route','노선 운항판정'],['dam','팔당댐 방류량'],['tide','인천 조석']]
+    },
+    dam:{
+      eyebrow:'상류 수문정보',
+      title:'팔당댐 방류량 상세',
+      description:'팔당댐 유입량·방류량과 증가 추세를 통해 한강 유속·수위 상승 가능성을 확인합니다.',
+      cards:[
+        ['핵심 지표','현재 방류량뿐 아니라 10분·30분·1시간 증가폭과 유입량 대비 방류량을 함께 확인합니다.'],
+        ['운항 기준','동부선과 서부선의 방류량 기준 접근 여부를 구분하여 표시합니다.'],
+        ['시간차 유의','팔당댐 방류 영향은 지점별 도달시간이 다르므로 현재값만으로 하류 수위를 단정하지 않습니다.']
+      ],
+      related:[['route','노선 운항판정'],['jamsu','잠수교 통과높이'],['river','한강 수위']]
+    },
+    river:{
+      eyebrow:'교량 관측수위',
+      title:'한강 수위 상세',
+      description:'잠수교와 한강대교 관측수위의 현재값·변화량·갱신상태를 비교합니다.',
+      cards:[
+        ['확인 목적','한강 주요 관측지점의 수위 상승·하강 방향과 변화 속도를 확인합니다.'],
+        ['표시 기준','한강대교는 수위만 표시하며 잠수교처럼 통과높이 값을 적용하지 않습니다.'],
+        ['자료 유의','0.00·결측·갱신지연 자료는 운항판단에 사용하지 않고 원자료와 현장을 재확인합니다.']
+      ],
+      related:[['jamsu','잠수교 통과높이'],['dam','팔당댐 방류량'],['tide','인천 조석']]
+    },
+    alerts:{
+      eyebrow:'공식 기상특보',
+      title:'운항 관련 특보 상세',
+      description:'서울 및 상류 영향권의 공식 특보 중 운항에 직접 영향을 주는 항목을 분리해 확인합니다.',
+      cards:[
+        ['표시 범위','호우·강풍·태풍과 폭염 관련 특보를 지역별로 구분해 표시합니다.'],
+        ['운항 영향','경보·주의보·예비특보의 단계와 대상지역에 따라 운항중지·사전검토·보호조치를 검토합니다.'],
+        ['해석 유의','전국 통보문 제목만 보지 않고 실제 대상지역에 서울 또는 상류 영향권이 포함됐는지 확인합니다.']
+      ],
+      related:[['route','노선 운항판정'],['rain','강수 예보'],['wind','풍향·풍속']]
+    },
+    rain:{
+      eyebrow:'단기 강수전망',
+      title:'강수 예보 상세',
+      description:'동부선·서부선 권역별 예상 강수량과 강수 확률을 비교합니다.',
+      cards:[
+        ['확인 항목','3시간·12시간 예상강수, 강수확률과 시간대별 집중 가능성을 확인합니다.'],
+        ['운항 영향','강수량 자체뿐 아니라 시정 저하, 돌풍, 선착장 승하선 안전과 수위 상승 가능성을 함께 봅니다.'],
+        ['자료 유의','예보는 변동될 수 있으므로 실제 레이더·현장 시정과 최신 특보를 함께 확인합니다.']
+      ],
+      related:[['alerts','운항 관련 특보'],['wind','풍향·풍속'],['route','노선 운항판정']]
+    },
+    wind:{
+      eyebrow:'선착장 기상관측',
+      title:'풍향·풍속 상세',
+      description:'선착장별 현재 풍향·풍속과 단기 예보를 비교해 접·이안 위험을 확인합니다.',
+      cards:[
+        ['확인 항목','현재 평균풍속, 최대풍속, 풍향과 1·2시간 예보를 선착장별로 비교합니다.'],
+        ['운항 영향','횡풍·돌풍은 접·이안, 계류삭 장력, 승강대 간섭과 선체 횡이동 위험을 키울 수 있습니다.'],
+        ['현장 우선','관측소 값과 실제 수면 풍황이 다를 수 있으므로 선착장 풍향계·선장 보고를 우선 확인합니다.']
+      ],
+      related:[['route','노선 운항판정'],['alerts','운항 관련 특보'],['rain','강수 예보']]
+    },
+    tide:{
+      eyebrow:'하류 조석영향',
+      title:'인천 조석 상세',
+      description:'인천 실측·예측조위와 만조·간조 시각을 통해 한강 하류 수위 중첩 가능성을 확인합니다.',
+      cards:[
+        ['확인 항목','현재 조위, 다음 만조·간조, 24시간 예측곡선과 향후 30일 조차를 확인합니다.'],
+        ['중첩 위험','팔당댐 방류 증가와 만조가 겹치면 잠수교 수위와 선착장 도교 경사가 함께 악화될 수 있습니다.'],
+        ['시간차 유의','인천 조석 영향이 한강 각 지점에 도달하는 시간차를 고려해 예상 도달시각을 별도로 판단합니다.']
+      ],
+      related:[['jamsu','잠수교 통과높이'],['dam','팔당댐 방류량'],['route','노선 운항판정']]
+    }
+  };
+
+  const DETAIL_SECTION_IDS=['route','jamsu','dam','alerts','rain','wind','river','tide','health'];
+
+  function renderDetailContext(section){
+    const context=$('detailPageContext');
+    const meta=DETAIL_PAGE_CONFIG[section];
+
+    if(!context||!meta){
+      if(context)context.hidden=true;
+      return;
+    }
+
+    context.hidden=false;
+    $('detailPageEyebrow').textContent=meta.eyebrow;
+    $('detailPageTitle').textContent=meta.title;
+    $('detailPageDescription').textContent=meta.description;
+    $('detailContextGrid').innerHTML=meta.cards.map(([title,text])=>`
+      <article>
+        <span>${esc(title)}</span>
+        <p>${esc(text)}</p>
+      </article>
+    `).join('');
+    $('detailRelatedLinks').innerHTML=`<b>관련 상세항목</b>${meta.related.map(([key,label])=>`
+      <button type="button" data-detail-related="${key}">${esc(label)}</button>
+    `).join('')}`;
+  }
+
+  function setDetailPageMode(section=''){
+    const normalized=DETAIL_PAGE_CONFIG[section]?section:'';
+    const focus=Boolean(normalized);
+
+    document.body.classList.toggle('detail-focus',focus);
+    document.body.dataset.detailSection=normalized||'all';
+    document.querySelector('.quick-nav')?.toggleAttribute('hidden',focus);
+
+    DETAIL_SECTION_IDS.forEach(id=>{
+      const element=document.getElementById(id);
+      if(!element)return;
+      element.hidden=focus&&id!==normalized;
+    });
+
+    renderDetailContext(normalized);
+
+    const meta=DETAIL_PAGE_CONFIG[normalized];
+    const title=meta?.title||'한강버스 전체 상세 모니터링';
+    const description=meta?.description||'기상·수문·조석·노선별 운항판단을 아래로 스크롤하여 확인합니다.';
+
+    document.querySelector('.brand-copy h1').textContent=title;
+    document.querySelector('.header-sub').textContent=description;
+    document.title=`${title} | 한강버스`;
+
+    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
+  }
+
+  function requestDetailMode(section=''){
+    if(window.parent!==window){
+      window.parent.postMessage(
+        {type:'hangangbus-request-detail',section},
+        window.location.origin
+      );
+      return;
+    }
+
+    setDetailPageMode(section);
+    history.replaceState(null,'',section?`#${section}`:location.pathname);
+  }
+
   function applyParentPrefill(payload){
     if(!payload||typeof payload!=='object')return;
 
@@ -2221,6 +2359,7 @@
       data.meta=data.meta||{};
       updateTideOverlapRisk();
       render();
+      $('modeBadge').textContent='SHARED';
       setBanner('live','메인 대시보드 수신자료를 즉시 표시했습니다. 상세자료는 백그라운드에서 갱신 중입니다.');
     }catch(_){}
   }
@@ -2235,26 +2374,33 @@
       applyParentPrefill(message.data);
     }
 
-    if(message.type==='hangangbus-scroll-section'){
-      const section=String(message.section||'');
-      const target=section?document.getElementById(section):document.body;
-      requestAnimationFrame(()=>{
-        if(section&&target){
-          target.scrollIntoView({behavior:'auto',block:'start'});
-        }else{
-          window.scrollTo({top:0,behavior:'auto'});
-        }
-      });
+    if(
+      message.type==='hangangbus-set-detail-mode'||
+      message.type==='hangangbus-scroll-section'
+    ){
+      setDetailPageMode(String(message.section||''));
     }
   });
 
   if(window.parent!==window){
+    document.body.classList.add('embedded-detail');
     window.parent.postMessage(
       {type:'hangangbus-detail-ready'},
       window.location.origin
     );
   }
 
+  $('detailShowAll')?.addEventListener('click',()=>requestDetailMode(''));
+  document.addEventListener('click',event=>{
+    const related=event.target.closest('[data-detail-related]');
+    if(!related)return;
+    requestDetailMode(related.dataset.detailRelated||'');
+  });
+
+  const initialSection=String(location.hash||'').replace(/^#/,'');
+  setDetailPageMode(initialSection);
+
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData('scenario');});
   $('refreshBtn')?.addEventListener('click',()=>loadData('manual'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastRefreshStartedAt&&Date.now()-lastRefreshStartedAt.getTime()>cfg.REFRESH_MS)loadData('resume');});
   if('serviceWorker' in navigator&&window.parent===window){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}

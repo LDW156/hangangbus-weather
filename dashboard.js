@@ -712,16 +712,52 @@
   }
 
 
-  const detailTitles = {
-    '':'전체 상세화면',
-    route:'노선 운항판정',
-    jamsu:'잠수교 통과높이',
-    dam:'팔당댐 방류량',
-    river:'한강 수위',
-    alerts:'운항 관련 기상특보',
-    rain:'강수 예보',
-    wind:'풍향·풍속',
-    tide:'인천 조석'
+  const detailPages = {
+    '': {
+      eyebrow:'전체 상세 모니터링',
+      title:'운항·수문·기상·조석 전체 상세',
+      description:'모든 상세 항목을 한 화면에서 아래로 스크롤하여 확인합니다.'
+    },
+    route:{
+      eyebrow:'운항·수문',
+      title:'노선 운항판정 상세',
+      description:'동부선·서부선 판정 결과와 판정에 반영된 수문·기상·특보 근거를 확인합니다.'
+    },
+    jamsu:{
+      eyebrow:'운항·수문',
+      title:'잠수교 통과높이 상세',
+      description:'잠수교 수위, 통과 가능 높이, 변화 추이와 운항 기준 여유를 확인합니다.'
+    },
+    dam:{
+      eyebrow:'운항·수문',
+      title:'팔당댐 방류량 상세',
+      description:'유입량·방류량·증감 추세와 동·서부선 운항 기준 접근 여부를 확인합니다.'
+    },
+    river:{
+      eyebrow:'운항·수문',
+      title:'한강 수위 상세',
+      description:'잠수교·한강대교 수위와 단기 변화량, 자료 갱신상태를 확인합니다.'
+    },
+    alerts:{
+      eyebrow:'기상·조석',
+      title:'운항 관련 특보 상세',
+      description:'서울 및 상류 영향권의 호우·강풍·태풍·폭염 특보와 운항 영향도를 확인합니다.'
+    },
+    rain:{
+      eyebrow:'기상·조석',
+      title:'강수 예보 상세',
+      description:'동·서부선 권역별 예상 강수량과 강수 확률, 단시간 집중 가능성을 확인합니다.'
+    },
+    wind:{
+      eyebrow:'기상·조석',
+      title:'풍향·풍속 상세',
+      description:'선착장별 현재 풍향·풍속과 단기 예보를 비교해 접·이안 위험을 확인합니다.'
+    },
+    tide:{
+      eyebrow:'기상·조석',
+      title:'인천 조석 상세',
+      description:'실측·예측조위, 만조·간조와 팔당댐 방류 중첩 가능성을 확인합니다.'
+    }
   };
 
   let detailFrameLoaded=false;
@@ -749,11 +785,11 @@
     });
   }
 
-  function scrollDetail(section=''){
+  function setDetailMode(section=''){
     pendingDetailSection=section;
     if(!detailFrameLoaded)return;
     detailMessage({
-      type:'hangangbus-scroll-section',
+      type:'hangangbus-set-detail-mode',
       section
     });
   }
@@ -806,7 +842,12 @@
     $('historyView')?.setAttribute('aria-hidden','true');
     $('detailView').classList.add('active');
     $('detailView').setAttribute('aria-hidden','false');
-    $('detailViewTitle').textContent=detailTitles[section]||'상세 모니터링';
+
+    const page=detailPages[section]||detailPages[''];
+    $('detailViewEyebrow').textContent=page.eyebrow;
+    $('detailViewTitle').textContent=page.title;
+    $('detailViewDescription').textContent=page.description;
+    $('showAllDetail').hidden=!section;
 
     pendingDetailSection=section;
     setDetailLoading(!detailFrameLoaded);
@@ -814,7 +855,7 @@
 
     if(detailFrameLoaded){
       pushDashboardDataToDetail();
-      scrollDetail(section);
+      setDetailMode(section);
     }
 
     if(link)activateMenu(link);
@@ -869,7 +910,7 @@
     detailFrameLoaded=true;
     setDetailLoading(false);
     pushDashboardDataToDetail();
-    scrollDetail(pendingDetailSection);
+    setDetailMode(pendingDetailSection);
   });
 
   window.addEventListener('message',event=>{
@@ -881,11 +922,19 @@
       detailFrameLoading=false;
       setDetailLoading(false);
       pushDashboardDataToDetail();
-      scrollDetail(pendingDetailSection);
+      setDetailMode(pendingDetailSection);
     }
 
     if(message.type==='hangangbus-open-dashboard'){
       showDashboard();
+    }
+
+    if(message.type==='hangangbus-request-detail'){
+      const section=String(message.section||'');
+      const menuLink=section
+        ? document.querySelector(`.side-nav a[data-detail-section="${section}"]`)
+        : document.querySelector('.side-nav a[data-detail-mode="all"]');
+      showDetail(section,menuLink);
     }
   });
 
@@ -900,7 +949,9 @@
         showHistory(link,link.dataset.historyEntry||'bridge');
       }else if(href.includes('detail.html')){
         event.preventDefault();
-        const section=href.includes('#')?href.split('#')[1]:'';
+        const section=link.dataset.detailSection||(
+          href.includes('#')?href.split('#')[1]:''
+        );
         showDetail(section,link);
       }else if(href.includes('index.html')){
         event.preventDefault();
@@ -924,6 +975,10 @@
   });
 
   $('backToDashboard')?.addEventListener('click',()=>showDashboard());
+  $('showAllDetail')?.addEventListener('click',()=>{
+    const link=document.querySelector('.side-nav a[data-detail-mode="all"]');
+    showDetail('',link);
+  });
   $('historyBackDashboard')?.addEventListener('click',()=>showDashboard());
 
   try{

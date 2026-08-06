@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="dashboard.css?v=90">
+  <link rel="stylesheet" href="dashboard.css?v=91.2">
   <link rel="stylesheet" href="history.css?v=91.1">
 </head>
 <body class="dashboard-body">
@@ -29,43 +29,43 @@
           <span class="side-icon">▦</span>
           <span>종합 대시보드</span>
         </a>
-        <a href="./detail.html">
+        <a href="./detail.html" data-detail-mode="all">
           <span class="side-icon">▤</span>
-          <span>상세 모니터링</span>
+          <span>전체 상세 모니터링</span>
         </a>
 
         <p>운항·수문</p>
-        <a href="./detail.html#route">
+        <a href="./detail.html#route" data-detail-section="route">
           <span class="side-icon">◉</span>
           <span>노선 운항판정</span>
         </a>
-        <a href="./detail.html#jamsu">
+        <a href="./detail.html#jamsu" data-detail-section="jamsu">
           <span class="side-icon">↕</span>
           <span>잠수교 통과높이</span>
         </a>
-        <a href="./detail.html#dam">
+        <a href="./detail.html#dam" data-detail-section="dam">
           <span class="side-icon">≋</span>
           <span>팔당댐 방류량</span>
         </a>
-        <a href="./detail.html#river">
+        <a href="./detail.html#river" data-detail-section="river">
           <span class="side-icon">⌁</span>
           <span>한강 수위</span>
         </a>
 
         <p>기상·조석</p>
-        <a href="./detail.html#alerts">
+        <a href="./detail.html#alerts" data-detail-section="alerts">
           <span class="side-icon">!</span>
           <span>운항 관련 특보</span>
         </a>
-        <a href="./detail.html#rain">
+        <a href="./detail.html#rain" data-detail-section="rain">
           <span class="side-icon">☂</span>
           <span>강수 예보</span>
         </a>
-        <a href="./detail.html#wind">
+        <a href="./detail.html#wind" data-detail-section="wind">
           <span class="side-icon">➤</span>
           <span>풍향·풍속</span>
         </a>
-        <a href="./detail.html#tide">
+        <a href="./detail.html#tide" data-detail-section="tide">
           <span class="side-icon">◒</span>
           <span>인천 조석</span>
         </a>
@@ -120,7 +120,7 @@
               <span>운항판정</span>
               <h2>노선별 현재 상태</h2>
             </div>
-            <a href="./detail.html#route">상세보기</a>
+            <a href="./detail.html#route" data-detail-section="route">상세보기</a>
           </div>
 
           <div class="route-summary-grid">
@@ -137,7 +137,7 @@
               <span>한강 수문 상황</span>
               <h2>핵심 수위·방류 현황</h2>
             </div>
-            <a href="./detail.html#jamsu">상세보기</a>
+            <a href="./detail.html#jamsu" data-detail-section="jamsu">상세보기</a>
           </div>
 
           <div class="river-schematic">
@@ -205,7 +205,7 @@
               <span>운항 관련 특보</span>
               <h2>호우·강풍·태풍</h2>
             </div>
-            <a href="./detail.html#alerts">상세보기</a>
+            <a href="./detail.html#alerts" data-detail-section="alerts">상세보기</a>
           </div>
 
           <div id="dashboardAlertList" class="dashboard-alert-list"></div>
@@ -217,7 +217,7 @@
               <span>기상 전망</span>
               <h2>강수·풍속 핵심값</h2>
             </div>
-            <a href="./detail.html#rain">상세보기</a>
+            <a href="./detail.html#rain" data-detail-section="rain">상세보기</a>
           </div>
 
           <div class="weather-kpi-grid">
@@ -269,11 +269,15 @@
 
       <section id="detailView" class="main-view detail-view" aria-hidden="true">
         <header class="detail-shell-header">
-          <div>
-            <span>상세 모니터링</span>
-            <h1 id="detailViewTitle">전체 상세화면</h1>
+          <div class="detail-shell-copy">
+            <span id="detailViewEyebrow">상세 모니터링</span>
+            <h1 id="detailViewTitle">전체 상세 모니터링</h1>
+            <p id="detailViewDescription">모든 운항·수문·기상·조석 항목을 아래로 스크롤하여 확인합니다.</p>
           </div>
-          <button id="backToDashboard" type="button">← 종합 대시보드</button>
+          <div class="detail-shell-actions">
+            <button id="showAllDetail" class="detail-show-all" type="button" hidden>전체 상세 보기</button>
+            <button id="backToDashboard" type="button">← 종합 대시보드</button>
+          </div>
         </header>
 
         <div id="detailLoadingOverlay" class="detail-loading-overlay" hidden>
@@ -287,7 +291,7 @@
           class="detail-frame"
           title="한강버스 상세 모니터링"
           src="about:blank"
-          data-src="./detail.html?v=90.2"
+          data-src="./detail.html?v=91.2"
           loading="lazy"
         ></iframe>
       </section>
@@ -536,6 +540,6 @@
   <script src="ocean.js?v=69"></script>
   <script src="history-config.js?v=90.1"></script>
   <script src="history.js?v=91.1"></script>
-  <script src="dashboard.js?v=91.0"></script>
+  <script src="dashboard.js?v=91.2"></script>
 </body>
 </html>

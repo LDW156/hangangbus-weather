@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=90.4">
+  <link rel="stylesheet" href="styles.css?v=91.2">
 </head>
 <body>
   <header class="app-header">
@@ -30,12 +30,26 @@
     <div class="header-right">
       <button id="embeddedDashboardBack" class="embedded-dashboard-back" type="button">← 종합 대시보드</button>
       <div class="refresh-control"><button id="refreshBtn" class="refresh-btn" type="button"><span class="refresh-icon">↻</span> 최신 데이터 업데이트</button><small id="refreshNote">자동 갱신 5분</small></div>
+      <span id="modeBadge" class="mode-badge">DEMO</span>
       <span id="updatedAt" class="updated">갱신 확인 중</span>
     </div>
   </header>
 
   <div id="systemBanner" class="system-banner demo">현재 데모 데이터로 표시 중입니다.</div>
   <div id="weatherAlertBanner" class="weather-alert-banner" role="alert" aria-live="assertive" hidden></div>
+
+  <section id="detailPageContext" class="detail-page-context" hidden>
+    <div class="detail-context-heading">
+      <div>
+        <span id="detailPageEyebrow">상세 항목</span>
+        <h2 id="detailPageTitle">상세 모니터링</h2>
+        <p id="detailPageDescription">선택 항목의 현재값과 판단 근거를 확인합니다.</p>
+      </div>
+      <button id="detailShowAll" type="button">전체 상세 모니터링</button>
+    </div>
+    <div id="detailContextGrid" class="detail-context-grid"></div>
+    <div id="detailRelatedLinks" class="detail-related-links"></div>
+  </section>
 
   <nav class="quick-nav" aria-label="섹터 이동">
     <a href="#route">노선판단</a><a href="#jamsu">잠수교</a><a href="#dam">팔당댐</a>
@@ -49,6 +63,12 @@
       <div class="route-grid">
         <article id="eastRoute" class="route-card"></article>
         <article id="westRoute" class="route-card"></article>
+      </div>
+      <div id="demoControls" class="scenario-controls" hidden>
+        <span>데모 시나리오</span>
+        <button data-scenario="normal">정상</button>
+        <button data-scenario="caution">주의</button>
+        <button data-scenario="stop">운항불가</button>
       </div>
     </section>
 
@@ -81,7 +101,7 @@
     <section id="alerts" class="section">
       <div class="section-head">
         <div><span>04</span><h2>운항 관련 기상특보</h2></div>
-        <small>호우·강풍·태풍·폭염 표시</small>
+        <small>호우·강풍·태풍만 표시</small>
       </div>
 
       <div class="alert-operation-criteria">
@@ -89,13 +109,9 @@
           <b>운항중지</b>
           <span>호우경보 · 강풍주의보 이상 · 태풍주의보 이상</span>
         </div>
-        <div class="heat-major">
-          <b>운항조정</b>
-          <span>폭염중대경보 · 단축운항 및 승객·승무원 보호조치 검토</span>
-        </div>
         <div>
           <b>사전검토</b>
-          <span>서울 예비특보 · 폭염주의보·경보</span>
+          <span>서울 호우·강풍·태풍 예비특보</span>
         </div>
         <div>
           <b>상류참고</b>
@@ -164,7 +180,7 @@
 
     </section>
 
-    <section class="section data-state">
+    <section id="health" class="section data-state">
       <div class="section-head"><div><span>09</span><h2>데이터 상태</h2></div><small>갱신 지연 시 운항판단 사용 금지</small></div>
       <div id="healthGrid" class="health-grid"></div>
     </section>
@@ -179,9 +195,9 @@
   <script src="config.js?v=62"></script>
   <script src="data/demo-data.js?v=62"></script>
   <script src="hrfco.js?v=62"></script>
-  <script src="kma.js?v=90.4"></script>
+  <script src="kma.js?v=87"></script>
   <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=90.5"></script>
+  <script src="app.js?v=91.2"></script>
   <script>
     (() => {
       const back = document.getElementById('embeddedDashboardBack');
