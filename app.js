@@ -1424,7 +1424,13 @@
     const h=obj.history,cur=obj.waterLevelM,d10=historyDelta(h,1),d30=historyDelta(h,3),d60=historyDelta(h,6);
     return `<article class="metric river-metric"><div class="data-time">관측 ${fullDateTimeText(obj.observedAt)} · ${obj.intervalMinutes}분 간격</div><div class="metric-label">${name}</div><div class="metric-value">${fmt(cur,2)}m</div><div class="comparison-list"><div><span>10분 전 ${timeText(historyPoint(h,1).timestamp)}</span><b>${fmt(historyValue(h,1),2)}m</b><em class="${deltaClass(d10)}">${signed(d10,2,'m')}</em></div><div><span>30분 전 ${timeText(historyPoint(h,3).timestamp)}</span><b>${fmt(historyValue(h,3),2)}m</b><em class="${deltaClass(d30)}">${signed(d30,2,'m')}</em></div><div><span>1시간 전 ${timeText(historyPoint(h,6).timestamp)}</span><b>${fmt(historyValue(h,6),2)}m</b><em class="${deltaClass(d60)}">${signed(d60,2,'m')}</em></div></div></article>`;
   }
-  function renderRiver(){$('riverGrid').innerHTML=riverMetric('잠수교 수위',data.hydrology.jamsuBridge)+riverMetric('한강대교 수위',data.hydrology.hangangBridge)}
+  function renderRiver(){
+    const jamsu=data.hydrology.jamsuBridge;
+    const hangang=data.hydrology.hangangBridge;
+    $('riverGrid').innerHTML=riverMetric('잠수교 수위',jamsu)+riverMetric('한강대교 수위',hangang);
+    if($('riverMapJamsuValue'))$('riverMapJamsuValue').textContent=`${fmt(jamsu.waterLevelM,2)}m · ${timeText(jamsu.observedAt)}`;
+    if($('riverMapHangangValue'))$('riverMapHangangValue').textContent=`${fmt(hangang.waterLevelM,2)}m · ${timeText(hangang.observedAt)}`;
+  }
 
   function tideEventCard(label,event,referenceAt){
     if(!event){
@@ -2338,12 +2344,22 @@
     requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
   }
 
+  const DETAIL_PAGE_FILES={
+    route:'./route.html',jamsu:'./jamsu.html',dam:'./paldang.html',river:'./river.html',
+    alerts:'./alerts.html',rain:'./rain.html',wind:'./wind.html',tide:'./tide.html'
+  };
+
   function requestDetailMode(section=''){
     if(window.parent!==window){
       window.parent.postMessage(
         {type:'hangangbus-request-detail',section},
         window.location.origin
       );
+      return;
+    }
+
+    if(document.body.classList.contains('module-page')){
+      window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html'):'./detail.html';
       return;
     }
 
@@ -2397,7 +2413,7 @@
     requestDetailMode(related.dataset.detailRelated||'');
   });
 
-  const initialSection=String(location.hash||'').replace(/^#/,'');
+  const initialSection=document.body.dataset.detailSection||String(location.hash||'').replace(/^#/,'');
   setDetailPageMode(initialSection);
 
   document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData('scenario');});

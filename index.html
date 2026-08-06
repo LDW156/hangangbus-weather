@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="dashboard.css?v=91.2">
+  <link rel="stylesheet" href="dashboard.css?v=91.3">
   <link rel="stylesheet" href="history.css?v=91.1">
 </head>
 <body class="dashboard-body">
@@ -35,37 +35,37 @@
         </a>
 
         <p>운항·수문</p>
-        <a href="./detail.html#route" data-detail-section="route">
+        <a href="./route.html">
           <span class="side-icon">◉</span>
           <span>노선 운항판정</span>
         </a>
-        <a href="./detail.html#jamsu" data-detail-section="jamsu">
+        <a href="./jamsu.html">
           <span class="side-icon">↕</span>
           <span>잠수교 통과높이</span>
         </a>
-        <a href="./detail.html#dam" data-detail-section="dam">
+        <a href="./paldang.html">
           <span class="side-icon">≋</span>
           <span>팔당댐 방류량</span>
         </a>
-        <a href="./detail.html#river" data-detail-section="river">
+        <a href="./river.html">
           <span class="side-icon">⌁</span>
           <span>한강 수위</span>
         </a>
 
         <p>기상·조석</p>
-        <a href="./detail.html#alerts" data-detail-section="alerts">
+        <a href="./alerts.html">
           <span class="side-icon">!</span>
           <span>운항 관련 특보</span>
         </a>
-        <a href="./detail.html#rain" data-detail-section="rain">
+        <a href="./rain.html">
           <span class="side-icon">☂</span>
           <span>강수 예보</span>
         </a>
-        <a href="./detail.html#wind" data-detail-section="wind">
+        <a href="./wind.html">
           <span class="side-icon">➤</span>
           <span>풍향·풍속</span>
         </a>
-        <a href="./detail.html#tide" data-detail-section="tide">
+        <a href="./tide.html">
           <span class="side-icon">◒</span>
           <span>인천 조석</span>
         </a>
@@ -120,7 +120,7 @@
               <span>운항판정</span>
               <h2>노선별 현재 상태</h2>
             </div>
-            <a href="./detail.html#route" data-detail-section="route">상세보기</a>
+            <a href="./route.html">상세보기</a>
           </div>
 
           <div class="route-summary-grid">
@@ -137,43 +137,43 @@
               <span>한강 수문 상황</span>
               <h2>핵심 수위·방류 현황</h2>
             </div>
-            <a href="./detail.html#jamsu" data-detail-section="jamsu">상세보기</a>
+            <a href="./jamsu.html">상세보기</a>
           </div>
 
           <div class="river-schematic">
             <div class="river-line"></div>
 
-            <a class="river-node dam" href="./detail.html#dam">
+            <a class="river-node dam" href="./paldang.html">
               <i id="nodePaldang" class="blue"></i>
               <strong>팔당댐</strong>
               <span id="dashPaldang">-</span>
             </a>
 
-            <a class="river-node jamsil" href="./detail.html#rain">
+            <a class="river-node jamsil" href="./rain.html">
               <i id="nodeJamsil" class="blue"></i>
               <strong>잠실</strong>
               <span id="dashJamsilRain">-</span>
             </a>
 
-            <a class="river-node jamsu" href="./detail.html#jamsu">
+            <a class="river-node jamsu" href="./jamsu.html">
               <i id="nodeJamsu" class="blue"></i>
               <strong>잠수교</strong>
               <span id="dashJamsu">-</span>
             </a>
 
-            <a class="river-node yeouido" href="./detail.html#river">
+            <a class="river-node yeouido" href="./river.html">
               <i id="nodeYeouido" class="blue"></i>
               <strong>여의도</strong>
               <span id="dashHangang">-</span>
             </a>
 
-            <a class="river-node magok" href="./detail.html#rain">
+            <a class="river-node magok" href="./rain.html">
               <i id="nodeMagok" class="blue"></i>
               <strong>마곡</strong>
               <span id="dashMagokRain">-</span>
             </a>
 
-            <a class="river-node incheon" href="./detail.html#tide">
+            <a class="river-node incheon" href="./tide.html">
               <i id="nodeIncheon" class="blue"></i>
               <strong>인천 조석</strong>
               <span id="dashTide">-</span>
@@ -205,7 +205,7 @@
               <span>운항 관련 특보</span>
               <h2>호우·강풍·태풍</h2>
             </div>
-            <a href="./detail.html#alerts" data-detail-section="alerts">상세보기</a>
+            <a href="./alerts.html">상세보기</a>
           </div>
 
           <div id="dashboardAlertList" class="dashboard-alert-list"></div>
@@ -217,7 +217,7 @@
               <span>기상 전망</span>
               <h2>강수·풍속 핵심값</h2>
             </div>
-            <a href="./detail.html#rain" data-detail-section="rain">상세보기</a>
+            <a href="./rain.html">상세보기</a>
           </div>
 
           <div class="weather-kpi-grid">
@@ -540,6 +540,6 @@
   <script src="ocean.js?v=69"></script>
   <script src="history-config.js?v=90.1"></script>
   <script src="history.js?v=91.1"></script>
-  <script src="dashboard.js?v=91.2"></script>
+  <script src="dashboard.js?v=91.3"></script>
 </body>
 </html>

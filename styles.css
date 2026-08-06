@@ -4977,3 +4977,49 @@ details.rain-contribution-box {
     grid-template-columns:1fr;
   }
 }
+
+
+/* =========================================================
+   v91.3 독립 상세 페이지 및 교량 수위 개략도
+========================================================= */
+.river-map-panel{margin-bottom:14px}
+.river-schematic{position:relative;min-height:220px;margin-top:8px;padding:35px 18px 70px;overflow-x:auto;background:linear-gradient(180deg,#f7fbfd 0,#edf6fa 100%);border:1px solid #d2e2ea;border-radius:12px}
+.river-line{position:absolute;left:3%;right:3%;top:105px;height:34px;background:linear-gradient(180deg,#87cbe9,#4ba4cf);border-radius:50% 45% 52% 48%;box-shadow:inset 0 2px 0 rgba(255,255,255,.45)}
+.bridge-marker{position:absolute;top:68px;transform:translateX(-50%);min-width:74px;text-align:center;z-index:2}
+.bridge-marker:after{content:"";display:block;width:12px;height:12px;margin:8px auto 0;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #748d9a;background:#aabac3}
+.bridge-marker b,.bridge-marker span{display:block;white-space:nowrap}
+.bridge-marker b{color:#244d63;font-size:9px}
+.bridge-marker span{margin-top:4px;color:#7a909c;font-size:7px;font-weight:800}
+.bridge-marker.live:after{background:#0d80ba;box-shadow:0 0 0 2px #0d80ba}
+.bridge-marker.live span{color:#0c6b97;font-weight:950}
+.river-map-note{margin-top:8px;color:#6c8390;font-size:8px;font-weight:750;line-height:1.55}
+
+.module-sidebar{position:fixed;inset:0 auto 0 0;z-index:100;width:220px;padding:16px 10px;background:#103f5c;color:#fff;overflow-y:auto;box-sizing:border-box}
+.module-sidebar .side-brand{display:flex;align-items:center;gap:9px;padding:4px 7px 15px;border-bottom:1px solid rgba(255,255,255,.13)}
+.module-sidebar .side-brand img{width:34px;height:34px;object-fit:contain;background:#fff;border-radius:7px;padding:3px}
+.module-sidebar .side-brand b,.module-sidebar .side-brand span{display:block}
+.module-sidebar .side-brand b{font-size:12px}.module-sidebar .side-brand span{margin-top:3px;color:#9ec6da;font-size:8px;font-weight:800}
+.module-sidebar nav{display:flex;flex-direction:column;gap:3px;margin-top:12px}
+.module-sidebar nav p{margin:14px 8px 5px;color:#70b7d8;font-size:8px;font-weight:950}
+.module-sidebar nav a{display:flex;align-items:center;gap:9px;padding:10px 9px;color:#eaf7fd;text-decoration:none;border-radius:8px;font-size:9px;font-weight:850}
+.module-sidebar nav a:hover,.module-sidebar nav a.active{background:#345f79;color:#fff}
+.module-sidebar nav i{width:16px;text-align:center;font-style:normal;color:#7bd5ff}
+.module-page{padding-left:220px;background:#eef3f7}
+.module-page .app-header{position:sticky;top:0;z-index:70}
+.module-page .quick-nav{display:none!important}
+.module-page main.container>.section{display:none}
+.module-page[data-detail-section="route"] #route,
+.module-page[data-detail-section="jamsu"] #jamsu,
+.module-page[data-detail-section="dam"] #dam,
+.module-page[data-detail-section="alerts"] #alerts,
+.module-page[data-detail-section="rain"] #rain,
+.module-page[data-detail-section="wind"] #wind,
+.module-page[data-detail-section="river"] #river,
+.module-page[data-detail-section="tide"] #tide,
+.module-page #health{display:block}
+.module-page .detail-page-context{display:block!important}
+.module-page .container{max-width:none;padding:18px 24px 28px}
+.module-page .section.first,.module-page .section{margin-top:14px}
+.module-page .module-page-note{margin:0 24px 4px;padding:12px 14px;color:#31576a;background:#fff;border:1px solid #cbdde6;border-left:5px solid #2f91bd;border-radius:10px;box-shadow:0 5px 15px rgba(34,73,92,.06);font-size:9px;font-weight:800;line-height:1.6}
+.module-page footer{margin-left:0}
+@media(max-width:860px){.module-sidebar{position:static;width:auto;height:auto}.module-sidebar nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.module-sidebar nav p{grid-column:1/-1}.module-page{padding-left:0}.module-page .app-header{position:relative}.module-page .container{padding:10px}.river-schematic{min-width:930px}.river-map-panel{overflow-x:auto}}

@@ -5,14 +5,31 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f1f4f7">
   <meta name="description" content="한강버스 기상·수문·조석 및 운항판단 모니터링">
-  <title>한강버스 상세 모니터링</title>
+  <title>운항 관련 기상특보 상세 | 한강버스</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
   <link rel="stylesheet" href="styles.css?v=91.3">
 </head>
-<body>
+<body class="module-page" data-detail-section="alerts">
+  <aside class="module-sidebar">
+  <div class="side-brand"><img src="./assets/hangangbus-logo.png?v=62" alt="한강버스 로고"><div><b>한강버스</b><span>항목별 상세 모니터링</span></div></div>
+  <nav>
+    <a href="./index.html"><i>▦</i>종합 대시보드</a>
+    <a href="./detail.html"><i>▤</i>전체 상세 모니터링</a>
+    <p>운항·수문</p>
+    <a data-page="route" href="./route.html"><i>◉</i>노선 운항판정</a>
+    <a data-page="jamsu" href="./jamsu.html"><i>↕</i>잠수교 통과높이</a>
+    <a data-page="dam" href="./paldang.html"><i>≋</i>팔당댐 방류량</a>
+    <a data-page="river" href="./river.html"><i>⌁</i>한강 교량별 수위</a>
+    <p>기상·조석</p>
+    <a data-page="alerts" href="./alerts.html"><i>!</i>운항 관련 특보</a>
+    <a data-page="rain" href="./rain.html"><i>☂</i>강수 예보</a>
+    <a data-page="wind" href="./wind.html"><i>➤</i>풍향·풍속</a>
+    <a data-page="tide" href="./tide.html"><i>◒</i>인천 조석</a>
+  </nav>
+</aside>
   <header class="app-header">
     <div class="brand-lockup">
       <div class="brand-mark official-logo" aria-label="한강버스 공식 로고">
@@ -56,6 +73,8 @@
     <a href="#alerts">특보</a><a href="#rain">강수</a><a href="#wind">바람</a>
     <a href="#river">수위</a><a href="#tide">조석</a>
   </nav>
+
+  <div class="module-page-note">서울·상류 영향권의 호우·강풍·태풍·폭염 특보를 운항영향별로 확인합니다.</div>
 
   <main class="container">
     <section id="route" class="section first">
@@ -216,6 +235,8 @@
   <script src="kma.js?v=87"></script>
   <script src="ocean.js?v=69"></script>
   <script src="app.js?v=91.3"></script>
+
+  <script>document.querySelector('.module-sidebar a[data-page="alerts"]')?.classList.add('active');</script>
   <script>
     (() => {
       const back = document.getElementById('embeddedDashboardBack');
