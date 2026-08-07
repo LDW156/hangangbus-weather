@@ -5045,3 +5045,30 @@ details.rain-contribution-box {
 /* v91.7 embedded mode retired */
 .embedded-detail .app-header,.embedded-detail footer{display:initial!important}
 .module-page .app-header,.app-header{position:relative!important;top:auto!important}
+
+/* v91.8 노선 상세화면 색상 구분 */
+.route-card.east-route.normal {
+  background:#eaf8f1;
+  border-color:#78c3a4;
+}
+.route-card.east-route.normal .route-status {
+  color:#148b60;
+}
+.route-card.west-route.normal {
+  background:#eaf5fb;
+  border-color:#6db1d3;
+}
+.route-card.west-route.normal .route-status {
+  color:#1377a7;
+}
+.route-card.east-route::before,
+.route-card.west-route::before {
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:5px;
+}
+.route-card.east-route::before { background:#148b60; }
+.route-card.west-route::before { background:#167eae; }

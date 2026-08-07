@@ -1324,3 +1324,23 @@ button {
     right:5px;
   }
 }
+
+/* v91.8 노선 색상 구분: 정상 상태에서도 동부선과 서부선을 즉시 구분 */
+.route-summary.route-east.blue {
+  color:#0b7b52;
+  background:#eaf8f1;
+  border-color:#70bea0;
+}
+.route-summary.route-east.blue i {
+  color:#ffffff;
+  background:#148b60;
+}
+.route-summary.route-west.blue {
+  color:#0f6d99;
+  background:#eaf5fb;
+  border-color:#65add1;
+}
+.route-summary.route-west.blue i {
+  color:#ffffff;
+  background:#167eae;
+}

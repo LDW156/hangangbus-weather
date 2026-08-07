@@ -2,6 +2,8 @@
   'use strict';
 
   const cfg = window.HANGANG_CONFIG;
+  const sharedCache = window.HANGANG_DATA_CACHE || null;
+  const AUTO_REFRESH_MS = sharedCache?.TTL_MS || 600000;
   const $ = id => document.getElementById(id);
   const fmt = (value, digits = 0) => {
     const number = Number(value);
@@ -71,8 +73,54 @@
     element.classList.add(stateClass(state));
   }
 
+  function tideIsUsable(tide) {
+    return Boolean(
+      tide &&
+      Array.isArray(tide.timeline) && tide.timeline.length >= 2 &&
+      (tide.nextHigh || tide.nextLow || (Array.isArray(tide.events) && tide.events.length))
+    );
+  }
+
+  function renderCachedDashboard(snapshot) {
+    if (!snapshot?.data) return false;
+    data = structuredClone(snapshot.data);
+    previousData = structuredClone(snapshot.data);
+    renderDashboard(computeDashboard());
+    const age = Math.max(0, Math.round((Date.now() - new Date(snapshot.savedAt).getTime()) / 60000));
+    if ($('dashboardMode')) $('dashboardMode').textContent = 'CACHE';
+    if ($('dashboardUpdated')) $('dashboardUpdated').textContent = `공유자료 ${age}분 전`;
+    const strip = $('dashboardAlertStrip');
+    if (strip) {
+      strip.textContent = `공유 최신자료 사용 · ${age}분 전 갱신 · 자동 갱신주기 10분`;
+      setStateClass(strip, 'normal');
+    }
+    return true;
+  }
+
   async function loadDashboardData(trigger = 'auto') {
     if (loading) return;
+    const force = trigger === 'manual';
+
+    if (!force && sharedCache) {
+      const fresh = sharedCache.readFresh();
+      if (fresh) {
+        renderCachedDashboard(fresh);
+        return;
+      }
+
+      if (!sharedCache.acquireLock(false)) {
+        const existing = sharedCache.readAny();
+        if (existing) renderCachedDashboard(existing);
+        setTimeout(() => {
+          const updated = sharedCache.readFresh();
+          if (updated) renderCachedDashboard(updated);
+        }, 1400);
+        return;
+      }
+    } else if (force && sharedCache) {
+      sharedCache.acquireLock(true);
+    }
+
     loading = true;
 
     const refresh = $('dashboardRefresh');
@@ -81,13 +129,15 @@
       refresh.textContent = '↻ 불러오는 중';
     }
 
-    previousData = data ? structuredClone(data) : null;
+    const cachedPrevious = sharedCache?.readAny()?.data || null;
+    previousData = data ? structuredClone(data) : (cachedPrevious ? structuredClone(cachedPrevious) : null);
     data = structuredClone(
       window.HANGANG_DEMO_DATA?.normal ||
       window.HANGANG_DEMO_DATA?.caution ||
       {}
     );
     data.tide=previousData?.tide||{referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:null,sourceLabel:'조석자료 확인 중'};
+    data.health=(data.health||[]).filter(item=>!['한강수위','팔당댐','수문정보','기상관측','기상예보','기상특보','조석','조석정보'].includes(item.name));
 
     const liveSources = [];
     const errors = [];
@@ -179,25 +229,39 @@
 
     if (cfg?.OCEAN?.ENABLED && window.OCEAN?.isConfigured?.()) {
       try {
-        const tide = await window.OCEAN.loadTide({ force: trigger === 'manual' });
-        data.tide = tide;
+        const tide = await window.OCEAN.loadTide({ force });
         data.health = (data.health || []).filter(
           item => !['조석','조석정보'].includes(item.name)
         );
+
+        if (!tideIsUsable(tide)) {
+          throw new Error('예측조위 또는 만·간조 핵심자료 없음');
+        }
+
+        data.tide = tide;
+        const tideCacheStatus = String(tide.cacheStatus || '');
+        const tideStale = tideCacheStatus === 'stale-cache';
+        const tideStored = tideCacheStatus === 'daily-cache';
+        const tidePartial = tide.monthly?.ok === false;
         data.health.push({
           name:'조석',
-          status:'normal',
+          status:tideStale ? 'cached' : tideStored ? 'stored' : tidePartial ? 'partial' : 'normal',
           updatedAt:tide.updatedAt,
-          checkedAt:tide.updatedAt,
+          checkedAt:new Date().toISOString(),
           intervalMinutes:360
         });
-        liveSources.push(String(tide.cacheStatus||'').includes('cache')?'조석 당일저장':'조석');
+        liveSources.push(tideStale ? '조석 직전값' : tideStored ? '조석 당일저장' : '조석');
       } catch (error) {
-        if (previousData?.tide) {
+        data.health = (data.health || []).filter(
+          item => !['조석','조석정보'].includes(item.name)
+        );
+        if (tideIsUsable(previousData?.tide)) {
           data.tide = previousData.tide;
+          data.health.push({name:'조석',status:'cached',updatedAt:previousData.tide.updatedAt,checkedAt:new Date().toISOString(),intervalMinutes:360,error:error.message});
           liveSources.push('조석 직전값');
         } else {
           data.tide={referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:error.message,sourceLabel:'조석자료 미수신'};
+          data.health.push({name:'조석',status:'error',updatedAt:null,checkedAt:new Date().toISOString(),intervalMinutes:360,error:error.message});
           errors.push(`조석 ${error.message}`);
         }
       }
@@ -220,6 +284,8 @@
       setStateClass(strip, 'caution');
     }
 
+    sharedCache?.write(data,{trigger,errors,liveSources});
+    sharedCache?.releaseLock();
     loading = false;
     if (refresh) {
       refresh.disabled = false;
@@ -388,7 +454,9 @@
     };
   }
 
-  function routeCard(element, name, state, reasons) {
+  function routeCard(element, name, state, reasons, routeClass) {
+    element.classList.remove('route-east','route-west');
+    if (routeClass) element.classList.add(routeClass);
     setStateClass(element, state);
     element.innerHTML = `
       <div>
@@ -417,7 +485,8 @@
         ? '잠수교·팔당·기상기준 확인'
         : calc.east === 'caution'
           ? '주의요인 사전 확인'
-          : '잠수교·팔당·기상 정상'
+          : '잠수교·팔당·기상 정상',
+      'route-east'
     );
     routeCard(
       $('dashboardWestRoute'),
@@ -427,7 +496,8 @@
         ? '팔당·강수·특보기준 확인'
         : calc.west === 'caution'
           ? '주의요인 사전 확인'
-          : '팔당·기상·조석 정상'
+          : '팔당·기상·조석 정상',
+      'route-west'
     );
 
     const overall =
@@ -688,19 +758,31 @@
         ? Math.max(0, Math.round((Date.now() - new Date(item.updatedAt)) / 60000))
         : null;
       const threshold = Number(item?.intervalMinutes || 10) * 3;
+      const explicitError = item && ['error','missing'].includes(item.status);
+      const explicitCached = item?.status === 'cached';
+      const explicitStored = item?.status === 'stored';
+      const explicitPartial = item?.status === 'partial';
       const state =
-        !item || age === null
-          ? 'caution'
-          : age > threshold
-            ? 'stop'
-            : age > Number(item.intervalMinutes || 10) * 1.5
+        explicitError
+          ? 'stop'
+          : !item || age === null
+            ? 'caution'
+            : explicitCached
               ? 'caution'
-              : 'normal';
+              : explicitStored
+                ? 'normal'
+                : explicitPartial
+                  ? 'caution'
+                  : age > threshold
+                ? 'stop'
+                : age > Number(item.intervalMinutes || 10) * 1.5
+                  ? 'caution'
+                  : 'normal';
 
       return {
         name,
         state,
-        text:age === null ? '확인 필요' : `${age}분 전`
+        text:explicitError ? '자료 미수신' : explicitPartial ? '일부자료 미수신' : age === null ? '확인 필요' : explicitCached ? `직전값 ${age}분 전` : `${age}분 전`
       };
     });
 
@@ -762,10 +844,10 @@
     }
   };
 
-  // v91.7: 데이터 분석은 독립 HTML 페이지에서 실행합니다.
+  // v91.8: 데이터 분석은 독립 HTML 페이지에서 실행합니다.
 
   $('dashboardRefresh')?.addEventListener('click', () => loadDashboardData('manual'));
 
   loadDashboardData('initial');
-  setInterval(loadDashboardData, cfg?.REFRESH_MS || 300000);
+  setInterval(() => loadDashboardData('auto'), AUTO_REFRESH_MS);
 })();

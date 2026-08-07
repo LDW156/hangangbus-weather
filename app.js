@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   const cfg = window.HANGANG_CONFIG;
+  const sharedCache = window.HANGANG_DATA_CACHE || null;
+  const AUTO_REFRESH_MS = sharedCache?.TTL_MS || 600000;
   let data = null;
   let scenario = 'normal';
   let isLoading = false;
@@ -53,14 +55,59 @@
     return `${sign}${h?`${h}시간 `:''}${m}분`;
   };
 
+  function tideIsUsable(tide){
+    return Boolean(
+      tide &&
+      Array.isArray(tide.timeline) && tide.timeline.length >= 2 &&
+      (tide.nextHigh || tide.nextLow || (Array.isArray(tide.events) && tide.events.length))
+    );
+  }
+
+  function renderSharedSnapshot(snapshot){
+    if(!snapshot?.data)return false;
+    data=structuredClone(snapshot.data);
+    lastRefreshStartedAt=snapshot.savedAt || new Date();
+    updateTideOverlapRisk();
+    render();
+    if($('modeBadge'))$('modeBadge').textContent='CACHE';
+    const age=Math.max(0,Math.round((Date.now()-new Date(snapshot.savedAt).getTime())/60000));
+    setBanner('live',`공유 최신자료 사용 · ${age}분 전 갱신 · 자동 갱신주기 10분`);
+    setRefreshState('cached');
+    return true;
+  }
+
   async function loadData(trigger='auto'){
     if(isLoading)return;
+    const force=trigger==='manual';
+
+    if(!force&&sharedCache){
+      const fresh=sharedCache.readFresh();
+      if(fresh){
+        renderSharedSnapshot(fresh);
+        return;
+      }
+
+      if(!sharedCache.acquireLock(false)){
+        const existing=sharedCache.readAny();
+        if(existing)renderSharedSnapshot(existing);
+        setTimeout(()=>{
+          const updated=sharedCache.readFresh();
+          if(updated)renderSharedSnapshot(updated);
+        },1400);
+        return;
+      }
+    }else if(force&&sharedCache){
+      sharedCache.acquireLock(true);
+    }
+
     isLoading=true;
     lastRefreshStartedAt=new Date();
     setRefreshState('loading');
 
-    const previousData=data?structuredClone(data):null;
+    const cachedPrevious=sharedCache?.readAny()?.data||null;
+    const previousData=data?structuredClone(data):(cachedPrevious?structuredClone(cachedPrevious):null);
     data=structuredClone(window.HANGANG_DEMO_DATA[scenario]);
+    data.health=(data.health||[]).filter(x=>!['한강수위','팔당댐','수문정보','기상관측','기상예보','기상특보','조석','조석정보'].includes(x.name));
     data.meta=data.meta||{};
     data.meta.dataTimes=data.meta.dataTimes||{};
     data.meta.generatedAt=new Date().toISOString();
@@ -163,18 +210,31 @@
         }
 
         if(task.type==='tide'){
-          data.tide=live;
-          data.meta.dataTimes.tide=live.updatedAt;
           data.health=(data.health||[]).filter(
             x=>!['조석','조석정보'].includes(x.name)
           );
-          const tideCached=String(live.cacheStatus||'').includes('cache');
+
+          if(!tideIsUsable(live)){
+            data.tide={referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:'조석 핵심자료 없음',sourceLabel:'조석자료 미수신'};
+            data.health.push({name:'조석',status:'error',updatedAt:null,checkedAt:new Date().toISOString(),intervalMinutes:360,error:'조석 핵심자료 없음'});
+            errors.push('조석: 예측조위 또는 만·간조 핵심자료 없음');
+            return;
+          }
+
+          data.tide=live;
+          data.meta.dataTimes.tide=live.updatedAt;
+          const tideCacheStatus=String(live.cacheStatus||'');
+          const tideStale=tideCacheStatus==='stale-cache';
+          const tideStored=tideCacheStatus==='daily-cache';
+          const tidePartial=live.monthly?.ok===false;
           data.health.push({
-            name:'조석',status:tideCached?'cached':'normal',updatedAt:live.updatedAt,
+            name:'조석',status:tideStale?'cached':tideStored?'stored':tidePartial?'partial':'normal',updatedAt:live.updatedAt,
             checkedAt:new Date().toISOString(),intervalMinutes:360
           });
-          if(tideCached)notes.push('조석: 당일 저장자료 사용');
-          liveSources.push(tideCached?'조석(당일저장)':'조석');
+          if(tideStored)notes.push('조석: 당일 저장자료 사용');
+          if(tideStale)notes.push('조석: 직전 정상자료 사용');
+          if(live.predictionMode==='highlow-interpolation')notes.push('조석: 공식 만·간조 기반 보간곡선 사용');
+          liveSources.push(tideStale?'조석(직전값)':tideStored?'조석(당일저장)':'조석');
         }
 
         return;
@@ -220,20 +280,21 @@
         errors.push(`기상: ${err.message}`);
       }
 
-      if(task.type==='tide'&&previousData?.tide){
+      if(task.type==='tide'&&tideIsUsable(previousData?.tide)){
         data.tide=previousData.tide;
         data.meta.dataTimes.tide=previousData.meta?.dataTimes?.tide;
         data.health=(data.health||[]).filter(
           x=>!['조석','조석정보'].includes(x.name)
         );
-        const previousHealth=(previousData.health||[])
-          .filter(x=>['조석','조석정보'].includes(x.name))
-          .map(x=>({...x,status:'cached',lastAttemptAt:new Date().toISOString()}));
-        data.health.push(...previousHealth);
+        data.health.push({name:'조석',status:'cached',updatedAt:previousData.tide.updatedAt,checkedAt:new Date().toISOString(),intervalMinutes:360,lastAttemptAt:new Date().toISOString(),error:err.message});
         notes.push(`조석 갱신 실패 · 직전 정상값 유지 (${err.message})`);
         liveSources.push('조석(직전값)');
       }else if(task.type==='tide'){
+        data.health=(data.health||[]).filter(
+          x=>!['조석','조석정보'].includes(x.name)
+        );
         data.tide={referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:err.message,sourceLabel:'조석자료 미수신'};
+        data.health.push({name:'조석',status:'error',updatedAt:null,checkedAt:new Date().toISOString(),intervalMinutes:360,error:err.message});
         errors.push(`조석: ${err.message}`);
       }
     });
@@ -267,6 +328,8 @@
     }
 
     render();
+    sharedCache?.write(data,{trigger,errors,liveSources});
+    sharedCache?.releaseLock();
     isLoading=false;
     setRefreshState(errors.length?'warning':'done');
 }
@@ -278,8 +341,9 @@
     btn.classList.toggle('loading',state==='loading');
     btn.innerHTML=state==='loading'?'<span class="refresh-icon">↻</span> 불러오는 중':'<span class="refresh-icon">↻</span> 최신 데이터 업데이트';
     if(state==='loading') note.textContent='수문·기상·조석 최신자료 조회 중';
+    else if(state==='cached') note.textContent='공유 최신자료 사용 · 자동 갱신 10분';
     else if(state==='warning') note.textContent=`갱신 완료 · 일부 참고자료 확인 필요 · ${timeText(new Date())}`;
-    else note.textContent=`갱신 완료 ${timeText(new Date())} · 자동 5분`;
+    else note.textContent=`갱신 완료 ${timeText(new Date())} · 자동 10분`;
   }
 
   function setBanner(type,text){
@@ -632,8 +696,8 @@
   function renderRoutes(c){
     const eastBasis=`자료기준 잠수교 ${timeText(data.hydrology.jamsuBridge.observedAt)} · 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)}`;
     const westBasis=`자료기준 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)} · 조석 ${timeText(data.tide.referenceAt)}`;
-    $('eastRoute').className=`route-card ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons,eastBasis);
-    $('westRoute').className=`route-card ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons,westBasis);
+    $('eastRoute').className=`route-card east-route ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons,eastBasis);
+    $('westRoute').className=`route-card west-route ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons,westBasis);
   }
 
   function comparisonCell(label,time,current,previous,digits=2,unit='m',inverse=false){
@@ -1817,6 +1881,9 @@
     $('healthGrid').innerHTML=items.map(x=>{
       const sourceAge=ageMinutes(x.updatedAt);
       const isCached=x.status==='cached';
+      const isStored=x.status==='stored';
+      const isPartial=x.status==='partial';
+      const isError=['error','missing'].includes(x.status);
       const isHydrology=['한강수위','팔당댐'].includes(x.name);
       const hydrologyDelayed=isHydrology&&sourceAge!==null&&sourceAge>60;
 
@@ -1824,10 +1891,21 @@
       let stateClass='good';
       let cardClass='';
 
-      if(isCached){
-        state='갱신 실패·직전값';
+      if(isError){
+        state='자료 미수신';
         stateClass='bad';
         cardClass='stale';
+      }else if(isCached){
+        state='직전 정상값';
+        stateClass='warn';
+        cardClass='stale';
+      }else if(isStored){
+        state='정상·당일저장';
+        stateClass='good';
+      }else if(isPartial){
+        state='일부자료 미수신';
+        stateClass='warn';
+        cardClass='source-delay';
       }else if(hydrologyDelayed){
         state='원자료 지연';
         stateClass='warn';
@@ -2377,15 +2455,15 @@
   }
 
   const DETAIL_PAGE_FILES={
-    route:'./route.html?v=91.7',jamsu:'./jamsu.html?v=91.7',dam:'./paldang.html?v=91.7',river:'./river.html?v=91.7',
-    alerts:'./alerts.html?v=91.7',rain:'./rain.html?v=91.7',wind:'./wind.html?v=91.7',tide:'./tide.html?v=91.7'
+    route:'./route.html?v=91.8',jamsu:'./jamsu.html?v=91.8',dam:'./paldang.html?v=91.8',river:'./river.html?v=91.8',
+    alerts:'./alerts.html?v=91.8',rain:'./rain.html?v=91.8',wind:'./wind.html?v=91.8',tide:'./tide.html?v=91.8'
   };
 
   function requestDetailMode(section=''){
-    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=91.7'):'./detail.html?v=91.7';
+    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=91.8'):'./detail.html?v=91.8';
   }
 
-  /* v91.7 상세화면은 독립 최상위 페이지로만 운영합니다. */
+  /* v91.8 상세화면은 독립 최상위 페이지로만 운영합니다. */
 
   $('detailShowAll')?.addEventListener('click',()=>requestDetailMode(''));
   document.addEventListener('click',event=>{
@@ -2397,9 +2475,9 @@
   const initialSection=document.body.dataset.detailSection||String(location.hash||'').replace(/^#/,'');
   setDetailPageMode(initialSection);
   $('refreshBtn')?.addEventListener('click',()=>loadData('manual'));
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastRefreshStartedAt&&Date.now()-lastRefreshStartedAt.getTime()>cfg.REFRESH_MS)loadData('resume');});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!sharedCache?.readFresh())loadData('resume');});
   bindWeatherSettings();
   bindHydrologySettings();
   loadData('initial');
-  setInterval(()=>{if(cfg.DATA_MODE==='live'||cfg.DATA_MODE==='hybrid')loadData('auto')},cfg.REFRESH_MS);
+  setInterval(()=>{if(cfg.DATA_MODE==='live'||cfg.DATA_MODE==='hybrid')loadData('auto')},AUTO_REFRESH_MS);
 })();

@@ -1,7 +1,7 @@
 window.HANGANG_CONFIG = {
   APP_NAME: '한강버스 운항환경 통합 대시보드',
   DATA_MODE: 'hybrid',
-  REFRESH_MS: 300000,
+  REFRESH_MS: 600000,
   SHOW_DEMO_CONTROLS: false,
   STRUCTURE_HEIGHT_M: 11.76,
   HRFCO: {

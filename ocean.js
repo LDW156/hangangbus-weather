@@ -251,6 +251,61 @@
     }));
   }
 
+  function interpolatedTimeline(events, centerDate) {
+    const sorted = (events || [])
+      .filter(event => event?.time && Number.isFinite(Number(event.heightCm)))
+      .sort((a,b) => new Date(a.time) - new Date(b.time));
+
+    if (sorted.length < 2) return [];
+
+    const center = centerDate instanceof Date ? centerDate : new Date(centerDate);
+    const start = new Date(center.getTime() - 12 * 60 * 60 * 1000);
+    start.setMinutes(Math.floor(start.getMinutes() / 10) * 10, 0, 0);
+    const end = new Date(center.getTime() + 12 * 60 * 60 * 1000);
+    const rows = [];
+
+    for (let cursor = new Date(start); cursor <= end; cursor = new Date(cursor.getTime() + 10 * 60000)) {
+      const time = cursor.getTime();
+      let previous = null;
+      let next = null;
+
+      for (let index = 0; index < sorted.length; index += 1) {
+        const eventTime = new Date(sorted[index].time).getTime();
+        if (eventTime <= time) previous = sorted[index];
+        if (eventTime >= time) {
+          next = sorted[index];
+          break;
+        }
+      }
+
+      if (!previous || !next) continue;
+      const from = new Date(previous.time).getTime();
+      const to = new Date(next.time).getTime();
+      if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) continue;
+
+      const ratio = Math.min(1, Math.max(0, (time - from) / (to - from)));
+      const eased = (1 - Math.cos(Math.PI * ratio)) / 2;
+      const heightCm = Number(previous.heightCm) +
+        (Number(next.heightCm) - Number(previous.heightCm)) * eased;
+
+      rows.push({
+        time: cursor.toISOString(),
+        heightCm: Math.round(heightCm * 10) / 10,
+        interpolated: true
+      });
+    }
+
+    return rows;
+  }
+
+  function tideIsUsable(tide) {
+    return Boolean(
+      tide &&
+      Array.isArray(tide.timeline) && tide.timeline.length >= 2 &&
+      (tide.nextHigh || tide.nextLow || (Array.isArray(tide.events) && tide.events.length))
+    );
+  }
+
   function classifyRange(rangeCm) {
     if (!Number.isFinite(rangeCm)) return '자료 확인';
     if (rangeCm >= 700) return '대조차';
@@ -306,8 +361,7 @@
       fetchXml('survey').then(value=>({ok:true,value})).catch(error=>({ok:false,error})),
       monthlyPromise
     ]);
-    if(!predictionResult.ok)throw predictionResult.error;
-    const predictionXml=predictionResult.value;
+    const predictionXml=predictionResult.ok ? predictionResult.value : null;
     const surveyXml=surveyResult.ok?surveyResult.value:null;
     let allEvents=[yesterdayResult,todayResult,tomorrowResult].filter(result=>result.ok).flatMap(result=>parseHighLow(result.value)).sort((a,b)=>new Date(a.time)-new Date(b.time));
     const monthlyFallback=monthlyEventsForDates(monthly,[yesterdayKey,todayKey,tomorrowKey]);
@@ -321,10 +375,22 @@
       event => localDateKey(event.time) === todayKey
     );
 
-    const prediction = parsePrediction(predictionXml);
+    let prediction = predictionXml ? parsePrediction(predictionXml) : [];
     const survey = surveyXml ? parseSurvey(surveyXml) : [];
+    let predictionMode = 'official-timeseries';
+
+    if (!prediction.length && allEvents.length >= 2) {
+      prediction = interpolatedTimeline(allEvents, fetchedAt);
+      predictionMode = 'highlow-interpolation';
+    }
+
     if (!prediction.length) {
-      throw new Error('인천 조석예보 시계열 자료 없음');
+      const causes = [
+        predictionResult.ok ? '' : `시계열 ${predictionResult.error?.message || predictionResult.error || '실패'}`,
+        todayResult.ok ? '' : `당일 만간조 ${todayResult.error?.message || todayResult.error || '실패'}`,
+        monthly?.ok === false ? `월간 ${monthly.error || '실패'}` : ''
+      ].filter(Boolean).join(' / ');
+      throw new Error(`인천 조석자료 없음${causes ? ` · ${causes}` : ''}`);
     }
 
     const currentObserved = latestValidObserved(survey, fetchedAt);
@@ -402,14 +468,16 @@
       timeline: tenMinuteTimeline(prediction),
       monthly,
       monthlyError: monthly?.ok === false ? monthly.error : null,
-      intervalMinutes: 1,
-      cacheStatus:'network',
-      sourceLabel:
-        '바다누리·공공데이터포털 인천 조석'
+      intervalMinutes: predictionMode === 'official-timeseries' ? 1 : 10,
+      predictionMode,
+      cacheStatus: predictionMode === 'official-timeseries' ? 'network' : 'network-fallback',
+      sourceLabel: predictionMode === 'official-timeseries'
+        ? '바다누리·공공데이터포털 인천 조석'
+        : '공식 만·간조 자료 기반 보간 조위'
     };
   }
 
-  const CACHE_VERSION='v91.7';
+  const CACHE_VERSION='v91.8';
   const LAST_GOOD_KEY=`hangangbus:tide:last-good:${settings().obsCode}`;
   function tideCacheKey(date=new Date()){return `hangangbus:tide:${CACHE_VERSION}:${settings().obsCode}:${kstDateKey(date)}`;}
   function parseCache(raw){try{const parsed=JSON.parse(raw);if(!parsed?.data||!parsed?.savedAt)return null;const savedAt=new Date(parsed.savedAt);if(Number.isNaN(savedAt.getTime()))return null;return {data:parsed.data,savedAt};}catch(_){return null;}}
@@ -432,15 +500,18 @@
     }catch(_){return readLastGood();}
   }
   function writeTideCache(data){
+    if (!tideIsUsable(data)) return false;
     try{
       const payload=JSON.stringify({savedAt:new Date().toISOString(),data});
       localStorage.setItem(tideCacheKey(),payload);
       localStorage.setItem(LAST_GOOD_KEY,payload);
-    }catch(_){}
+      return true;
+    }catch(_){return false;}
   }
   async function loadTide(options={}){
     const force=Boolean(options.force);
-    const cached=readTideCache();
+    const rawCached=readTideCache();
+    const cached=rawCached&&tideIsUsable(rawCached.data)?rawCached:null;
     if(cached&&!force){
       return {...cached.data,cacheStatus:'daily-cache',cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};
     }
@@ -449,7 +520,11 @@
       writeTideCache(tide);
       return tide;
     }catch(error){
-      const fallback=cached||readLastGood()||readLatestAnyTideCache();
+      const fallbackCandidates=[cached,readLastGood(),readLatestAnyTideCache()]
+        .filter(Boolean)
+        .filter(item=>tideIsUsable(item.data))
+        .sort((a,b)=>b.savedAt-a.savedAt);
+      const fallback=fallbackCandidates[0]||null;
       if(fallback){
         return {...fallback.data,cacheStatus:'stale-cache',cacheWarning:error.message,cacheSavedAt:fallback.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-fallback.savedAt.getTime())/60000))};
       }
