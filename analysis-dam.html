@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<script>
+(() => {
+  'use strict';
+  const BUILD = '91.7';
+  if (window.top !== window.self) {
+    window.top.location.replace(window.location.href);
+    return;
+  }
+  window.HANGANG_BUILD = BUILD;
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#eef3f7" name="theme-color"/>
+<title>댐 방류량 데이터 분석 | 한강버스</title>
+<link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
+<link href="./dashboard.css?v=91.7" rel="stylesheet"/>
+<link href="./history.css?v=91.7" rel="stylesheet"/>
+<link href="./shared-sidebar.css?v=91.7" rel="stylesheet"/>
+</head>
+<body class="analysis-body" data-analysis-entry="dam">
+<div class="control-shell analysis-shell">
+<aside aria-label="한강버스 공통 메뉴" class="control-sidebar">
+<div class="side-brand">
+<img alt="한강버스 로고" src="./assets/hangangbus-logo.png?v=88"/>
+<div><b>한강버스</b><span>통합 상황관리</span></div>
+</div>
+<nav aria-label="대시보드 메뉴" class="side-nav">
+<a data-nav-file="index.html" href="./index.html?v=91.7"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=91.7"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<p>운항·수문</p>
+<a data-nav-file="route.html" href="./route.html?v=91.7"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=91.7"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=91.7"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=91.7"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<p>기상·조석</p>
+<a data-nav-file="alerts.html" href="./alerts.html?v=91.7"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=91.7"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=91.7"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=91.7"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<p>데이터 분석</p>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=91.7"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=91.7"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=91.7"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+</nav>
+<div class="side-legend">
+<b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+</div>
+<div class="side-credit">제작 · 운항감독 이대운</div>
+</aside>
+<main class="control-main analysis-main">
+<section aria-hidden="false" class="main-view history-view active" id="historyView">
+<header class="history-shell-header">
+<div>
+<span id="historyHeaderEyebrow">BRIDGE WATER LEVEL ARCHIVE</span>
+<h1 id="historyMainTitle">교량 수위 이력 조회</h1>
+<p class="history-header-description" id="historyHeaderDescription">잠수교·한강대교 장기 수위와 특이변화 자료를 조회합니다.</p>
+</div>
+<div class="history-header-actions">
+<span class="history-api-status loading" id="historyApiStatus">연결 확인 중</span>
+<a href="./index.html?v=91.7" id="historyBackDashboard">← 종합 대시보드</a>
+</div>
+</header>
+<div class="history-scroll">
+<section class="history-search-panel">
+<div aria-label="자료구분" class="history-source-tabs" id="historySourceTabs" role="tablist">
+<button class="active" data-history-source="bridge" type="button">
+                교량 수위 이력
+              </button>
+<button data-history-source="dam" type="button">
+                댐 방류량 이력
+              </button>
+<button disabled="" type="button">
+                통합 비교분석 <em>다음 단계</em>
+</button>
+</div>
+<div class="history-search-grid" id="historySearchGrid">
+<label>
+<span id="historyTargetLabel">교량 선택</span>
+<select id="historyTarget">
+<option value="jamsu">잠수교</option>
+<option value="hangang">한강대교</option>
+</select>
+</label>
+<fieldset class="history-mode-group">
+<legend>조회단위</legend>
+<label>
+<input checked="" name="historyMode" type="radio" value="hourly"/>
+<span>시간별</span>
+<small>10분 원자료</small>
+</label>
+<label>
+<input name="historyMode" type="radio" value="daily"/>
+<span>일별</span>
+<small>월간 일 통계</small>
+</label>
+<label>
+<input name="historyMode" type="radio" value="monthly"/>
+<span>월별</span>
+<small>연간 월 통계</small>
+</label>
+</fieldset>
+<label id="historyDateField">
+<span>조회일</span>
+<input id="historyDate" type="date"/>
+</label>
+<div class="history-search-actions">
+<button class="primary" id="historySearch" type="button">
+                  조회
+                </button>
+<button disabled="" id="historyExport" type="button">
+                  CSV 다운로드
+                </button>
+</div>
+</div>
+<section class="history-advanced-panel" hidden="" id="historyAdvancedPanel">
+<div class="history-advanced-head">
+<div>
+<span>ADVANCED FILTER</span>
+<h2>조건별 데이터 검색</h2>
+</div>
+<p>기간·기준값·변화량 순위를 조합하여 조건에 맞는 자료만 추출합니다.</p>
+</div>
+<div class="history-advanced-grid">
+<label>
+<span>시작일</span>
+<input id="historyFromDate" type="date"/>
+</label>
+<label>
+<span>종료일</span>
+<input id="historyToDate" type="date"/>
+</label>
+<label id="historyWaterMinField">
+<span>수위 기준</span>
+<select id="historyWaterMin">
+<option value="">전체 수위</option>
+<option value="1">1.00m 이상</option>
+<option value="2">2.00m 이상</option>
+<option value="3">3.00m 이상</option>
+<option value="4">4.00m 이상</option>
+<option value="4.1">4.10m 이상</option>
+<option value="4.46">4.46m 이상</option>
+<option value="5">5.00m 이상</option>
+</select>
+</label>
+<label id="historyClearanceMaxField">
+<span>잠수교 통과높이</span>
+<select id="historyClearanceMax">
+<option value="">전체 통과높이</option>
+<option value="8">8.00m 이하</option>
+<option value="7.66">7.66m 이하</option>
+<option value="7.3">7.30m 이하</option>
+<option value="7">7.00m 이하</option>
+<option value="6.5">6.50m 이하</option>
+</select>
+</label>
+<label id="historyOutflowMinField">
+<span>방류량 기준</span>
+<select id="historyOutflowMin">
+<option value="">전체 방류량</option>
+<option value="1000">1,000㎥/s 이상</option>
+<option value="2000">2,000㎥/s 이상</option>
+<option value="2500">2,500㎥/s 이상</option>
+<option value="3000">3,000㎥/s 이상</option>
+<option value="4000">4,000㎥/s 이상</option>
+<option value="5000">5,000㎥/s 이상</option>
+</select>
+</label>
+<label>
+<span>변화량 순위</span>
+<select id="historyStatFilter">
+<option value="all">전체자료</option>
+<option value="top10">변화량 상위 10%만</option>
+<option value="top5">변화량 상위 5%만</option>
+</select>
+</label>
+<label class="history-tide-filter">
+<span>조석 단계</span>
+<select disabled="" id="historyTidePhase">
+<option value="">조석 이력 연계 대기</option>
+<option value="spring">대조기</option>
+<option value="neap">소조기</option>
+</select>
+</label>
+</div>
+<div class="history-data-note">
+<b>조석 단계 검색은 아직 비활성화</b>
+<span>현재 D1에는 과거 조석 단계가 저장되지 않아 대조기·소조기 필터는 적용하지 않습니다. 조석 이력 테이블 연계 후 활성화합니다.</span>
+</div>
+</section>
+<div class="history-range-status">
+<div>
+<b id="historyRangeTitle">저장자료 확인 중</b>
+<span id="historyRangeDescription">D1 데이터베이스 연결상태를 확인합니다.</span>
+</div>
+<span id="historyQueryStatus">대기</span>
+</div>
+</section>
+<section class="history-summary-grid" id="historySummary">
+<article>
+<span>조회 건수</span>
+<b>-</b>
+<em>자료 조회 전</em>
+</article>
+<article>
+<span>최근·평균값</span>
+<b>-</b>
+<em>-</em>
+</article>
+<article>
+<span>최고값</span>
+<b>-</b>
+<em>-</em>
+</article>
+<article>
+<span>최저값</span>
+<b>-</b>
+<em>-</em>
+</article>
+</section>
+<section class="history-panel history-chart-panel">
+<div class="history-panel-title">
+<div>
+<span id="historyChartEyebrow">교량 수위 통계</span>
+<h2 id="historyChartTitle">잠수교 수위 그래프</h2>
+</div>
+<div class="history-legend" id="historyLegend"></div>
+</div>
+<div class="history-chart-wrap" id="historyChartWrap">
+<svg aria-label="과거 수문자료 그래프" id="historyChart" role="img" viewbox="0 0 1200 340"></svg>
+<div class="history-tooltip" hidden="" id="historyTooltip"></div>
+</div>
+<div class="history-legend-note" id="historyLegendNote"></div>
+</section>
+<section class="history-panel history-table-panel">
+<div class="history-panel-title">
+<div>
+<span>검색결과</span>
+<h2 id="historyTableTitle">목록(0)</h2>
+</div>
+<span id="historyTableNote">DB 저장 시작 이후 자료</span>
+</div>
+<div class="history-anomaly-toolbar" id="historyAnomalyToolbar">
+<div class="history-anomaly-summary">
+<b id="historyAnomalyCount">특이점 0건</b>
+<span id="historyAnomalyGuide">변화가 큰 자료를 따로 골라볼 수 있습니다.</span>
+</div>
+<div aria-label="특이점 필터" class="history-anomaly-filters" id="historyAnomalyFilters" role="tablist"></div>
+</div>
+<div class="history-table-scroll">
+<table id="historyTable">
+<thead></thead>
+<tbody>
+<tr>
+<td class="history-empty-cell">조회조건을 선택하고 검색하십시오.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</section>
+</main>
+</div>
+<script src="./history-config.js?v=91.7"></script>
+<script src="./history.js?v=91.7"></script>
+<script src="./shared-navigation.js?v=91.7"></script>
+<script src="./app-bootstrap.js?v=91.7"></script>
+</body>
+</html>

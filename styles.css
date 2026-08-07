@@ -5040,3 +5040,8 @@ details.rain-contribution-box {
   background:#edf5f9;
   border-color:#a9c7d8;
 }
+
+
+/* v91.7 embedded mode retired */
+.embedded-detail .app-header,.embedded-detail footer{display:initial!important}
+.module-page .app-header,.app-header{position:relative!important;top:auto!important}

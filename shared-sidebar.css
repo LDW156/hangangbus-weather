@@ -32,3 +32,9 @@ html,body,body *,button,input,select,textarea{
 }
 .control-sidebar{visibility:visible!important;opacity:1!important}
 #demoControls,.scenario-controls,.mode-badge,#modeBadge,.autonomy-hidden-badge,.control-mode{display:none!important}
+
+
+/* v91.7 canonical top-level pages */
+html,body,body *,button,input,select,textarea{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",Arial,sans-serif!important}
+.control-sidebar{position:sticky!important;top:0!important}
+.control-sidebar .side-nav a span:last-child{font-size:10px!important;font-weight:700!important;line-height:1.35!important}

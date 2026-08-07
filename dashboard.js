@@ -71,7 +71,7 @@
     element.classList.add(stateClass(state));
   }
 
-  async function loadDashboardData() {
+  async function loadDashboardData(trigger = 'auto') {
     if (loading) return;
     loading = true;
 
@@ -179,7 +179,7 @@
 
     if (cfg?.OCEAN?.ENABLED && window.OCEAN?.isConfigured?.()) {
       try {
-        const tide = await window.OCEAN.loadTide();
+        const tide = await window.OCEAN.loadTide({ force: trigger === 'manual' });
         data.tide = tide;
         data.health = (data.health || []).filter(
           item => !['조석','조석정보'].includes(item.name)
@@ -205,7 +205,7 @@
 
     data.meta = data.meta || {};
     data.meta.generatedAt = new Date().toISOString();
-    data.meta.mode = liveSources.length ? 'hybrid' : 'demo';
+    data.meta.mode = liveSources.length ? 'live' : 'check';
 
     renderDashboard(computeDashboard());
 
@@ -762,77 +762,10 @@
     }
   };
 
-  function activateMenu(link){
-    document.querySelectorAll('.side-nav a').forEach(item=>{
-      item.classList.toggle('active',item===link);
-    });
-  }
+  // v91.7: 데이터 분석은 독립 HTML 페이지에서 실행합니다.
 
-  function showDashboard(link=null){
-    $('dashboardView')?.classList.add('active');
-    $('historyView')?.classList.remove('active');
-    $('historyView')?.setAttribute('aria-hidden','true');
+  $('dashboardRefresh')?.addEventListener('click', () => loadDashboardData('manual'));
 
-    activateMenu(
-      link || document.querySelector('.side-nav a[data-nav-file="index.html"]')
-    );
-
-    sessionStorage.setItem('hangangbus-view','dashboard');
-  }
-
-  function showHistory(link=null,entry=null){
-    $('dashboardView')?.classList.remove('active');
-    $('historyView')?.classList.add('active');
-    $('historyView')?.setAttribute('aria-hidden','false');
-
-    const resolvedEntry=entry||link?.dataset.historyEntry||'bridge';
-    const hashMap={dam:'analysis-dam',bridge:'analysis-bridge',search:'analysis-search'};
-    const hash=hashMap[resolvedEntry]||'analysis-bridge';
-    if(location.hash!==`#${hash}`) history.replaceState(null,'',`#${hash}`);
-
-    const resolvedLink=link||document.querySelector(`.side-nav a[data-nav-hash="${hash}"]`);
-    activateMenu(resolvedLink);
-
-    sessionStorage.setItem('hangangbus-view',JSON.stringify({view:'history',entry:resolvedEntry}));
-    window.dispatchEvent(new CustomEvent('hangangbus-history-open',{detail:{entry:resolvedEntry}}));
-  }
-
-  document.querySelectorAll('.side-nav a[data-nav-hash]').forEach(link=>{
-    link.addEventListener('click',event=>{
-      event.preventDefault();
-      const hash=link.dataset.navHash||'analysis-bridge';
-      const entry=hash.replace('analysis-','');
-      showHistory(link,entry);
-    });
-  });
-
-  $('historyBackDashboard')?.addEventListener('click',()=>showDashboard());
-
-  try{
-    const hash=location.hash.replace(/^#/,'');
-    if(/^analysis-(dam|bridge|search)$/.test(hash)){
-      showHistory(document.querySelector(`.side-nav a[data-nav-hash="${hash}"]`),hash.replace('analysis-',''));
-    }else{
-      const saved=sessionStorage.getItem('hangangbus-view');
-      if(saved&&saved!=='dashboard'){
-        const state=JSON.parse(saved);
-        if(state?.view==='history') showHistory(null,state.entry||'bridge');
-      }
-    }
-  }catch(_){
-    sessionStorage.setItem('hangangbus-view','dashboard');
-  }
-
-  $('dashboardRefresh')?.addEventListener('click', loadDashboardData);
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('./service-worker.js')
-        .catch(() => {});
-    });
-  }
-
-  loadDashboardData();
+  loadDashboardData('initial');
   setInterval(loadDashboardData, cfg?.REFRESH_MS || 300000);
 })();

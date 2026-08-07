@@ -1492,7 +1492,8 @@
     if (state.initialized) return;
     state.initialized = true;
 
-    applyEntry('bridge');
+    const initialEntry = document.body.dataset.analysisEntry || 'bridge';
+    applyEntry(initialEntry);
     bindChartPointer();
 
     document.querySelectorAll('[data-history-source]').forEach(button => {
@@ -1538,7 +1539,9 @@
       window.open(state.exportUrl, '_blank', 'noopener');
     });
 
-    loadStats();
+    loadStats().finally(() => {
+      if (state.entry !== 'search') searchHistory();
+    });
   }
 
   window.addEventListener('hangangbus-history-open', event => {

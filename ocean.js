@@ -409,35 +409,50 @@
     };
   }
 
-  const CACHE_VERSION='v91.6';
+  const CACHE_VERSION='v91.7';
+  const LAST_GOOD_KEY=`hangangbus:tide:last-good:${settings().obsCode}`;
   function tideCacheKey(date=new Date()){return `hangangbus:tide:${CACHE_VERSION}:${settings().obsCode}:${kstDateKey(date)}`;}
   function parseCache(raw){try{const parsed=JSON.parse(raw);if(!parsed?.data||!parsed?.savedAt)return null;const savedAt=new Date(parsed.savedAt);if(Number.isNaN(savedAt.getTime()))return null;return {data:parsed.data,savedAt};}catch(_){return null;}}
   function readTideCache(){try{const raw=localStorage.getItem(tideCacheKey());return raw?parseCache(raw):null;}catch(_){return null;}}
-  function readLatestTideCache(){
+  function readLastGood(){try{return parseCache(localStorage.getItem(LAST_GOOD_KEY));}catch(_){return null;}}
+  function readLatestAnyTideCache(){
     try{
-      const prefix=`hangangbus:tide:${CACHE_VERSION}:${settings().obsCode}:`;
+      const prefix='hangangbus:tide:';
+      const suffix=`:${settings().obsCode}:`;
       const candidates=[];
       for(let i=0;i<localStorage.length;i+=1){
         const key=localStorage.key(i);
-        if(!key||!key.startsWith(prefix))continue;
+        if(!key||!key.startsWith(prefix)||!key.includes(suffix))continue;
         const parsed=parseCache(localStorage.getItem(key));
         if(parsed)candidates.push(parsed);
       }
+      const stable=readLastGood();
+      if(stable)candidates.push(stable);
       return candidates.sort((a,b)=>b.savedAt-a.savedAt)[0]||null;
-    }catch(_){return null;}
+    }catch(_){return readLastGood();}
   }
-  function writeTideCache(data){try{localStorage.setItem(tideCacheKey(),JSON.stringify({savedAt:new Date().toISOString(),data}));}catch(_){}}
+  function writeTideCache(data){
+    try{
+      const payload=JSON.stringify({savedAt:new Date().toISOString(),data});
+      localStorage.setItem(tideCacheKey(),payload);
+      localStorage.setItem(LAST_GOOD_KEY,payload);
+    }catch(_){}
+  }
   async function loadTide(options={}){
     const force=Boolean(options.force);
     const cached=readTideCache();
-    if(cached&&!force)return {...cached.data,cacheStatus:'daily-cache',cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};
+    if(cached&&!force){
+      return {...cached.data,cacheStatus:'daily-cache',cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};
+    }
     try{
       const tide=await fetchTideNetwork();
       writeTideCache(tide);
       return tide;
     }catch(error){
-      const fallback=cached||readLatestTideCache();
-      if(fallback)return {...fallback.data,cacheStatus:'stale-cache',cacheWarning:error.message,cacheSavedAt:fallback.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-fallback.savedAt.getTime())/60000))};
+      const fallback=cached||readLastGood()||readLatestAnyTideCache();
+      if(fallback){
+        return {...fallback.data,cacheStatus:'stale-cache',cacheWarning:error.message,cacheSavedAt:fallback.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-fallback.savedAt.getTime())/60000))};
+      }
       throw error;
     }
   }

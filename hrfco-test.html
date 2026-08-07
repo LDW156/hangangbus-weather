@@ -1,12 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#eef3f7">
-  <meta name="description" content="한강홍수통제소 HRFCO 브라우저 직접 연결 테스트">
-  <title>HRFCO 연결 테스트 · 한강버스</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#eef3f7" name="theme-color"/>
+<meta content="한강홍수통제소 HRFCO 브라우저 직접 연결 테스트" name="description"/>
+<title>HRFCO 연결 테스트 · 한강버스</title>
+<style>
     :root{
       color-scheme:light;
       --bg:#eef3f7;--surface:#fff;--soft:#f4f7f9;--line:#c9d6df;
@@ -54,55 +55,51 @@
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <header>
-      <div>
-        <h1>HRFCO 브라우저 직접 연결 테스트</h1>
-        <p class="sub">GitHub Pages에서 한강홍수통제소 XML을 JavaScript로 읽을 수 있는지 확인합니다.</p>
-      </div>
-      <a class="back" href="./">대시보드로 돌아가기</a>
-    </header>
-
-    <div class="notice">
+<main class="wrap">
+<header>
+<div>
+<h1>HRFCO 브라우저 직접 연결 테스트</h1>
+<p class="sub">GitHub Pages에서 한강홍수통제소 XML을 JavaScript로 읽을 수 있는지 확인합니다.</p>
+</div>
+<a class="back" href="./">대시보드로 돌아가기</a>
+</header>
+<div class="notice">
       전체 호출 URL에는 인증키가 포함됩니다. 이 페이지는 입력값을 저장하거나 서버로 전송하지 않습니다.
       테스트 결과를 캡처할 때 주소 입력란은 가리십시오.
     </div>
-
-    <section class="card">
-      <h2>1. 호출 URL 입력</h2>
-      <label for="apiUrl">브라우저 주소창에서 XML이 정상 출력됐던 전체 URL</label>
-      <div class="input-row">
-        <input id="apiUrl" type="password" autocomplete="off" spellcheck="false" placeholder="https://api.hrfco.go.kr/...xml">
-        <button id="toggleBtn" type="button">표시</button>
-        <button id="openBtn" type="button">새 탭 확인</button>
-      </div>
-      <div class="help">
+<section class="card">
+<h2>1. 호출 URL 입력</h2>
+<label for="apiUrl">브라우저 주소창에서 XML이 정상 출력됐던 전체 URL</label>
+<div class="input-row">
+<input autocomplete="off" id="apiUrl" placeholder="https://api.hrfco.go.kr/...xml" spellcheck="false" type="password"/>
+<button id="toggleBtn" type="button">표시</button>
+<button id="openBtn" type="button">새 탭 확인</button>
+</div>
+<div class="help">
         URL은 <code>http://</code> 또는 <code>https://</code>로 시작해야 합니다. 새 탭 확인은 원본 XML이 직접 열리는지만 확인합니다.
       </div>
-    </section>
-
-    <section class="card">
-      <h2>2. GitHub Pages 직접 호출 테스트</h2>
-      <button id="testBtn" class="primary" type="button">연결 테스트 시작</button>
-      <div id="status" class="status"></div>
-      <div id="result" hidden>
-        <div class="summary">
-          <div class="metric"><span>HTTP 상태</span><b id="httpStatus">-</b></div>
-          <div class="metric"><span>응답 형식</span><b id="contentType">-</b></div>
-          <div class="metric"><span>응답 길이</span><b id="responseLength">-</b></div>
-          <div class="metric"><span>소요시간</span><b id="elapsed">-</b></div>
-        </div>
-        <div id="decision" class="decision"></div>
-        <table>
-          <thead><tr><th>XML 필드</th><th>값</th><th>추정 의미</th></tr></thead>
-          <tbody id="fieldBody"></tbody>
-        </table>
-        <pre id="preview"></pre>
-      </div>
-    </section>
-  </main>
-
-  <script>
+</section>
+<section class="card">
+<h2>2. GitHub Pages 직접 호출 테스트</h2>
+<button class="primary" id="testBtn" type="button">연결 테스트 시작</button>
+<div class="status" id="status"></div>
+<div hidden="" id="result">
+<div class="summary">
+<div class="metric"><span>HTTP 상태</span><b id="httpStatus">-</b></div>
+<div class="metric"><span>응답 형식</span><b id="contentType">-</b></div>
+<div class="metric"><span>응답 길이</span><b id="responseLength">-</b></div>
+<div class="metric"><span>소요시간</span><b id="elapsed">-</b></div>
+</div>
+<div class="decision" id="decision"></div>
+<table>
+<thead><tr><th>XML 필드</th><th>값</th><th>추정 의미</th></tr></thead>
+<tbody id="fieldBody"></tbody>
+</table>
+<pre id="preview"></pre>
+</div>
+</section>
+</main>
+<script>
     (() => {
       'use strict';
       const $ = (id) => document.getElementById(id);

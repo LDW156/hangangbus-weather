@@ -987,3 +987,11 @@
     gap:4px;
   }
 }
+
+
+/* v91.7 standalone data analysis pages */
+.analysis-body{margin:0;background:#edf3f7;overflow:hidden}
+.analysis-shell{height:100vh;min-height:0}
+.analysis-main{min-height:0;overflow:hidden}
+.analysis-main .history-view{display:grid!important;height:100vh!important}
+.history-shell-header a#historyBackDashboard{padding:7px 10px;color:#12658e;background:#edf7fc;border:1px solid #86bbd7;border-radius:8px;font-size:8px;font-weight:900;text-decoration:none}

@@ -1,83 +1,93 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0e3d5c">
-  <title>잠수교 통과높이 | 한강버스</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=91.6">
-  <link rel="stylesheet" href="module-pages.css?v=91.6">
-  <link rel="stylesheet" href="shared-sidebar.css?v=91.6">
+<head><script>
+(() => {
+  'use strict';
+  const BUILD = '91.7';
+  if (window.top !== window.self) {
+    window.top.location.replace(window.location.href);
+    return;
+  }
+  window.HANGANG_BUILD = BUILD;
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#0e3d5c" name="theme-color"/>
+<title>잠수교 통과높이 | 한강버스</title>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
+<link href="styles.css?v=91.7" rel="stylesheet"/>
+<link href="module-pages.css?v=91.7" rel="stylesheet"/>
+<link href="shared-sidebar.css?v=91.7" rel="stylesheet"/>
 </head>
 <body class="module-autonomy module-jamsu" data-detail-section="jamsu">
-<aside class="control-sidebar" aria-label="한강버스 공통 메뉴">
-  <div class="side-brand">
-    <img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고">
-    <div><b>한강버스</b><span>통합 상황관리</span></div>
-  </div>
-  <nav class="side-nav" aria-label="대시보드 메뉴">
-    <a href="./index.html" data-nav-file="index.html"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
-    <a href="./detail.html" data-nav-file="detail.html"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
-    <p>운항·수문</p>
-    <a href="./route.html" data-nav-file="route.html"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
-    <a href="./jamsu.html" data-nav-file="jamsu.html"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
-    <a href="./paldang.html" data-nav-file="paldang.html"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
-    <a href="./river.html" data-nav-file="river.html"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
-    <p>기상·조석</p>
-    <a href="./alerts.html" data-nav-file="alerts.html"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
-    <a href="./rain.html" data-nav-file="rain.html"><span class="side-icon">☂</span><span>강수 예보</span></a>
-    <a href="./wind.html" data-nav-file="wind.html"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
-    <a href="./tide.html" data-nav-file="tide.html"><span class="side-icon">◒</span><span>인천 조석</span></a>
-    <p>데이터 분석</p>
-    <a href="./index.html#analysis-dam" data-nav-hash="analysis-dam"><span class="side-icon">≋</span><span>댐 방류량</span></a>
-    <a href="./index.html#analysis-bridge" data-nav-hash="analysis-bridge"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
-    <a href="./index.html#analysis-search" data-nav-hash="analysis-search"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
-  </nav>
-  <div class="side-legend">
-    <b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
-  </div>
-  <div class="side-credit">제작 · 운항감독 이대운</div>
+<aside aria-label="한강버스 공통 메뉴" class="control-sidebar">
+<div class="side-brand">
+<img alt="한강버스 로고" src="./assets/hangangbus-logo.png?v=88"/>
+<div><b>한강버스</b><span>통합 상황관리</span></div>
+</div>
+<nav aria-label="대시보드 메뉴" class="side-nav">
+<a data-nav-file="index.html" href="./index.html?v=91.7"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=91.7"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<p>운항·수문</p>
+<a data-nav-file="route.html" href="./route.html?v=91.7"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=91.7"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=91.7"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=91.7"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<p>기상·조석</p>
+<a data-nav-file="alerts.html" href="./alerts.html?v=91.7"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=91.7"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=91.7"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=91.7"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<p>데이터 분석</p>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=91.7"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=91.7"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=91.7"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+</nav>
+<div class="side-legend">
+<b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+</div>
+<div class="side-credit">제작 · 운항감독 이대운</div>
 </aside>
 <div class="autonomy-shell">
 <header class="autonomy-topbar">
-  <div class="autonomy-title">
-    <span>CLEARANCE CONTROL</span>
-    <h1>잠수교 통과높이</h1>
-    <p>동부선 통항의 핵심 기준을 집중 관제합니다.</p>
-  </div>
-  <div class="autonomy-actions">
-    <button id="embeddedDashboardBack" type="button">← 종합 대시보드</button>
-    <button id="refreshBtn" class="refresh-btn" type="button">↻ 최신 데이터</button>
-    <small id="refreshNote">자동 갱신 5분</small>
-    <span id="updatedAt" class="updated">갱신 확인 중</span>
-  </div>
+<div class="autonomy-title">
+<span>CLEARANCE CONTROL</span>
+<h1>잠수교 통과높이</h1>
+<p>동부선 통항의 핵심 기준을 집중 관제합니다.</p>
+</div>
+<div class="autonomy-actions">
+<a href="./index.html?v=91.7" id="embeddedDashboardBack">← 종합 대시보드</a>
+<button class="refresh-btn" id="refreshBtn" type="button">↻ 최신 데이터</button>
+<small id="refreshNote">자동 갱신 5분</small>
+<span class="updated" id="updatedAt">갱신 확인 중</span>
+</div>
 </header>
-<div id="systemBanner" class="system-banner loading">최신 공식자료를 조회하고 있습니다.</div>
-<div id="weatherAlertBanner" class="weather-alert-banner" role="alert" hidden></div>
+<div class="system-banner loading" id="systemBanner">최신 공식자료를 조회하고 있습니다.</div>
+<div class="weather-alert-banner" hidden="" id="weatherAlertBanner" role="alert"></div>
 <main class="autonomy-main">
-  <section class="module-hero jamsu-hero-banner"><div><span>CLEARANCE CONTROL</span><h2>잠수교 통과높이 전용 관제</h2><p>현재 통과높이, 기준 여유, 수위 상승속도를 한 화면에서 확인합니다.</p></div><div class="hero-kicker"><b>운항중지</b><span>통과높이 7.30m 이하</span></div></section>
-  <section id="jamsu" class="autonomy-section jamsu-control-grid">
-    <article id="jamsuHero" class="jamsu-hero"></article>
-    <article class="panel chart-panel autonomy-chart-panel"><div class="panel-title"><h3>최근 수위 추이와 기준선</h3><span id="jamsuChartMeta">10분 간격</span></div><svg id="jamsuChart" viewBox="0 0 1100 230"></svg><div class="chart-legend jamsu-chart-legend"><span class="line water"></span>잠수교 수위 <span class="line caution dashed-long"></span>주의수위 4.10m <span class="line stop dashed-short"></span>운항불가수위 4.46m</div></article>
-  </section>
-  <section class="autonomy-section threshold-deck"><div class="section-heading"><div><span>02</span><h2>통과높이 기준 체계</h2></div><small>현재값과 비교</small></div><div class="threshold-grid"><article class="normal"><b>정상영역</b><strong>7.66m 초과</strong><p>기본 통항 가능. 수위 상승추세는 별도 감시합니다.</p></article><article class="caution"><b>주의영역</b><strong>7.30~7.66m</strong><p>선장 확인, 감속 및 대기 가능성을 검토합니다.</p></article><article class="stop"><b>운항불가</b><strong>7.30m 이하</strong><p>잠수교 통과 운항을 중지하고 노선조정을 시행합니다.</p></article></div></section>
-  <section class="autonomy-section"><div class="section-heading"><div><span>03</span><h2>현장 확인 체크</h2></div><small>계기값만으로 확정하지 않음</small></div><div class="checklist-grid"><span>관측시각 최신 여부</span><span>10·30·60분 수위 변화</span><span>팔당댐 방류 증가추세</span><span>만조 영향 중첩</span><span>실제 선박 흘수·마스트 높이</span><span>시계 및 유속 상태</span></div></section>
+<section class="module-hero jamsu-hero-banner"><div><span>CLEARANCE CONTROL</span><h2>잠수교 통과높이 전용 관제</h2><p>현재 통과높이, 기준 여유, 수위 상승속도를 한 화면에서 확인합니다.</p></div><div class="hero-kicker"><b>운항중지</b><span>통과높이 7.30m 이하</span></div></section>
+<section class="autonomy-section jamsu-control-grid" id="jamsu">
+<article class="jamsu-hero" id="jamsuHero"></article>
+<article class="panel chart-panel autonomy-chart-panel"><div class="panel-title"><h3>최근 수위 추이와 기준선</h3><span id="jamsuChartMeta">10분 간격</span></div><svg id="jamsuChart" viewbox="0 0 1100 230"></svg><div class="chart-legend jamsu-chart-legend"><span class="line water"></span>잠수교 수위 <span class="line caution dashed-long"></span>주의수위 4.10m <span class="line stop dashed-short"></span>운항불가수위 4.46m</div></article>
+</section>
+<section class="autonomy-section threshold-deck"><div class="section-heading"><div><span>02</span><h2>통과높이 기준 체계</h2></div><small>현재값과 비교</small></div><div class="threshold-grid"><article class="normal"><b>정상영역</b><strong>7.66m 초과</strong><p>기본 통항 가능. 수위 상승추세는 별도 감시합니다.</p></article><article class="caution"><b>주의영역</b><strong>7.30~7.66m</strong><p>선장 확인, 감속 및 대기 가능성을 검토합니다.</p></article><article class="stop"><b>운항불가</b><strong>7.30m 이하</strong><p>잠수교 통과 운항을 중지하고 노선조정을 시행합니다.</p></article></div></section>
+<section class="autonomy-section"><div class="section-heading"><div><span>03</span><h2>현장 확인 체크</h2></div><small>계기값만으로 확정하지 않음</small></div><div class="checklist-grid"><span>관측시각 최신 여부</span><span>10·30·60분 수위 변화</span><span>팔당댐 방류 증가추세</span><span>만조 영향 중첩</span><span>실제 선박 흘수·마스트 높이</span><span>시계 및 유속 상태</span></div></section>
 </main>
 <footer class="autonomy-footer"><strong>운항 참고용</strong> 공식기관 자료와 회사 지침, 현장 확인을 함께 적용하십시오. <span>제작 · 운항감독 이대운</span></footer>
 </div>
-<script src="shared-config.js?v=62"></script>
-<script src="weather-config.js?v=62"></script>
-<script src="ocean-config.js?v=67"></script>
-<script src="config.js?v=62"></script>
-<script src="data/demo-data.js?v=62"></script>
-<script src="hrfco.js?v=62"></script>
-<script src="kma.js?v=87"></script>
-<script src="ocean.js?v=91.6"></script>
-<script src="app.js?v=91.6"></script>
-<script src="module-pages.js?v=91.6"></script>
-
-  <script src="shared-navigation.js?v=91.6"></script>
-</body>
+<script src="shared-config.js?v=91.7"></script>
+<script src="weather-config.js?v=91.7"></script>
+<script src="ocean-config.js?v=91.7"></script>
+<script src="config.js?v=91.7"></script>
+<script src="data/demo-data.js?v=91.7"></script>
+<script src="hrfco.js?v=91.7"></script>
+<script src="kma.js?v=91.7"></script>
+<script src="ocean.js?v=91.7"></script>
+<script src="app.js?v=91.7"></script>
+<script src="module-pages.js?v=91.7"></script>
+<script src="shared-navigation.js?v=91.7"></script>
+<script src="./app-bootstrap.js?v=91.7"></script></body>
 </html>

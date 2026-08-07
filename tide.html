@@ -1,82 +1,92 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0e3d5c">
-  <title>인천 조석 | 한강버스</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=91.6">
-  <link rel="stylesheet" href="module-pages.css?v=91.6">
-  <link rel="stylesheet" href="shared-sidebar.css?v=91.6">
+<head><script>
+(() => {
+  'use strict';
+  const BUILD = '91.7';
+  if (window.top !== window.self) {
+    window.top.location.replace(window.location.href);
+    return;
+  }
+  window.HANGANG_BUILD = BUILD;
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#0e3d5c" name="theme-color"/>
+<title>인천 조석 | 한강버스</title>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
+<link href="styles.css?v=91.7" rel="stylesheet"/>
+<link href="module-pages.css?v=91.7" rel="stylesheet"/>
+<link href="shared-sidebar.css?v=91.7" rel="stylesheet"/>
 </head>
 <body class="module-autonomy module-tide" data-detail-section="tide">
-<aside class="control-sidebar" aria-label="한강버스 공통 메뉴">
-  <div class="side-brand">
-    <img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고">
-    <div><b>한강버스</b><span>통합 상황관리</span></div>
-  </div>
-  <nav class="side-nav" aria-label="대시보드 메뉴">
-    <a href="./index.html" data-nav-file="index.html"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
-    <a href="./detail.html" data-nav-file="detail.html"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
-    <p>운항·수문</p>
-    <a href="./route.html" data-nav-file="route.html"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
-    <a href="./jamsu.html" data-nav-file="jamsu.html"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
-    <a href="./paldang.html" data-nav-file="paldang.html"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
-    <a href="./river.html" data-nav-file="river.html"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
-    <p>기상·조석</p>
-    <a href="./alerts.html" data-nav-file="alerts.html"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
-    <a href="./rain.html" data-nav-file="rain.html"><span class="side-icon">☂</span><span>강수 예보</span></a>
-    <a href="./wind.html" data-nav-file="wind.html"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
-    <a href="./tide.html" data-nav-file="tide.html"><span class="side-icon">◒</span><span>인천 조석</span></a>
-    <p>데이터 분석</p>
-    <a href="./index.html#analysis-dam" data-nav-hash="analysis-dam"><span class="side-icon">≋</span><span>댐 방류량</span></a>
-    <a href="./index.html#analysis-bridge" data-nav-hash="analysis-bridge"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
-    <a href="./index.html#analysis-search" data-nav-hash="analysis-search"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
-  </nav>
-  <div class="side-legend">
-    <b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
-  </div>
-  <div class="side-credit">제작 · 운항감독 이대운</div>
+<aside aria-label="한강버스 공통 메뉴" class="control-sidebar">
+<div class="side-brand">
+<img alt="한강버스 로고" src="./assets/hangangbus-logo.png?v=88"/>
+<div><b>한강버스</b><span>통합 상황관리</span></div>
+</div>
+<nav aria-label="대시보드 메뉴" class="side-nav">
+<a data-nav-file="index.html" href="./index.html?v=91.7"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=91.7"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<p>운항·수문</p>
+<a data-nav-file="route.html" href="./route.html?v=91.7"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=91.7"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=91.7"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=91.7"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<p>기상·조석</p>
+<a data-nav-file="alerts.html" href="./alerts.html?v=91.7"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=91.7"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=91.7"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=91.7"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<p>데이터 분석</p>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=91.7"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=91.7"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=91.7"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+</nav>
+<div class="side-legend">
+<b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+</div>
+<div class="side-credit">제작 · 운항감독 이대운</div>
 </aside>
 <div class="autonomy-shell">
 <header class="autonomy-topbar">
-  <div class="autonomy-title">
-    <span>TIDAL INFLUENCE</span>
-    <h1>인천 조석</h1>
-    <p>조석과 방류 중첩에 따른 하류영향을 분석합니다.</p>
-  </div>
-  <div class="autonomy-actions">
-    <button id="embeddedDashboardBack" type="button">← 종합 대시보드</button>
-    <button id="refreshBtn" class="refresh-btn" type="button">↻ 최신 데이터</button>
-    <small id="refreshNote">자동 갱신 5분</small>
-    <span id="updatedAt" class="updated">갱신 확인 중</span>
-  </div>
+<div class="autonomy-title">
+<span>TIDAL INFLUENCE</span>
+<h1>인천 조석</h1>
+<p>조석과 방류 중첩에 따른 하류영향을 분석합니다.</p>
+</div>
+<div class="autonomy-actions">
+<a href="./index.html?v=91.7" id="embeddedDashboardBack">← 종합 대시보드</a>
+<button class="refresh-btn" id="refreshBtn" type="button">↻ 최신 데이터</button>
+<small id="refreshNote">자동 갱신 5분</small>
+<span class="updated" id="updatedAt">갱신 확인 중</span>
+</div>
 </header>
-<div id="systemBanner" class="system-banner loading">최신 공식자료를 조회하고 있습니다.</div>
-<div id="weatherAlertBanner" class="weather-alert-banner" role="alert" hidden></div>
+<div class="system-banner loading" id="systemBanner">최신 공식자료를 조회하고 있습니다.</div>
+<div class="weather-alert-banner" hidden="" id="weatherAlertBanner" role="alert"></div>
 <main class="autonomy-main">
-  <section class="module-hero tide-hero"><div><span>TIDAL OBSERVATORY</span><h2>인천 조석 영향 분석</h2><p>현재 조위, 만·간조, 24시간 곡선과 향후 30일 조차를 함께 확인합니다.</p></div><div class="hero-kicker"><b>중첩위험</b><span>만조 × 팔당댐 방류</span></div></section>
-  <section id="tide" class="autonomy-section"><div class="section-heading"><div><span>01</span><h2>현재 조석 상태</h2></div><small>실측·예측·다음 이벤트</small></div><div id="tideGrid" class="metric-grid four tide-metric-grid"></div><div id="tideEventStrip" class="tide-event-strip"></div>
-    <article class="panel chart-panel autonomy-chart-panel tide-chart-panel"><div class="panel-title"><h3>24시간 예측조위</h3><span>만조·간조·현재시각</span></div><div class="tide-chart-scroll"><svg id="tideChart" viewBox="0 0 1100 300"></svg></div><div class="chart-legend tide-chart-legend"><span class="line water"></span>예측조위 <span class="tide-now-line"></span>현재시각 <span class="tide-high-line"></span>만조 <span class="tide-low-line"></span>간조</div></article>
-    <div class="tide-lower-grid"><article class="panel table-panel"><div class="panel-title"><h3>이벤트 전후 비교</h3><span>이전·현재·다음</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>조위</th><th>비교</th></tr></thead><tbody id="tideComparisonBody"></tbody></table></div></article><article class="tide-impact-panel"><h3>운항 영향 해석</h3><div><b>만조 접근</b><span>하류 수위 상승 영향</span></div><div><b>방류 중첩</b><span>잠수교·도교 영향 확대</span></div><div><b>간조 전환</b><span>하류 영향 완화 가능</span></div></article></div>
-    <article class="panel table-panel monthly-tide-panel"><div class="panel-title"><h3>향후 30일 조석 전망</h3><span>조차 기준 대조기권·소조기권</span></div><div id="tideMonthlySummary" class="monthly-summary-grid"></div><div class="table-scroll monthly-table-scroll"><table class="data-table monthly-tide-table"><thead><tr><th>날짜</th><th>조석구간</th><th>만조 시각·조위</th><th>간조 시각·조위</th><th>최대조차</th><th>운항 참고</th></tr></thead><tbody id="tideMonthlyBody"></tbody></table></div></article>
-  </section>
+<section class="module-hero tide-hero"><div><span>TIDAL OBSERVATORY</span><h2>인천 조석 영향 분석</h2><p>현재 조위, 만·간조, 24시간 곡선과 향후 30일 조차를 함께 확인합니다.</p></div><div class="hero-kicker"><b>중첩위험</b><span>만조 × 팔당댐 방류</span></div></section>
+<section class="autonomy-section" id="tide"><div class="section-heading"><div><span>01</span><h2>현재 조석 상태</h2></div><small>실측·예측·다음 이벤트</small></div><div class="metric-grid four tide-metric-grid" id="tideGrid"></div><div class="tide-event-strip" id="tideEventStrip"></div>
+<article class="panel chart-panel autonomy-chart-panel tide-chart-panel"><div class="panel-title"><h3>24시간 예측조위</h3><span>만조·간조·현재시각</span></div><div class="tide-chart-scroll"><svg id="tideChart" viewbox="0 0 1100 300"></svg></div><div class="chart-legend tide-chart-legend"><span class="line water"></span>예측조위 <span class="tide-now-line"></span>현재시각 <span class="tide-high-line"></span>만조 <span class="tide-low-line"></span>간조</div></article>
+<div class="tide-lower-grid"><article class="panel table-panel"><div class="panel-title"><h3>이벤트 전후 비교</h3><span>이전·현재·다음</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>조위</th><th>비교</th></tr></thead><tbody id="tideComparisonBody"></tbody></table></div></article><article class="tide-impact-panel"><h3>운항 영향 해석</h3><div><b>만조 접근</b><span>하류 수위 상승 영향</span></div><div><b>방류 중첩</b><span>잠수교·도교 영향 확대</span></div><div><b>간조 전환</b><span>하류 영향 완화 가능</span></div></article></div>
+<article class="panel table-panel monthly-tide-panel"><div class="panel-title"><h3>향후 30일 조석 전망</h3><span>조차 기준 대조기권·소조기권</span></div><div class="monthly-summary-grid" id="tideMonthlySummary"></div><div class="table-scroll monthly-table-scroll"><table class="data-table monthly-tide-table"><thead><tr><th>날짜</th><th>조석구간</th><th>만조 시각·조위</th><th>간조 시각·조위</th><th>최대조차</th><th>운항 참고</th></tr></thead><tbody id="tideMonthlyBody"></tbody></table></div></article>
+</section>
 </main>
 <footer class="autonomy-footer"><strong>운항 참고용</strong> 공식기관 자료와 회사 지침, 현장 확인을 함께 적용하십시오. <span>제작 · 운항감독 이대운</span></footer>
 </div>
-<script src="shared-config.js?v=62"></script>
-<script src="weather-config.js?v=62"></script>
-<script src="ocean-config.js?v=67"></script>
-<script src="config.js?v=62"></script>
-<script src="data/demo-data.js?v=62"></script>
-<script src="hrfco.js?v=62"></script>
-<script src="kma.js?v=87"></script>
-<script src="ocean.js?v=91.6"></script>
-<script src="app.js?v=91.6"></script>
-<script src="module-pages.js?v=91.6"></script>
-
-  <script src="shared-navigation.js?v=91.6"></script>
-</body>
+<script src="shared-config.js?v=91.7"></script>
+<script src="weather-config.js?v=91.7"></script>
+<script src="ocean-config.js?v=91.7"></script>
+<script src="config.js?v=91.7"></script>
+<script src="data/demo-data.js?v=91.7"></script>
+<script src="hrfco.js?v=91.7"></script>
+<script src="kma.js?v=91.7"></script>
+<script src="ocean.js?v=91.7"></script>
+<script src="app.js?v=91.7"></script>
+<script src="module-pages.js?v=91.7"></script>
+<script src="shared-navigation.js?v=91.7"></script>
+<script src="./app-bootstrap.js?v=91.7"></script></body>
 </html>

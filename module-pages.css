@@ -58,3 +58,8 @@ body.module-autonomy{min-height:100vh;margin:0;background:var(--module-bg);color
 
 /* 유효하지 않은 숫자는 시각적으로 숨김 */
 .station-coordinate:empty,.wind-current-value em:empty{display:none}
+
+
+/* v91.7 top bar never overlays content */
+.module-autonomy .autonomy-topbar{position:relative!important;top:auto!important;z-index:1!important}
+.module-autonomy .autonomy-actions a{display:inline-flex;align-items:center;height:36px;padding:0 12px;border:1px solid #b9ccd7;border-radius:8px;background:#fff;color:#2c5b72;font-weight:900;text-decoration:none}

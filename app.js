@@ -104,7 +104,7 @@
       if(window.OCEAN?.isConfigured()){
         tasks.push({
           type:'tide',
-          promise:window.OCEAN.loadTide()
+          promise:window.OCEAN.loadTide({force:trigger==='manual'})
         });
       }else{
         setupSources.push('조석');
@@ -269,14 +269,7 @@
     render();
     isLoading=false;
     setRefreshState(errors.length?'warning':'done');
-
-    if(window.parent!==window){
-      window.parent.postMessage({
-        type:'hangangbus-detail-data-updated',
-        updatedAt:data.meta.generatedAt
-      },window.location.origin);
-    }
-  }
+}
 
   function setRefreshState(state){
     const btn=$('refreshBtn'), note=$('refreshNote');
@@ -2384,60 +2377,15 @@
   }
 
   const DETAIL_PAGE_FILES={
-    route:'./route.html',jamsu:'./jamsu.html',dam:'./paldang.html',river:'./river.html',
-    alerts:'./alerts.html',rain:'./rain.html',wind:'./wind.html',tide:'./tide.html'
+    route:'./route.html?v=91.7',jamsu:'./jamsu.html?v=91.7',dam:'./paldang.html?v=91.7',river:'./river.html?v=91.7',
+    alerts:'./alerts.html?v=91.7',rain:'./rain.html?v=91.7',wind:'./wind.html?v=91.7',tide:'./tide.html?v=91.7'
   };
 
   function requestDetailMode(section=''){
-    if(window.parent!==window){
-      window.parent.postMessage(
-        {type:'hangangbus-request-detail',section},
-        window.location.origin
-      );
-      return;
-    }
-
-    if(document.body.classList.contains('module-page')){
-      window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html'):'./detail.html';
-      return;
-    }
-
-    setDetailPageMode(section);
-    history.replaceState(null,'',section?`#${section}`:location.pathname);
+    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=91.7'):'./detail.html?v=91.7';
   }
 
-  function applyParentPrefill(payload){
-    if(!payload||typeof payload!=='object')return;
-
-    try{
-      data=structuredClone(payload);
-      data.meta=data.meta||{};
-      updateTideOverlapRisk();
-      render();
-      if($('modeBadge'))$('modeBadge').textContent='SHARED';
-      setBanner('live','메인 대시보드 수신자료를 즉시 표시했습니다. 상세자료는 백그라운드에서 갱신 중입니다.');
-    }catch(_){}
-  }
-
-  window.addEventListener('message',event=>{
-    if(event.origin!==window.location.origin)return;
-    if(event.source!==window.parent)return;
-
-    const message=event.data||{};
-
-    if(message.type==='hangangbus-prefill-data'){
-      applyParentPrefill(message.data);
-    }
-
-    if(
-      message.type==='hangangbus-set-detail-mode'||
-      message.type==='hangangbus-scroll-section'
-    ){
-      setDetailPageMode(String(message.section||''));
-    }
-  });
-
-  /* v91.6 상세화면은 독립 페이지로만 운영합니다. */
+  /* v91.7 상세화면은 독립 최상위 페이지로만 운영합니다. */
 
   $('detailShowAll')?.addEventListener('click',()=>requestDetailMode(''));
   document.addEventListener('click',event=>{
@@ -2450,7 +2398,6 @@
   setDetailPageMode(initialSection);
   $('refreshBtn')?.addEventListener('click',()=>loadData('manual'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastRefreshStartedAt&&Date.now()-lastRefreshStartedAt.getTime()>cfg.REFRESH_MS)loadData('resume');});
-  if('serviceWorker' in navigator&&window.parent===window){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
   bindWeatherSettings();
   bindHydrologySettings();
   loadData('initial');

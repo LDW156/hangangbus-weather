@@ -1,80 +1,90 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0e3d5c">
-  <title>풍향·풍속 | 한강버스</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=91.6">
-  <link rel="stylesheet" href="module-pages.css?v=91.6">
-  <link rel="stylesheet" href="shared-sidebar.css?v=91.6">
+<head><script>
+(() => {
+  'use strict';
+  const BUILD = '91.7';
+  if (window.top !== window.self) {
+    window.top.location.replace(window.location.href);
+    return;
+  }
+  window.HANGANG_BUILD = BUILD;
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#0e3d5c" name="theme-color"/>
+<title>풍향·풍속 | 한강버스</title>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
+<link href="styles.css?v=91.7" rel="stylesheet"/>
+<link href="module-pages.css?v=91.7" rel="stylesheet"/>
+<link href="shared-sidebar.css?v=91.7" rel="stylesheet"/>
 </head>
 <body class="module-autonomy module-wind" data-detail-section="wind">
-<aside class="control-sidebar" aria-label="한강버스 공통 메뉴">
-  <div class="side-brand">
-    <img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고">
-    <div><b>한강버스</b><span>통합 상황관리</span></div>
-  </div>
-  <nav class="side-nav" aria-label="대시보드 메뉴">
-    <a href="./index.html" data-nav-file="index.html"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
-    <a href="./detail.html" data-nav-file="detail.html"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
-    <p>운항·수문</p>
-    <a href="./route.html" data-nav-file="route.html"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
-    <a href="./jamsu.html" data-nav-file="jamsu.html"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
-    <a href="./paldang.html" data-nav-file="paldang.html"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
-    <a href="./river.html" data-nav-file="river.html"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
-    <p>기상·조석</p>
-    <a href="./alerts.html" data-nav-file="alerts.html"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
-    <a href="./rain.html" data-nav-file="rain.html"><span class="side-icon">☂</span><span>강수 예보</span></a>
-    <a href="./wind.html" data-nav-file="wind.html"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
-    <a href="./tide.html" data-nav-file="tide.html"><span class="side-icon">◒</span><span>인천 조석</span></a>
-    <p>데이터 분석</p>
-    <a href="./index.html#analysis-dam" data-nav-hash="analysis-dam"><span class="side-icon">≋</span><span>댐 방류량</span></a>
-    <a href="./index.html#analysis-bridge" data-nav-hash="analysis-bridge"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
-    <a href="./index.html#analysis-search" data-nav-hash="analysis-search"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
-  </nav>
-  <div class="side-legend">
-    <b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
-  </div>
-  <div class="side-credit">제작 · 운항감독 이대운</div>
+<aside aria-label="한강버스 공통 메뉴" class="control-sidebar">
+<div class="side-brand">
+<img alt="한강버스 로고" src="./assets/hangangbus-logo.png?v=88"/>
+<div><b>한강버스</b><span>통합 상황관리</span></div>
+</div>
+<nav aria-label="대시보드 메뉴" class="side-nav">
+<a data-nav-file="index.html" href="./index.html?v=91.7"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=91.7"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<p>운항·수문</p>
+<a data-nav-file="route.html" href="./route.html?v=91.7"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=91.7"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=91.7"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=91.7"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<p>기상·조석</p>
+<a data-nav-file="alerts.html" href="./alerts.html?v=91.7"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=91.7"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=91.7"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=91.7"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<p>데이터 분석</p>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=91.7"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=91.7"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=91.7"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+</nav>
+<div class="side-legend">
+<b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+</div>
+<div class="side-credit">제작 · 운항감독 이대운</div>
 </aside>
 <div class="autonomy-shell">
 <header class="autonomy-topbar">
-  <div class="autonomy-title">
-    <span>WIND FIELD</span>
-    <h1>풍향·풍속</h1>
-    <p>선착장별 상대풍과 단기예보를 확인합니다.</p>
-  </div>
-  <div class="autonomy-actions">
-    <button id="embeddedDashboardBack" type="button">← 종합 대시보드</button>
-    <button id="refreshBtn" class="refresh-btn" type="button">↻ 최신 데이터</button>
-    <small id="refreshNote">자동 갱신 5분</small>
-    <span id="updatedAt" class="updated">갱신 확인 중</span>
-  </div>
+<div class="autonomy-title">
+<span>WIND FIELD</span>
+<h1>풍향·풍속</h1>
+<p>선착장별 상대풍과 단기예보를 확인합니다.</p>
+</div>
+<div class="autonomy-actions">
+<a href="./index.html?v=91.7" id="embeddedDashboardBack">← 종합 대시보드</a>
+<button class="refresh-btn" id="refreshBtn" type="button">↻ 최신 데이터</button>
+<small id="refreshNote">자동 갱신 5분</small>
+<span class="updated" id="updatedAt">갱신 확인 중</span>
+</div>
 </header>
-<div id="systemBanner" class="system-banner loading">최신 공식자료를 조회하고 있습니다.</div>
-<div id="weatherAlertBanner" class="weather-alert-banner" role="alert" hidden></div>
+<div class="system-banner loading" id="systemBanner">최신 공식자료를 조회하고 있습니다.</div>
+<div class="weather-alert-banner" hidden="" id="weatherAlertBanner" role="alert"></div>
 <main class="autonomy-main">
-  <section class="module-hero wind-hero"><div><span>WIND FIELD MONITOR</span><h2>선착장 풍향·풍속 관제</h2><p>현재풍과 1·2시간 예보를 선착장별로 비교해 접·이안 위험을 확인합니다.</p></div><div class="hero-kicker"><b>핵심</b><span>풍속보다 선착장 상대풍향</span></div></section>
-  <section class="autonomy-section"><div class="section-heading"><div><span>01</span><h2>운항 기준 가이드</h2></div><small>회사 기준값과 현장체감 병행</small></div><div class="wind-band"><article class="good"><b>정상</b><span>기준 미만·접안 영향 낮음</span></article><article class="warn"><b>주의</b><span>돌풍·횡풍·접안방향 확인</span></article><article class="danger"><b>중지 검토</b><span>기준 초과 또는 통제 곤란</span></article></div></section>
-  <section id="wind" class="autonomy-section"><div class="section-heading"><div><span>02</span><h2>선착장별 현재·단기예보</h2></div><small>풍향 나침반·경위도·1·2시간</small></div><div id="windGrid" class="station-grid wind-autonomy-grid"></div></section>
-  <section class="autonomy-section"><div class="section-heading"><div><span>03</span><h2>접·이안 판단요소</h2></div><small>같은 풍속도 선착장마다 다름</small></div><div class="checklist-grid"><span>안벽과 바람 각도</span><span>접안면 횡풍 여부</span><span>돌풍 최대값</span><span>조류와 반대·동일방향</span><span>승강대 흔들림</span><span>예인·보조인력 필요성</span></div></section>
+<section class="module-hero wind-hero"><div><span>WIND FIELD MONITOR</span><h2>선착장 풍향·풍속 관제</h2><p>현재풍과 1·2시간 예보를 선착장별로 비교해 접·이안 위험을 확인합니다.</p></div><div class="hero-kicker"><b>핵심</b><span>풍속보다 선착장 상대풍향</span></div></section>
+<section class="autonomy-section"><div class="section-heading"><div><span>01</span><h2>운항 기준 가이드</h2></div><small>회사 기준값과 현장체감 병행</small></div><div class="wind-band"><article class="good"><b>정상</b><span>기준 미만·접안 영향 낮음</span></article><article class="warn"><b>주의</b><span>돌풍·횡풍·접안방향 확인</span></article><article class="danger"><b>중지 검토</b><span>기준 초과 또는 통제 곤란</span></article></div></section>
+<section class="autonomy-section" id="wind"><div class="section-heading"><div><span>02</span><h2>선착장별 현재·단기예보</h2></div><small>풍향 나침반·경위도·1·2시간</small></div><div class="station-grid wind-autonomy-grid" id="windGrid"></div></section>
+<section class="autonomy-section"><div class="section-heading"><div><span>03</span><h2>접·이안 판단요소</h2></div><small>같은 풍속도 선착장마다 다름</small></div><div class="checklist-grid"><span>안벽과 바람 각도</span><span>접안면 횡풍 여부</span><span>돌풍 최대값</span><span>조류와 반대·동일방향</span><span>승강대 흔들림</span><span>예인·보조인력 필요성</span></div></section>
 </main>
 <footer class="autonomy-footer"><strong>운항 참고용</strong> 공식기관 자료와 회사 지침, 현장 확인을 함께 적용하십시오. <span>제작 · 운항감독 이대운</span></footer>
 </div>
-<script src="shared-config.js?v=62"></script>
-<script src="weather-config.js?v=62"></script>
-<script src="ocean-config.js?v=67"></script>
-<script src="config.js?v=62"></script>
-<script src="data/demo-data.js?v=62"></script>
-<script src="hrfco.js?v=62"></script>
-<script src="kma.js?v=87"></script>
-<script src="ocean.js?v=91.6"></script>
-<script src="app.js?v=91.6"></script>
-<script src="module-pages.js?v=91.6"></script>
-
-  <script src="shared-navigation.js?v=91.6"></script>
-</body>
+<script src="shared-config.js?v=91.7"></script>
+<script src="weather-config.js?v=91.7"></script>
+<script src="ocean-config.js?v=91.7"></script>
+<script src="config.js?v=91.7"></script>
+<script src="data/demo-data.js?v=91.7"></script>
+<script src="hrfco.js?v=91.7"></script>
+<script src="kma.js?v=91.7"></script>
+<script src="ocean.js?v=91.7"></script>
+<script src="app.js?v=91.7"></script>
+<script src="module-pages.js?v=91.7"></script>
+<script src="shared-navigation.js?v=91.7"></script>
+<script src="./app-bootstrap.js?v=91.7"></script></body>
 </html>
