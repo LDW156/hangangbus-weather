@@ -10,9 +10,9 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="dashboard.css?v=91.5">
-  <link rel="stylesheet" href="history.css?v=91.1">
-  <link rel="stylesheet" href="shared-sidebar.css?v=91.5">
+  <link rel="stylesheet" href="dashboard.css?v=91.6">
+  <link rel="stylesheet" href="history.css?v=91.6">
+  <link rel="stylesheet" href="shared-sidebar.css?v=91.6">
 </head>
 <body class="dashboard-body">
   <div class="control-shell">
@@ -215,35 +215,6 @@
         <span>공식기관 자료 취합 운항 참고화면 · 실제 운항판단은 회사 지침과 현장 확인 우선</span>
         <span>자동 갱신 5분</span>
       </footer>
-      </section>
-
-      <section id="detailView" class="main-view detail-view" aria-hidden="true">
-        <header class="detail-shell-header">
-          <div class="detail-shell-copy">
-            <span id="detailViewEyebrow">상세 모니터링</span>
-            <h1 id="detailViewTitle">전체 상세 모니터링</h1>
-            <p id="detailViewDescription">모든 운항·수문·기상·조석 항목을 아래로 스크롤하여 확인합니다.</p>
-          </div>
-          <div class="detail-shell-actions">
-            <button id="showAllDetail" class="detail-show-all" type="button" hidden>전체 상세 보기</button>
-            <button id="backToDashboard" type="button">← 종합 대시보드</button>
-          </div>
-        </header>
-
-        <div id="detailLoadingOverlay" class="detail-loading-overlay" hidden>
-          <div class="detail-loading-spinner"></div>
-          <b>상세 모니터링 준비 중</b>
-          <span>화면은 먼저 표시하고 최신 자료는 병렬로 갱신합니다.</span>
-        </div>
-
-        <iframe
-          id="detailFrame"
-          class="detail-frame"
-          title="한강버스 상세 모니터링"
-          src="about:blank"
-          data-src="./detail.html?v=91.2"
-          loading="lazy"
-        ></iframe>
       </section>
 
       <section id="historyView" class="main-view history-view" aria-hidden="true">
@@ -489,8 +460,8 @@
   <script src="kma.js?v=87"></script>
   <script src="ocean.js?v=91.5"></script>
   <script src="history-config.js?v=90.1"></script>
-  <script src="history.js?v=91.1"></script>
-  <script src="dashboard.js?v=91.3"></script>
+  <script src="history.js?v=91.6"></script>
+  <script src="dashboard.js?v=91.6"></script>
   <script src="shared-navigation.js?v=91.5"></script>
 </body>
 </html>

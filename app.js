@@ -6,7 +6,11 @@
   let isLoading = false;
   let lastRefreshStartedAt = null;
   const $ = (id) => document.getElementById(id);
-  const fmt = (n, d=0) => Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const fmt = (n, d=0) => {
+    const value=Number(n);
+    if(!Number.isFinite(value))return '-';
+    return value.toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  };
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const last = (arr) => arr[arr.length-1];
   const first = (arr) => arr[0];
@@ -66,7 +70,7 @@
     updateTideOverlapRisk();
     render();
     if($('modeBadge'))$('modeBadge').textContent='LOADING';
-    setBanner('demo','기본 화면 표시 완료 · 수문·기상·조석 최신자료를 동시에 조회 중입니다.');
+    setBanner('loading','수문·기상·조석 최신 공식자료를 조회 중입니다.');
 
     const liveSources=[];
     const setupSources=[];
@@ -236,16 +240,16 @@
 
     updateTideOverlapRisk();
     data.meta.generatedAt=new Date().toISOString();
-    data.meta.mode=liveSources.length?'hybrid':'demo';
+    data.meta.mode=liveSources.length?'live':'check';
 
     const hasSource=name=>liveSources.some(source=>source.startsWith(name));
 
     if(liveSources.length){
       if($('modeBadge'))$('modeBadge').textContent='LIVE';
       const liveText=`실데이터: ${liveSources.join('·')}`;
-      const demoList=['수문','기상','조석'].filter(x=>!hasSource(x));
-      const demoText=demoList.length?`자료 확인 필요: ${demoList.join('·')}`:'';
-      const parts=[liveText,demoText].filter(Boolean);
+      const missingList=['수문','기상','조석'].filter(x=>!hasSource(x));
+      const missingText=missingList.length?`자료 확인 필요: ${missingList.join('·')}`:'';
+      const parts=[liveText,missingText].filter(Boolean);
 
       if(errors.length){
         setBanner('error',`${parts.join(' / ')} / 오류 ${errors.join(' | ')}`);
@@ -259,7 +263,7 @@
       setBanner('error',`${errors.join(' | ')} · 현재 미수신 항목은 운항판단에 사용하지 마십시오.`);
     }else{
       if($('modeBadge'))$('modeBadge').textContent='CHECK';
-      setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. 공용 설정파일을 확인하십시오.`);
+      setBanner('loading',`${setupSources.join('·')} 자료 연결상태를 확인하고 있습니다.`);
     }
 
     render();
@@ -286,7 +290,9 @@
   }
 
   function setBanner(type,text){
-    $('systemBanner').className=`system-banner ${type}`;
+    const safeType=type==='demo'?'loading':type;
+    if(!$('systemBanner'))return;
+    $('systemBanner').className=`system-banner ${safeType}`;
     $('systemBanner').textContent=text;
   }
 
@@ -1376,7 +1382,7 @@
 
         <div class="rain-table-heading">
           <h4>예상 강수량(향후 ${fmt(r.timelineHours||8)}시간)</h4>
-          <span>${esc(r.representativeName||'-')} ${Number(r.representativeLat).toFixed(5)}°N, ${Number(r.representativeLon).toFixed(5)}°E</span>
+          <span>${esc(r.representativeName||'-')} ${esc(coordinateText(r.representativeLat,r.representativeLon)||'좌표 확인 중')}</span>
         </div>
 
         <div class="rain-hour-scroll rain-hour-scroll-v59">
@@ -1403,8 +1409,16 @@
       <span class="wind-arrow"><i></i></span><span class="compass-center"></span>
     </div>`;
   }
+  function coordinateText(lat,lon){
+    const y=Number(lat),x=Number(lon);
+    if(!Number.isFinite(y)||!Number.isFinite(x))return '';
+    return `${y.toFixed(5)}°N, ${x.toFixed(5)}°E`;
+  }
+  function validWindForecast(x){
+    return x&&Number.isFinite(Number(x.speed));
+  }
   function forecastWindCard(x){
-    if(!x)return `<div class="wind-forecast-card unavailable"><span>자료 없음</span></div>`;
+    if(!validWindForecast(x))return `<div class="wind-forecast-card unavailable"><span>자료 없음</span></div>`;
     return `<div class="wind-forecast-card">
       <div class="wind-forecast-head"><span>${x.hour}시간 후</span><b>${timeText(x.time)}</b></div>
       <div class="wind-forecast-body">${compass(x.directionDeg,x.speed,true)}<div><strong>${fmt(x.speed,1)}m/s</strong><em>${esc(x.direction)}</em></div></div>
@@ -1412,14 +1426,13 @@
   }
   function renderWind(){
     $('windGrid').innerHTML=data.weather.windStations.map(w=>{
-      const coordinate=
-        `${Number(w.lat).toFixed(5)}°N, ${Number(w.lon).toFixed(5)}°E`;
+      const coordinate=coordinateText(w.lat,w.lon);
 
       return `<article class="station-card wind-card-v59">
         <div class="station-head wind-station-head">
           <div>
             <h3>${esc(w.name)}</h3>
-            <div class="station-coordinate">${esc(coordinate)}</div>
+            <div class="station-coordinate">${coordinate?esc(coordinate):'좌표 확인 중'}</div>
           </div>
           <span class="sector-pill sector-pill-v59">${w.sector==='east'?'동부선':'서부선'}</span>
         </div>
@@ -1431,7 +1444,7 @@
           <div class="wind-current-value">
             <span>현재 ${timeText(w.observedAt)}</span>
             <b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
-            <em>${esc(w.direction)} · ${fmt(w.directionDeg)}°</em>
+            <em>${esc(w.direction||'풍향 확인 중')}${Number.isFinite(Number(w.directionDeg))?` · ${fmt(w.directionDeg)}°`:''}</em>
           </div>
         </div>
 
@@ -2424,13 +2437,7 @@
     }
   });
 
-  if(window.parent!==window){
-    document.body.classList.add('embedded-detail');
-    window.parent.postMessage(
-      {type:'hangangbus-detail-ready'},
-      window.location.origin
-    );
-  }
+  /* v91.6 상세화면은 독립 페이지로만 운영합니다. */
 
   $('detailShowAll')?.addEventListener('click',()=>requestDetailMode(''));
   document.addEventListener('click',event=>{

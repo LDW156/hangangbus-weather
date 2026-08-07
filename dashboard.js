@@ -762,244 +762,66 @@
     }
   };
 
-  let detailFrameLoaded=false;
-  let detailFrameLoading=false;
-  let pendingDetailSection='';
-  let detailPreloadScheduled=false;
-
   function activateMenu(link){
     document.querySelectorAll('.side-nav a').forEach(item=>{
       item.classList.toggle('active',item===link);
     });
   }
 
-  function detailMessage(payload){
-    const frame=$('detailFrame');
-    if(!detailFrameLoaded||!frame?.contentWindow)return;
-    frame.contentWindow.postMessage(payload,window.location.origin);
-  }
-
-  function pushDashboardDataToDetail(){
-    if(!data)return;
-    detailMessage({
-      type:'hangangbus-prefill-data',
-      data
-    });
-  }
-
-  function setDetailMode(section=''){
-    pendingDetailSection=section;
-    if(!detailFrameLoaded)return;
-    detailMessage({
-      type:'hangangbus-set-detail-mode',
-      section
-    });
-  }
-
-  function setDetailLoading(visible){
-    const overlay=$('detailLoadingOverlay');
-    if(!overlay)return;
-    overlay.hidden=!visible;
-  }
-
-  function ensureDetailFrame(){
-    const frame=$('detailFrame');
-    if(!frame||detailFrameLoaded||detailFrameLoading)return;
-
-    detailFrameLoading=true;
-    const source=frame.dataset.src||'./detail.html?v=88';
-    frame.setAttribute('src',source);
-  }
-
-  function scheduleDetailPreload(){
-    if(detailPreloadScheduled||detailFrameLoaded||detailFrameLoading)return;
-    detailPreloadScheduled=true;
-
-    const preload=()=>ensureDetailFrame();
-
-    if('requestIdleCallback' in window){
-      requestIdleCallback(preload,{timeout:1800});
-    }else{
-      setTimeout(preload,900);
-    }
-  }
-
   function showDashboard(link=null){
-    $('dashboardView').classList.add('active');
-    $('detailView').classList.remove('active');
-    $('detailView').setAttribute('aria-hidden','true');
+    $('dashboardView')?.classList.add('active');
     $('historyView')?.classList.remove('active');
     $('historyView')?.setAttribute('aria-hidden','true');
 
     activateMenu(
-      link || document.querySelector('.side-nav a[href="./index.html"]')
+      link || document.querySelector('.side-nav a[data-nav-file="index.html"]')
     );
 
     sessionStorage.setItem('hangangbus-view','dashboard');
   }
 
-  function showDetail(section='',link=null){
-    $('dashboardView').classList.remove('active');
-    $('historyView')?.classList.remove('active');
-    $('historyView')?.setAttribute('aria-hidden','true');
-    $('detailView').classList.add('active');
-    $('detailView').setAttribute('aria-hidden','false');
-
-    const page=detailPages[section]||detailPages[''];
-    $('detailViewEyebrow').textContent=page.eyebrow;
-    $('detailViewTitle').textContent=page.title;
-    $('detailViewDescription').textContent=page.description;
-    $('showAllDetail').hidden=!section;
-
-    pendingDetailSection=section;
-    setDetailLoading(!detailFrameLoaded);
-    ensureDetailFrame();
-
-    if(detailFrameLoaded){
-      pushDashboardDataToDetail();
-      setDetailMode(section);
-    }
-
-    if(link)activateMenu(link);
-
-    sessionStorage.setItem(
-      'hangangbus-view',
-      JSON.stringify({view:'detail',section})
-    );
-  }
-
   function showHistory(link=null,entry=null){
-    $('dashboardView').classList.remove('active');
-    $('detailView').classList.remove('active');
-    $('detailView').setAttribute('aria-hidden','true');
+    $('dashboardView')?.classList.remove('active');
     $('historyView')?.classList.add('active');
     $('historyView')?.setAttribute('aria-hidden','false');
 
-    const resolvedEntry =
-      entry ||
-      link?.dataset.historyEntry ||
-      'bridge';
+    const resolvedEntry=entry||link?.dataset.historyEntry||'bridge';
+    const hashMap={dam:'analysis-dam',bridge:'analysis-bridge',search:'analysis-search'};
+    const hash=hashMap[resolvedEntry]||'analysis-bridge';
+    if(location.hash!==`#${hash}`) history.replaceState(null,'',`#${hash}`);
 
-    const resolvedLink =
-      link ||
-      document.querySelector(
-        `.side-nav a[data-history-entry="${resolvedEntry}"]`
-      ) ||
-      document.querySelector(
-        '.side-nav a[data-main-view="history"]'
-      );
-
+    const resolvedLink=link||document.querySelector(`.side-nav a[data-nav-hash="${hash}"]`);
     activateMenu(resolvedLink);
 
-    sessionStorage.setItem(
-      'hangangbus-view',
-      JSON.stringify({view:'history',entry:resolvedEntry})
-    );
-
-    window.dispatchEvent(
-      new CustomEvent('hangangbus-history-open',{
-        detail:{entry:resolvedEntry}
-      })
-    );
+    sessionStorage.setItem('hangangbus-view',JSON.stringify({view:'history',entry:resolvedEntry}));
+    window.dispatchEvent(new CustomEvent('hangangbus-history-open',{detail:{entry:resolvedEntry}}));
   }
 
-  const detailFrame=$('detailFrame');
-  detailFrame?.addEventListener('load',()=>{
-    const current=detailFrame.getAttribute('src')||'';
-    if(!current.includes('detail.html'))return;
-
-    detailFrameLoading=false;
-    detailFrameLoaded=true;
-    setDetailLoading(false);
-    pushDashboardDataToDetail();
-    setDetailMode(pendingDetailSection);
-  });
-
-  window.addEventListener('message',event=>{
-    if(event.origin!==window.location.origin)return;
-    const message=event.data||{};
-
-    if(message.type==='hangangbus-detail-ready'){
-      detailFrameLoaded=true;
-      detailFrameLoading=false;
-      setDetailLoading(false);
-      pushDashboardDataToDetail();
-      setDetailMode(pendingDetailSection);
-    }
-
-    if(message.type==='hangangbus-open-dashboard'){
-      showDashboard();
-    }
-
-    if(message.type==='hangangbus-request-detail'){
-      const section=String(message.section||'');
-      const menuLink=section
-        ? document.querySelector(`.side-nav a[data-detail-section="${section}"]`)
-        : document.querySelector('.side-nav a[data-detail-mode="all"]');
-      showDetail(section,menuLink);
-    }
-  });
-
-  document.querySelectorAll('.side-nav a').forEach(link=>{
-    const href=link.getAttribute('href')||'';
-
-    if(href==='#'||link.classList.contains('disabled'))return;
-
-    link.addEventListener('click',event=>{
-      if(link.dataset.mainView==='history'||href.includes('#history')){
-        event.preventDefault();
-        showHistory(link,link.dataset.historyEntry||'bridge');
-      }else if(href.includes('detail.html')){
-        event.preventDefault();
-        const section=link.dataset.detailSection||(
-          href.includes('#')?href.split('#')[1]:''
-        );
-        showDetail(section,link);
-      }else if(href.includes('index.html')){
-        event.preventDefault();
-        showDashboard(link);
-      }
-    });
-  });
-
-  document.querySelectorAll('a[href^="./detail.html"]').forEach(link=>{
-    if(link.closest('.side-nav'))return;
-
+  document.querySelectorAll('.side-nav a[data-nav-hash]').forEach(link=>{
     link.addEventListener('click',event=>{
       event.preventDefault();
-      const href=link.getAttribute('href')||'';
-      const section=href.includes('#')?href.split('#')[1]:'';
-      const menuLink=document.querySelector(
-        `.side-nav a[href="./detail.html${section?`#${section}`:''}"]`
-      );
-      showDetail(section,menuLink);
+      const hash=link.dataset.navHash||'analysis-bridge';
+      const entry=hash.replace('analysis-','');
+      showHistory(link,entry);
     });
   });
 
-  $('backToDashboard')?.addEventListener('click',()=>showDashboard());
-  $('showAllDetail')?.addEventListener('click',()=>{
-    const link=document.querySelector('.side-nav a[data-detail-mode="all"]');
-    showDetail('',link);
-  });
   $('historyBackDashboard')?.addEventListener('click',()=>showDashboard());
 
   try{
-    const saved=sessionStorage.getItem('hangangbus-view');
-    if(saved==='history'){
-      showHistory(null,'bridge');
-    }else if(saved&&saved!=='dashboard'){
-      const state=JSON.parse(saved);
-      if(state?.view==='history'){
-        showHistory(null,state.entry||'bridge');
-      }else if(state?.view==='detail'){
-        const section=state.section||'';
-        const menuLink=document.querySelector(
-          `.side-nav a[href="./detail.html${section?`#${section}`:''}"]`
-        );
-        showDetail(section,menuLink);
+    const hash=location.hash.replace(/^#/,'');
+    if(/^analysis-(dam|bridge|search)$/.test(hash)){
+      showHistory(document.querySelector(`.side-nav a[data-nav-hash="${hash}"]`),hash.replace('analysis-',''));
+    }else{
+      const saved=sessionStorage.getItem('hangangbus-view');
+      if(saved&&saved!=='dashboard'){
+        const state=JSON.parse(saved);
+        if(state?.view==='history') showHistory(null,state.entry||'bridge');
       }
     }
-  }catch(_){}
+  }catch(_){
+    sessionStorage.setItem('hangangbus-view','dashboard');
+  }
 
   $('dashboardRefresh')?.addEventListener('click', loadDashboardData);
 

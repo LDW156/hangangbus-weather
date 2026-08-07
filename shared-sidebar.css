@@ -11,3 +11,24 @@ html,body,button,input,select,textarea{font-family:"Noto Sans KR","Malgun Gothic
 body.module-autonomy{grid-template-columns:var(--shared-sidebar-width) minmax(0,1fr)!important;font-family:"Noto Sans KR","Malgun Gothic",Arial,sans-serif!important}body.module-autonomy .control-sidebar{grid-column:1;grid-row:1}body.module-autonomy .autonomy-shell{grid-column:2;grid-row:1}
 #demoControls,.scenario-controls,.mode-badge,.autonomy-hidden-badge{display:none!important}
 @media(max-width:820px){:root{--shared-sidebar-width:100%}.control-shell,.detail-control-shell,body.module-autonomy{display:block!important}.control-sidebar{position:relative;width:100%;height:auto;padding:9px 10px}.side-brand,.side-legend,.side-credit{display:none}.side-nav{display:flex;gap:3px;margin-top:0;overflow-x:auto}.side-nav p{display:none}.side-nav a{flex:0 0 auto;min-height:34px;padding:6px 9px}}
+
+
+/* v91.6 단일 메뉴·폰트 강제 통일 */
+html,body,body *,button,input,select,textarea{
+  font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",Arial,sans-serif!important;
+}
+.control-sidebar,.control-sidebar *{
+  font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif!important;
+  letter-spacing:-.02em;
+}
+.control-sidebar .side-nav a span:last-child{
+  font-size:10px!important;
+  font-weight:700!important;
+  line-height:1.35!important;
+}
+.control-sidebar .side-nav p{
+  font-size:8px!important;
+  font-weight:700!important;
+}
+.control-sidebar{visibility:visible!important;opacity:1!important}
+#demoControls,.scenario-controls,.mode-badge,#modeBadge,.autonomy-hidden-badge,.control-mode{display:none!important}

@@ -1,4 +1,4 @@
-const CACHE='hangangbus-ui-stability-v91-5';
+const CACHE='hangangbus-ui-canonical-v91-6';
 const ASSETS=[
   './',
   './index.html',
@@ -11,12 +11,12 @@ const ASSETS=[
   './rain.html',
   './wind.html',
   './tide.html',
-  './dashboard.css?v=91.5',
-  './dashboard.js?v=91.3',
-  './styles.css?v=91.5',
-  './module-pages.css?v=91.5',
-  './module-pages.js?v=91.5',
-  './app.js?v=91.5',
+  './dashboard.css?v=91.6',
+  './dashboard.js?v=91.6',
+  './styles.css?v=91.6',
+  './module-pages.css?v=91.6',
+  './module-pages.js?v=91.6',
+  './app.js?v=91.6',
   './shared-config.js?v=62',
   './weather-config.js?v=62',
   './ocean-config.js?v=67',
@@ -24,13 +24,13 @@ const ASSETS=[
   './data/demo-data.js?v=62',
   './hrfco.js?v=62',
   './kma.js?v=87',
-  './ocean.js?v=91.5',
+  './ocean.js?v=91.6',
   './assets/hangangbus-logo.png?v=88',
-  './history.css?v=91.1',
+  './history.css?v=91.6',
   './history-config.js?v=90.1',
-  './history.js?v=91.1',
-  './shared-sidebar.css?v=91.5',
-  './shared-navigation.js?v=91.5'
+  './history.js?v=91.6',
+  './shared-sidebar.css?v=91.6',
+  './shared-navigation.js?v=91.6'
 ];
 
 self.addEventListener('install',event=>{

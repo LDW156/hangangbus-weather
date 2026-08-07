@@ -409,14 +409,37 @@
     };
   }
 
-  const CACHE_VERSION='v91.5';
+  const CACHE_VERSION='v91.6';
   function tideCacheKey(date=new Date()){return `hangangbus:tide:${CACHE_VERSION}:${settings().obsCode}:${kstDateKey(date)}`;}
-  function readTideCache(){try{const raw=localStorage.getItem(tideCacheKey());if(!raw)return null;const parsed=JSON.parse(raw);if(!parsed?.data||!parsed?.savedAt)return null;const savedAt=new Date(parsed.savedAt);if(Number.isNaN(savedAt.getTime()))return null;return {data:parsed.data,savedAt};}catch(_){return null;}}
+  function parseCache(raw){try{const parsed=JSON.parse(raw);if(!parsed?.data||!parsed?.savedAt)return null;const savedAt=new Date(parsed.savedAt);if(Number.isNaN(savedAt.getTime()))return null;return {data:parsed.data,savedAt};}catch(_){return null;}}
+  function readTideCache(){try{const raw=localStorage.getItem(tideCacheKey());return raw?parseCache(raw):null;}catch(_){return null;}}
+  function readLatestTideCache(){
+    try{
+      const prefix=`hangangbus:tide:${CACHE_VERSION}:${settings().obsCode}:`;
+      const candidates=[];
+      for(let i=0;i<localStorage.length;i+=1){
+        const key=localStorage.key(i);
+        if(!key||!key.startsWith(prefix))continue;
+        const parsed=parseCache(localStorage.getItem(key));
+        if(parsed)candidates.push(parsed);
+      }
+      return candidates.sort((a,b)=>b.savedAt-a.savedAt)[0]||null;
+    }catch(_){return null;}
+  }
   function writeTideCache(data){try{localStorage.setItem(tideCacheKey(),JSON.stringify({savedAt:new Date().toISOString(),data}));}catch(_){}}
   async function loadTide(options={}){
-    const force=Boolean(options.force);const cached=readTideCache();
+    const force=Boolean(options.force);
+    const cached=readTideCache();
     if(cached&&!force)return {...cached.data,cacheStatus:'daily-cache',cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};
-    try{const tide=await fetchTideNetwork();writeTideCache(tide);return tide;}catch(error){if(cached)return {...cached.data,cacheStatus:'stale-cache',cacheWarning:error.message,cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};throw error;}
+    try{
+      const tide=await fetchTideNetwork();
+      writeTideCache(tide);
+      return tide;
+    }catch(error){
+      const fallback=cached||readLatestTideCache();
+      if(fallback)return {...fallback.data,cacheStatus:'stale-cache',cacheWarning:error.message,cacheSavedAt:fallback.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-fallback.savedAt.getTime())/60000))};
+      throw error;
+    }
   }
   async function testConnection() {
     const tide = await loadTide({force:true});

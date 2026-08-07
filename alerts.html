@@ -7,9 +7,9 @@
   <title>운항 관련 특보 | 한강버스</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=91.5">
-  <link rel="stylesheet" href="module-pages.css?v=91.5">
-  <link rel="stylesheet" href="shared-sidebar.css?v=91.5">
+  <link rel="stylesheet" href="styles.css?v=91.6">
+  <link rel="stylesheet" href="module-pages.css?v=91.6">
+  <link rel="stylesheet" href="shared-sidebar.css?v=91.6">
 </head>
 <body class="module-autonomy module-alerts" data-detail-section="alerts">
 <aside class="control-sidebar" aria-label="한강버스 공통 메뉴">
@@ -54,15 +54,37 @@
     <span id="updatedAt" class="updated">갱신 확인 중</span>
   </div>
 </header>
-<div id="systemBanner" class="system-banner demo">데이터 연결상태를 확인하고 있습니다.</div>
+<div id="systemBanner" class="system-banner loading">최신 공식자료를 조회하고 있습니다.</div>
 <div id="weatherAlertBanner" class="weather-alert-banner" role="alert" hidden></div>
 <main class="autonomy-main">
-  <section class="module-hero alert-hero"><div><span>OFFICIAL ALERT DESK</span><h2>운항 관련 기상특보 센터</h2><p>서울 직접영향, 팔당 상류 참고, 해제자료를 운항기준에 맞춰 분리합니다.</p></div><div class="hero-kicker"><b>표시대상</b><span>호우 · 강풍 · 태풍 · 폭염</span></div></section>
   <section id="alerts" class="autonomy-section">
-    <div class="alert-operation-criteria autonomy-alert-criteria"><div><b>운항중지 검토</b><span>호우경보 · 강풍주의보 이상 · 태풍주의보 이상</span></div><div><b>운항조정 검토</b><span>폭염중대경보 · 예비특보 · 현장 위험 증가</span></div><div><b>상류 참고</b><span>경기 동부 호우·태풍 특보</span></div></div>
-    <div class="section-heading"><div><span>01</span><h2>현재 발효·예정 특보</h2></div><small>기상청 발표 기준</small></div><div id="alertList" class="alert-list"></div>
+    <div class="section-heading">
+      <div><span>01</span><h2>현재 발효·예정 특보</h2></div>
+      <small>서울 직접영향·팔당 상류 참고·최근 해제</small>
+    </div>
+    <div id="alertList" class="alert-list"></div>
   </section>
-  <section class="autonomy-section"><div class="section-heading"><div><span>02</span><h2>특보 적용 원칙</h2></div><small>지역·현상·발효시각 확인</small></div><div class="rule-grid"><article><b>서울 대상 확인</b><p>전국 통보문 제목만 보고 서울 특보로 판단하지 않습니다.</p></article><article><b>발효·예비 구분</b><p>현재 발효와 향후 발효예정을 분리하여 조치 수준을 결정합니다.</p></article><article><b>해제문 반영</b><p>동일 현상·동일 지역의 최신 해제 발표를 우선합니다.</p></article></div></section>
+
+  <section class="autonomy-section alert-summary-strip">
+    <div class="section-heading">
+      <div><span>02</span><h2>운항 적용 구분</h2></div>
+      <small>현상·지역·발효시각을 함께 확인</small>
+    </div>
+    <div class="alert-operation-criteria autonomy-alert-criteria">
+      <div><b>운항중지 검토</b><span>호우경보 · 강풍주의보 이상 · 태풍주의보 이상</span></div>
+      <div><b>운항조정 검토</b><span>폭염중대경보 · 예비특보 · 현장 위험 증가</span></div>
+      <div><b>상류 참고</b><span>경기 동부 호우·태풍 특보</span></div>
+    </div>
+  </section>
+
+  <section class="autonomy-section alert-rule-section">
+    <div class="section-heading"><div><span>03</span><h2>특보 적용 원칙</h2></div><small>전국 통보문 오인 방지</small></div>
+    <div class="rule-grid">
+      <article><b>서울 대상 확인</b><p>전국 통보문 제목만 보고 서울 특보로 판단하지 않습니다.</p></article>
+      <article><b>발효·예비 구분</b><p>현재 발효와 향후 발효예정을 분리하여 조치 수준을 결정합니다.</p></article>
+      <article><b>해제문 반영</b><p>동일 현상·동일 지역의 최신 해제 발표를 우선합니다.</p></article>
+    </div>
+  </section>
 </main>
 <footer class="autonomy-footer"><strong>운항 참고용</strong> 공식기관 자료와 회사 지침, 현장 확인을 함께 적용하십시오. <span>제작 · 운항감독 이대운</span></footer>
 </div>
@@ -73,10 +95,10 @@
 <script src="data/demo-data.js?v=62"></script>
 <script src="hrfco.js?v=62"></script>
 <script src="kma.js?v=87"></script>
-<script src="ocean.js?v=91.5"></script>
-<script src="app.js?v=91.5"></script>
-<script src="module-pages.js?v=91.5"></script>
+<script src="ocean.js?v=91.6"></script>
+<script src="app.js?v=91.6"></script>
+<script src="module-pages.js?v=91.6"></script>
 
-  <script src="shared-navigation.js?v=91.5"></script>
+  <script src="shared-navigation.js?v=91.6"></script>
 </body>
 </html>

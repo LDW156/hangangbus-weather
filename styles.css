@@ -5023,3 +5023,20 @@ details.rain-contribution-box {
 .module-page .module-page-note{margin:0 24px 4px;padding:12px 14px;color:#31576a;background:#fff;border:1px solid #cbdde6;border-left:5px solid #2f91bd;border-radius:10px;box-shadow:0 5px 15px rgba(34,73,92,.06);font-size:9px;font-weight:800;line-height:1.6}
 .module-page footer{margin-left:0}
 @media(max-width:860px){.module-sidebar{position:static;width:auto;height:auto}.module-sidebar nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.module-sidebar nav p{grid-column:1/-1}.module-page{padding-left:0}.module-page .app-header{position:relative}.module-page .container{padding:10px}.river-schematic{min-width:930px}.river-map-panel{overflow-x:auto}}
+
+
+/* v91.6 상세화면 스크롤 겹침 제거 */
+.detail-content .app-header,
+.detail-content .quick-nav,
+.detail-content .weather-alert-banner,
+.module-page .app-header{
+  position:relative!important;
+  top:auto!important;
+  z-index:2!important;
+  backdrop-filter:none!important;
+}
+.system-banner.loading{
+  color:#31566a;
+  background:#edf5f9;
+  border-color:#a9c7d8;
+}
