@@ -60,11 +60,12 @@
     data.meta=data.meta||{};
     data.meta.dataTimes=data.meta.dataTimes||{};
     data.meta.generatedAt=new Date().toISOString();
+    data.tide=previousData?.tide||{referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:null,sourceLabel:'조석자료 확인 중'};
 
     // 빈 화면을 기다리지 않도록 기본 화면을 즉시 먼저 표시합니다.
     updateTideOverlapRisk();
     render();
-    $('modeBadge').textContent='LOADING';
+    if($('modeBadge'))$('modeBadge').textContent='LOADING';
     setBanner('demo','기본 화면 표시 완료 · 수문·기상·조석 최신자료를 동시에 조회 중입니다.');
 
     const liveSources=[];
@@ -163,11 +164,13 @@
           data.health=(data.health||[]).filter(
             x=>!['조석','조석정보'].includes(x.name)
           );
+          const tideCached=String(live.cacheStatus||'').includes('cache');
           data.health.push({
-            name:'조석',status:'normal',updatedAt:live.updatedAt,
-            checkedAt:live.updatedAt,intervalMinutes:10
+            name:'조석',status:tideCached?'cached':'normal',updatedAt:live.updatedAt,
+            checkedAt:new Date().toISOString(),intervalMinutes:360
           });
-          liveSources.push('조석');
+          if(tideCached)notes.push('조석: 당일 저장자료 사용');
+          liveSources.push(tideCached?'조석(당일저장)':'조석');
         }
 
         return;
@@ -226,6 +229,7 @@
         notes.push(`조석 갱신 실패 · 직전 정상값 유지 (${err.message})`);
         liveSources.push('조석(직전값)');
       }else if(task.type==='tide'){
+        data.tide={referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:err.message,sourceLabel:'조석자료 미수신'};
         errors.push(`조석: ${err.message}`);
       }
     });
@@ -237,10 +241,10 @@
     const hasSource=name=>liveSources.some(source=>source.startsWith(name));
 
     if(liveSources.length){
-      $('modeBadge').textContent='HYBRID';
+      if($('modeBadge'))$('modeBadge').textContent='LIVE';
       const liveText=`실데이터: ${liveSources.join('·')}`;
       const demoList=['수문','기상','조석'].filter(x=>!hasSource(x));
-      const demoText=demoList.length?`데모 유지: ${demoList.join('·')}`:'';
+      const demoText=demoList.length?`자료 확인 필요: ${demoList.join('·')}`:'';
       const parts=[liveText,demoText].filter(Boolean);
 
       if(errors.length){
@@ -251,10 +255,10 @@
         setBanner('live',`${parts.join(' / ')}. 각 카드의 관측·예보 시각을 확인하십시오.`);
       }
     }else if(errors.length){
-      $('modeBadge').textContent='ERROR';
-      setBanner('error',`${errors.join(' | ')} · 현재 표시값은 데모이므로 운항판단에 사용하지 마십시오.`);
+      if($('modeBadge'))$('modeBadge').textContent='ERROR';
+      setBanner('error',`${errors.join(' | ')} · 현재 미수신 항목은 운항판단에 사용하지 마십시오.`);
     }else{
-      $('modeBadge').textContent=setupSources.length?'SETUP':'DEMO';
+      if($('modeBadge'))$('modeBadge').textContent='CHECK';
       setBanner('demo',`${setupSources.join('·')} 실데이터 설정 전입니다. 공용 설정파일을 확인하십시오.`);
     }
 
@@ -589,8 +593,26 @@
 
   function render(){
     const calc=compute();
-    renderRoutes(calc);renderJamsu(calc);renderDam(calc);renderAlerts();renderWeatherAlertBanner();renderRain();renderWind();renderRiver();renderTide();renderHealth();
-    $('updatedAt').textContent=`화면 갱신 ${dateTimeText(data.meta.generatedAt)}`;
+
+    if($('eastRoute')&&$('westRoute'))renderRoutes(calc);
+    if($('jamsuHero')&&$('jamsuChart'))renderJamsu(calc);
+    if($('damMetrics')&&$('damChart'))renderDam(calc);
+    if($('alertList'))renderAlerts();
+    if($('weatherAlertBanner'))renderWeatherAlertBanner();
+    if($('rainCards'))renderRain();
+    if($('windGrid'))renderWind();
+    if($('riverGrid'))renderRiver();
+    if($('tideGrid')&&$('tideChart'))renderTide();
+    if($('healthGrid'))renderHealth();
+
+    if($('updatedAt')){
+      $('updatedAt').textContent=`화면 갱신 ${dateTimeText(data.meta.generatedAt)}`;
+    }
+
+    window.HANGANG_LATEST_DATA=data;
+    window.dispatchEvent(new CustomEvent('hangangbus-data-rendered',{
+      detail:{data,calc}
+    }));
   }
 
   function routeCard(name,status,reasons,basis){
@@ -613,7 +635,6 @@
     const westBasis=`자료기준 팔당 ${timeText(data.hydrology.paldang.observedAt)} · 기상 ${timeText(data.meta.dataTimes.weatherObservation)} · 조석 ${timeText(data.tide.referenceAt)}`;
     $('eastRoute').className=`route-card ${c.east}`;$('eastRoute').innerHTML=routeCard('동부선',c.east,c.eastReasons,eastBasis);
     $('westRoute').className=`route-card ${c.west}`;$('westRoute').innerHTML=routeCard('서부선',c.west,c.westReasons,westBasis);
-    if(cfg.SHOW_DEMO_CONTROLS&&cfg.DATA_MODE==='demo'){$('demoControls').hidden=false;document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.toggle('active',b.dataset.scenario===scenario));}
   }
 
   function comparisonCell(label,time,current,previous,digits=2,unit='m',inverse=false){
@@ -879,6 +900,7 @@
 
   function renderWeatherAlertBanner(){
     const root=$('weatherAlertBanner');
+    if(!root)return;
     const allActiveAlerts=activeOperationAlerts();
 
     const directAlerts=allActiveAlerts
@@ -2337,9 +2359,13 @@
     const title=meta?.title||'한강버스 전체 상세 모니터링';
     const description=meta?.description||'기상·수문·조석·노선별 운항판단을 아래로 스크롤하여 확인합니다.';
 
-    document.querySelector('.brand-copy h1').textContent=title;
-    document.querySelector('.header-sub').textContent=description;
-    document.title=`${title} | 한강버스`;
+    if(!document.body.classList.contains('module-autonomy')){
+      const heading=document.querySelector('.brand-copy h1');
+      const subtitle=document.querySelector('.header-sub');
+      if(heading)heading.textContent=title;
+      if(subtitle)subtitle.textContent=description;
+      document.title=`${title} | 한강버스`;
+    }
 
     requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));
   }
@@ -2375,7 +2401,7 @@
       data.meta=data.meta||{};
       updateTideOverlapRisk();
       render();
-      $('modeBadge').textContent='SHARED';
+      if($('modeBadge'))$('modeBadge').textContent='SHARED';
       setBanner('live','메인 대시보드 수신자료를 즉시 표시했습니다. 상세자료는 백그라운드에서 갱신 중입니다.');
     }catch(_){}
   }
@@ -2415,8 +2441,6 @@
 
   const initialSection=document.body.dataset.detailSection||String(location.hash||'').replace(/^#/,'');
   setDetailPageMode(initialSection);
-
-  document.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;scenario=b.dataset.scenario;loadData('scenario');});
   $('refreshBtn')?.addEventListener('click',()=>loadData('manual'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lastRefreshStartedAt&&Date.now()-lastRefreshStartedAt.getTime()>cfg.REFRESH_MS)loadData('resume');});
   if('serviceWorker' in navigator&&window.parent===window){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}

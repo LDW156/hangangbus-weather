@@ -3,251 +3,78 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f1f4f7">
-  <meta name="description" content="한강버스 기상·수문·조석 및 운항판단 모니터링">
-  <title>풍향·풍속 상세 | 한강버스</title>
+  <meta name="theme-color" content="#0e3d5c">
+  <title>풍향·풍속 | 한강버스</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=91.3">
+  <link rel="stylesheet" href="styles.css?v=91.5">
+  <link rel="stylesheet" href="module-pages.css?v=91.5">
+  <link rel="stylesheet" href="shared-sidebar.css?v=91.5">
 </head>
-<body class="module-page" data-detail-section="wind">
-  <aside class="module-sidebar">
-  <div class="side-brand"><img src="./assets/hangangbus-logo.png?v=62" alt="한강버스 로고"><div><b>한강버스</b><span>항목별 상세 모니터링</span></div></div>
-  <nav>
-    <a href="./index.html"><i>▦</i>종합 대시보드</a>
-    <a href="./detail.html"><i>▤</i>전체 상세 모니터링</a>
+<body class="module-autonomy module-wind" data-detail-section="wind">
+<aside class="control-sidebar" aria-label="한강버스 공통 메뉴">
+  <div class="side-brand">
+    <img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고">
+    <div><b>한강버스</b><span>통합 상황관리</span></div>
+  </div>
+  <nav class="side-nav" aria-label="대시보드 메뉴">
+    <a href="./index.html" data-nav-file="index.html"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+    <a href="./detail.html" data-nav-file="detail.html"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
     <p>운항·수문</p>
-    <a data-page="route" href="./route.html"><i>◉</i>노선 운항판정</a>
-    <a data-page="jamsu" href="./jamsu.html"><i>↕</i>잠수교 통과높이</a>
-    <a data-page="dam" href="./paldang.html"><i>≋</i>팔당댐 방류량</a>
-    <a data-page="river" href="./river.html"><i>⌁</i>한강 교량별 수위</a>
+    <a href="./route.html" data-nav-file="route.html"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+    <a href="./jamsu.html" data-nav-file="jamsu.html"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+    <a href="./paldang.html" data-nav-file="paldang.html"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+    <a href="./river.html" data-nav-file="river.html"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
     <p>기상·조석</p>
-    <a data-page="alerts" href="./alerts.html"><i>!</i>운항 관련 특보</a>
-    <a data-page="rain" href="./rain.html"><i>☂</i>강수 예보</a>
-    <a data-page="wind" href="./wind.html"><i>➤</i>풍향·풍속</a>
-    <a data-page="tide" href="./tide.html"><i>◒</i>인천 조석</a>
+    <a href="./alerts.html" data-nav-file="alerts.html"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+    <a href="./rain.html" data-nav-file="rain.html"><span class="side-icon">☂</span><span>강수 예보</span></a>
+    <a href="./wind.html" data-nav-file="wind.html"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+    <a href="./tide.html" data-nav-file="tide.html"><span class="side-icon">◒</span><span>인천 조석</span></a>
+    <p>데이터 분석</p>
+    <a href="./index.html#analysis-dam" data-nav-hash="analysis-dam"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+    <a href="./index.html#analysis-bridge" data-nav-hash="analysis-bridge"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+    <a href="./index.html#analysis-search" data-nav-hash="analysis-search"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
   </nav>
+  <div class="side-legend">
+    <b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+  </div>
+  <div class="side-credit">제작 · 운항감독 이대운</div>
 </aside>
-  <header class="app-header">
-    <div class="brand-lockup">
-      <div class="brand-mark official-logo" aria-label="한강버스 공식 로고">
-        <img src="./assets/hangangbus-logo.png?v=62" alt="한강버스 로고">
-      </div>
-      <div class="brand-copy">
-        <p class="eyebrow">HANGANG BUS WEATHER MONITORING</p>
-        <h1>한강버스 기상·수문 모니터링</h1>
-        <div class="header-meta">
-          <p class="header-sub">기상 · 수문 · 조석 · 노선별 운항판단</p>
-          <p class="creator-credit">제작 · 운항감독 이대운</p>
-        </div>
-      </div>
-    </div>
-    <div class="header-right">
-      <button id="embeddedDashboardBack" class="embedded-dashboard-back" type="button">← 종합 대시보드</button>
-      <div class="refresh-control"><button id="refreshBtn" class="refresh-btn" type="button"><span class="refresh-icon">↻</span> 최신 데이터 업데이트</button><small id="refreshNote">자동 갱신 5분</small></div>
-      <span id="modeBadge" class="mode-badge">DEMO</span>
-      <span id="updatedAt" class="updated">갱신 확인 중</span>
-    </div>
-  </header>
-
-  <div id="systemBanner" class="system-banner demo">현재 데모 데이터로 표시 중입니다.</div>
-  <div id="weatherAlertBanner" class="weather-alert-banner" role="alert" aria-live="assertive" hidden></div>
-
-  <section id="detailPageContext" class="detail-page-context" hidden>
-    <div class="detail-context-heading">
-      <div>
-        <span id="detailPageEyebrow">상세 항목</span>
-        <h2 id="detailPageTitle">상세 모니터링</h2>
-        <p id="detailPageDescription">선택 항목의 현재값과 판단 근거를 확인합니다.</p>
-      </div>
-      <button id="detailShowAll" type="button">전체 상세 모니터링</button>
-    </div>
-    <div id="detailContextGrid" class="detail-context-grid"></div>
-    <div id="detailRelatedLinks" class="detail-related-links"></div>
-  </section>
-
-  <nav class="quick-nav" aria-label="섹터 이동">
-    <a href="#route">노선판단</a><a href="#jamsu">잠수교</a><a href="#dam">팔당댐</a>
-    <a href="#alerts">특보</a><a href="#rain">강수</a><a href="#wind">바람</a>
-    <a href="#river">수위</a><a href="#tide">조석</a>
-  </nav>
-
-  <div class="module-page-note">선착장별 현재풍과 단기예보를 비교해 접·이안 위험을 확인합니다.</div>
-
-  <main class="container">
-    <section id="route" class="section first">
-      <div class="section-head"><div><span>01</span><h2>노선별 운항 가능 여부</h2></div><small>수문·기상·특보 기준 종합판단</small></div>
-      <div class="route-grid">
-        <article id="eastRoute" class="route-card"></article>
-        <article id="westRoute" class="route-card"></article>
-      </div>
-      <div id="demoControls" class="scenario-controls" hidden>
-        <span>데모 시나리오</span>
-        <button data-scenario="normal">정상</button>
-        <button data-scenario="caution">주의</button>
-        <button data-scenario="stop">운항불가</button>
-      </div>
-    </section>
-
-    <section id="jamsu" class="section">
-      <div class="section-head"><div><span>02</span><h2>잠수교 통과높이</h2></div><small>동부선 운항판단 핵심값</small></div>
-      <div class="jamsu-layout">
-        <article id="jamsuHero" class="jamsu-hero"></article>
-        <article class="panel chart-panel">
-          <div class="panel-title"><h3>최근 수위 추이</h3><span id="jamsuChartMeta">10분 간격</span></div>
-          <svg id="jamsuChart" viewBox="0 0 1100 230" role="img" aria-label="잠수교 수위 추이"></svg>
-          <div class="chart-legend jamsu-chart-legend"><span class="line water"></span>잠수교 수위 <span class="line caution dashed-long"></span>주의수위 4.10m <span class="line stop dashed-short"></span>운항불가수위 4.46m</div>
-        </article>
-      </div>
-    </section>
-
-    <section id="dam" class="section">
-      <div class="section-head"><div><span>03</span><h2>팔당댐 수문정보</h2></div><small>유입량·방류량·증감·추이</small></div>
-      <div id="damMetrics" class="metric-grid four"></div>
-      <article class="panel chart-panel top-gap">
-        <div class="panel-title"><h3>유입량·방류량 추이</h3><span id="damTrendText"></span></div>
-        <svg id="damChart" viewBox="0 0 1200 220" role="img" aria-label="팔당댐 유입량 방류량 추이"></svg>
-        <div class="chart-legend"><span class="line inflow"></span>유입량 <span class="line outflow"></span>방류량 <span class="line east"></span>동부 2,000 <span class="line west"></span>서부 3,000</div>
-      </article>
-      <article class="panel table-panel top-gap">
-        <div class="panel-title"><h3>유입량·방류량 시각별 비교</h3><span>현재·10분·30분·1시간</span></div>
-        <div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>유입량</th><th>방류량</th><th>유입-방류</th></tr></thead><tbody id="damComparisonBody"></tbody></table></div>
-      </article>
-    </section>
-
-    <section id="alerts" class="section">
-      <div class="section-head">
-        <div><span>04</span><h2>운항 관련 기상특보</h2></div>
-        <small>호우·강풍·태풍만 표시</small>
-      </div>
-
-      <div class="alert-operation-criteria">
-        <div>
-          <b>운항중지</b>
-          <span>호우경보 · 강풍주의보 이상 · 태풍주의보 이상</span>
-        </div>
-        <div>
-          <b>사전검토</b>
-          <span>서울 호우·강풍·태풍 예비특보</span>
-        </div>
-        <div>
-          <b>상류참고</b>
-          <span>경기 동부 호우·태풍 특보</span>
-        </div>
-      </div>
-
-      <div id="alertList" class="alert-list"></div>
-    </section>
-
-    <section id="rain" class="section">
-      <div class="section-head"><div><span>05</span><h2>예상 강수량</h2></div><small>서부선·동부선 구분</small></div>
-      <div id="rainCards" class="sector-grid"></div>
-    </section>
-
-    <section id="wind" class="section">
-      <div class="section-head"><div><span>06</span><h2>선착장별 풍향·풍속</h2></div><small>현재·1시간·2시간 예보 · 풍향 나침반·경위도</small></div>
-      <div id="windGrid" class="station-grid"></div>
-    </section>
-
-    <section id="river" class="section">
-      <div class="section-head"><div><span>07</span><h2>한강 교량별 수위</h2></div><small>운항구간 개략도 · 관측소 연결상태</small></div>
-      <article class="panel river-map-panel">
-        <div class="panel-title"><h3>한강버스 운항구간 교량 수위 지도</h3><span>현재 실시간 연결: 잠수교·한강대교</span></div>
-        <div class="river-schematic" role="img" aria-label="한강 주요 교량 수위 관측 연결 개략도">
-          <div class="river-line"></div>
-          <div class="bridge-marker planned" style="left:4%"><b>방화대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker planned" style="left:14%"><b>성산대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker planned" style="left:23%"><b>양화대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker planned" style="left:33%"><b>마포대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker live" style="left:43%"><b>한강대교</b><span id="riverMapHangangValue">조회 중</span></div>
-          <div class="bridge-marker planned" style="left:52%"><b>동작대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker live" style="left:60%"><b>잠수교</b><span id="riverMapJamsuValue">조회 중</span></div>
-          <div class="bridge-marker planned" style="left:69%"><b>한남대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker planned" style="left:77%"><b>성수대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker planned" style="left:85%"><b>영동대교</b><span>연결 예정</span></div>
-          <div class="bridge-marker planned" style="left:93%"><b>잠실대교</b><span>연결 예정</span></div>
-        </div>
-        <div class="river-map-note">위치는 실제 축척이 아닌 운항구간 개략도입니다. 현재 D1 실시간 수위가 연결된 교량은 잠수교와 한강대교이며, 나머지는 관측소 연계 후 활성화됩니다.</div>
-      </article>
-      <div id="riverGrid" class="metric-grid two"></div>
-    </section>
-
-    <section id="tide" class="section">
-      <div class="section-head"><div><span>08</span><h2>인천 조석</h2></div><small>실측·예측조위 · 만조·간조 · 방류 중첩</small></div>
-      <div id="tideGrid" class="metric-grid four"></div>
-      <article class="panel chart-panel top-gap tide-chart-panel">
-        <div class="panel-title"><h3>인천 24시간 예측조위·만간조</h3><span>시각·조위 고정표시 · 10분 단위 마우스·터치 조회</span></div>
-        <div id="tideEventStrip" class="tide-event-strip"></div>
-        <div class="tide-chart-scroll" role="region" aria-label="인천 조석 그래프 좌우 이동">
-          <svg id="tideChart" viewBox="0 0 1100 300" role="img" aria-label="인천 예측조위와 만조 간조 그래프"></svg>
-        </div>
-        <div class="chart-legend tide-chart-legend"><span class="line water"></span>예측조위 <span class="tide-now-line"></span>현재시각 <span class="tide-high-line"></span>만조 <span class="tide-low-line"></span>간조</div>
-      </article>
-      <article class="panel table-panel top-gap">
-        <div class="panel-title"><h3>조석 전후 시각 비교</h3><span>이전·현재·다음 이벤트</span></div>
-        <div class="table-scroll"><table class="data-table"><thead><tr><th>구분</th><th>시각</th><th>조위</th><th>비교</th></tr></thead><tbody id="tideComparisonBody"></tbody></table></div>
-      </article>
-      <article class="panel table-panel top-gap monthly-tide-panel">
-        <div class="panel-title">
-          <h3>향후 30일 조석 전망</h3>
-          <span>reqDate 일별조회 · 조차 기준 대조기권·소조기권 추정</span>
-        </div>
-        <div id="tideMonthlySummary" class="monthly-summary-grid"></div>
-        <div class="monthly-method-note">
-          대조기권·소조기권은 향후 30일 일 조차의 상대범위로 추정한 운항 참고값입니다.
-        </div>
-        <div class="table-scroll monthly-table-scroll">
-          <table class="data-table monthly-tide-table">
-            <thead>
-              <tr>
-                <th>날짜</th>
-                <th>조석구간</th>
-                <th>만조 시각·조위</th>
-                <th>간조 시각·조위</th>
-                <th>최대조차</th>
-                <th>운항 참고</th>
-              </tr>
-            </thead>
-            <tbody id="tideMonthlyBody"></tbody>
-          </table>
-        </div>
-      </article>
-
-    </section>
-
-    <section id="health" class="section data-state">
-      <div class="section-head"><div><span>09</span><h2>데이터 상태</h2></div><small>갱신 지연 시 운항판단 사용 금지</small></div>
-      <div id="healthGrid" class="health-grid"></div>
-    </section>
-  </main>
-
-  <footer>
-    <strong>주의:</strong> 공식기관 자료를 취합한 운항 참고용 화면입니다. 실제 운항판단은 회사 지침과 현장 확인을 우선합니다. <span class="footer-credit">제작 · 운항감독 이대운</span>
-  </footer>
+<div class="autonomy-shell">
+<header class="autonomy-topbar">
+  <div class="autonomy-title">
+    <span>WIND FIELD</span>
+    <h1>풍향·풍속</h1>
+    <p>선착장별 상대풍과 단기예보를 확인합니다.</p>
+  </div>
+  <div class="autonomy-actions">
+    <button id="embeddedDashboardBack" type="button">← 종합 대시보드</button>
+    <button id="refreshBtn" class="refresh-btn" type="button">↻ 최신 데이터</button>
+    <small id="refreshNote">자동 갱신 5분</small>
+    <span id="updatedAt" class="updated">갱신 확인 중</span>
+  </div>
+</header>
+<div id="systemBanner" class="system-banner demo">데이터 연결상태를 확인하고 있습니다.</div>
+<div id="weatherAlertBanner" class="weather-alert-banner" role="alert" hidden></div>
+<main class="autonomy-main">
+  <section class="module-hero wind-hero"><div><span>WIND FIELD MONITOR</span><h2>선착장 풍향·풍속 관제</h2><p>현재풍과 1·2시간 예보를 선착장별로 비교해 접·이안 위험을 확인합니다.</p></div><div class="hero-kicker"><b>핵심</b><span>풍속보다 선착장 상대풍향</span></div></section>
+  <section class="autonomy-section"><div class="section-heading"><div><span>01</span><h2>운항 기준 가이드</h2></div><small>회사 기준값과 현장체감 병행</small></div><div class="wind-band"><article class="good"><b>정상</b><span>기준 미만·접안 영향 낮음</span></article><article class="warn"><b>주의</b><span>돌풍·횡풍·접안방향 확인</span></article><article class="danger"><b>중지 검토</b><span>기준 초과 또는 통제 곤란</span></article></div></section>
+  <section id="wind" class="autonomy-section"><div class="section-heading"><div><span>02</span><h2>선착장별 현재·단기예보</h2></div><small>풍향 나침반·경위도·1·2시간</small></div><div id="windGrid" class="station-grid wind-autonomy-grid"></div></section>
+  <section class="autonomy-section"><div class="section-heading"><div><span>03</span><h2>접·이안 판단요소</h2></div><small>같은 풍속도 선착장마다 다름</small></div><div class="checklist-grid"><span>안벽과 바람 각도</span><span>접안면 횡풍 여부</span><span>돌풍 최대값</span><span>조류와 반대·동일방향</span><span>승강대 흔들림</span><span>예인·보조인력 필요성</span></div></section>
+</main>
+<footer class="autonomy-footer"><strong>운항 참고용</strong> 공식기관 자료와 회사 지침, 현장 확인을 함께 적용하십시오. <span>제작 · 운항감독 이대운</span></footer>
+</div>
 <script src="shared-config.js?v=62"></script>
-  <script src="weather-config.js?v=62"></script>
-  <script src="ocean-config.js?v=67"></script>
-  <script src="config.js?v=62"></script>
-  <script src="data/demo-data.js?v=62"></script>
-  <script src="hrfco.js?v=62"></script>
-  <script src="kma.js?v=87"></script>
-  <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=91.3"></script>
+<script src="weather-config.js?v=62"></script>
+<script src="ocean-config.js?v=67"></script>
+<script src="config.js?v=62"></script>
+<script src="data/demo-data.js?v=62"></script>
+<script src="hrfco.js?v=62"></script>
+<script src="kma.js?v=87"></script>
+<script src="ocean.js?v=91.5"></script>
+<script src="app.js?v=91.5"></script>
+<script src="module-pages.js?v=91.5"></script>
 
-  <script>document.querySelector('.module-sidebar a[data-page="wind"]')?.classList.add('active');</script>
-  <script>
-    (() => {
-      const back = document.getElementById('embeddedDashboardBack');
-      back?.addEventListener('click', () => {
-        if (window.parent !== window) {
-          window.parent.postMessage({type:'hangangbus-open-dashboard'}, window.location.origin);
-        } else {
-          window.location.href = './?v=86';
-        }
-      });
-    })();
-  </script>
+  <script src="shared-navigation.js?v=91.5"></script>
 </body>
 </html>

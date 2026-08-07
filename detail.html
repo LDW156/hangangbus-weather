@@ -10,9 +10,40 @@
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="shortcut icon" type="image/png" href="./assets/hangangbus-logo.png?v=88">
   <link rel="apple-touch-icon" href="./assets/hangangbus-logo.png?v=88">
-  <link rel="stylesheet" href="styles.css?v=91.3">
+  <link rel="stylesheet" href="styles.css?v=91.5">
+  <link rel="stylesheet" href="shared-sidebar.css?v=91.5">
 </head>
 <body>
+<div class="detail-control-shell">
+<aside class="control-sidebar" aria-label="한강버스 공통 메뉴">
+  <div class="side-brand">
+    <img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고">
+    <div><b>한강버스</b><span>통합 상황관리</span></div>
+  </div>
+  <nav class="side-nav" aria-label="대시보드 메뉴">
+    <a href="./index.html" data-nav-file="index.html"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+    <a href="./detail.html" data-nav-file="detail.html"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+    <p>운항·수문</p>
+    <a href="./route.html" data-nav-file="route.html"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+    <a href="./jamsu.html" data-nav-file="jamsu.html"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+    <a href="./paldang.html" data-nav-file="paldang.html"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+    <a href="./river.html" data-nav-file="river.html"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+    <p>기상·조석</p>
+    <a href="./alerts.html" data-nav-file="alerts.html"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+    <a href="./rain.html" data-nav-file="rain.html"><span class="side-icon">☂</span><span>강수 예보</span></a>
+    <a href="./wind.html" data-nav-file="wind.html"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+    <a href="./tide.html" data-nav-file="tide.html"><span class="side-icon">◒</span><span>인천 조석</span></a>
+    <p>데이터 분석</p>
+    <a href="./index.html#analysis-dam" data-nav-hash="analysis-dam"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+    <a href="./index.html#analysis-bridge" data-nav-hash="analysis-bridge"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+    <a href="./index.html#analysis-search" data-nav-hash="analysis-search"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+  </nav>
+  <div class="side-legend">
+    <b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+  </div>
+  <div class="side-credit">제작 · 운항감독 이대운</div>
+</aside>
+<div class="detail-content">
   <header class="app-header">
     <div class="brand-lockup">
       <div class="brand-mark official-logo" aria-label="한강버스 공식 로고">
@@ -30,7 +61,6 @@
     <div class="header-right">
       <button id="embeddedDashboardBack" class="embedded-dashboard-back" type="button">← 종합 대시보드</button>
       <div class="refresh-control"><button id="refreshBtn" class="refresh-btn" type="button"><span class="refresh-icon">↻</span> 최신 데이터 업데이트</button><small id="refreshNote">자동 갱신 5분</small></div>
-      <span id="modeBadge" class="mode-badge">DEMO</span>
       <span id="updatedAt" class="updated">갱신 확인 중</span>
     </div>
   </header>
@@ -64,13 +94,7 @@
         <article id="eastRoute" class="route-card"></article>
         <article id="westRoute" class="route-card"></article>
       </div>
-      <div id="demoControls" class="scenario-controls" hidden>
-        <span>데모 시나리오</span>
-        <button data-scenario="normal">정상</button>
-        <button data-scenario="caution">주의</button>
-        <button data-scenario="stop">운항불가</button>
-      </div>
-    </section>
+</section>
 
     <section id="jamsu" class="section">
       <div class="section-head"><div><span>02</span><h2>잠수교 통과높이</h2></div><small>동부선 운항판단 핵심값</small></div>
@@ -207,6 +231,8 @@
   <footer>
     <strong>주의:</strong> 공식기관 자료를 취합한 운항 참고용 화면입니다. 실제 운항판단은 회사 지침과 현장 확인을 우선합니다. <span class="footer-credit">제작 · 운항감독 이대운</span>
   </footer>
+</div>
+</div>
 <script src="shared-config.js?v=62"></script>
   <script src="weather-config.js?v=62"></script>
   <script src="ocean-config.js?v=67"></script>
@@ -214,8 +240,8 @@
   <script src="data/demo-data.js?v=62"></script>
   <script src="hrfco.js?v=62"></script>
   <script src="kma.js?v=87"></script>
-  <script src="ocean.js?v=69"></script>
-  <script src="app.js?v=91.3"></script>
+  <script src="ocean.js?v=91.5"></script>
+  <script src="app.js?v=91.5"></script>
   <script>
     (() => {
       const back = document.getElementById('embeddedDashboardBack');
@@ -228,5 +254,6 @@
       });
     })();
   </script>
+  <script src="shared-navigation.js?v=91.5"></script>
 </body>
 </html>

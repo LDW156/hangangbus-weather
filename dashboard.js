@@ -87,6 +87,7 @@
       window.HANGANG_DEMO_DATA?.caution ||
       {}
     );
+    data.tide=previousData?.tide||{referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:null,sourceLabel:'조석자료 확인 중'};
 
     const liveSources = [];
     const errors = [];
@@ -188,14 +189,15 @@
           status:'normal',
           updatedAt:tide.updatedAt,
           checkedAt:tide.updatedAt,
-          intervalMinutes:10
+          intervalMinutes:360
         });
-        liveSources.push('조석');
+        liveSources.push(String(tide.cacheStatus||'').includes('cache')?'조석 당일저장':'조석');
       } catch (error) {
         if (previousData?.tide) {
           data.tide = previousData.tide;
           liveSources.push('조석 직전값');
         } else {
+          data.tide={referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:error.message,sourceLabel:'조석자료 미수신'};
           errors.push(`조석 ${error.message}`);
         }
       }
@@ -207,14 +209,14 @@
 
     renderDashboard(computeDashboard());
 
-    $('dashboardMode').textContent = liveSources.length ? 'LIVE' : 'DEMO';
+    $('dashboardMode').textContent = liveSources.length ? 'LIVE' : 'CHECK';
     $('dashboardUpdated').textContent =
       `갱신 ${dateTimeText(data.meta.generatedAt)}`;
 
     const strip = $('dashboardAlertStrip');
     if (errors.length) {
       strip.textContent =
-        `일부 데이터 갱신 실패 · ${errors.join(' / ')} · 직전값 또는 데모값 확인`;
+        `일부 데이터 갱신 실패 · ${errors.join(' / ')} · 직전값 또는 미수신 항목 확인`;
       setStateClass(strip, 'caution');
     }
 

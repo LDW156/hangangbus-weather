@@ -258,6 +258,18 @@
     return '소조차';
   }
 
+  function monthlyEventsForDates(monthly, dateKeys) {
+    const wanted=new Set(dateKeys.map(key=>`${key.slice(0,4)}-${key.slice(4,6)}-${key.slice(6,8)}`));
+    return (monthly?.daily||[])
+      .filter(day=>wanted.has(String(day.date||'')))
+      .flatMap(day=>[
+        ...(day.highs||[]).map(event=>({...event,type:'high'})),
+        ...(day.lows||[]).map(event=>({...event,type:'low'}))
+      ])
+      .filter(event=>event.time&&Number.isFinite(Number(event.heightCm)))
+      .sort((a,b)=>new Date(a.time)-new Date(b.time));
+  }
+
   function phaseFromSeries(rows, now) {
     if (!rows.length) return '자료 확인';
     const target = now.getTime();
@@ -270,7 +282,7 @@
     return '정체';
   }
 
-  async function loadTide() {
+  async function fetchTideNetwork() {
     const fetchedAt = new Date();
     const yesterdayKey = addKstDays(fetchedAt, -1);
     const todayKey = addKstDays(fetchedAt, 0);
@@ -286,34 +298,31 @@
       summary: null
     }));
 
-    const [
-      yesterdayXml,
-      todayXml,
-      tomorrowXml,
-      predictionXml,
-      surveyXml,
-      monthly
-    ] = await Promise.all([
-      fetchXml('highlow', { reqDate: yesterdayKey }),
-      fetchXml('highlow', { reqDate: todayKey }),
-      fetchXml('highlow', { reqDate: tomorrowKey }),
-      fetchXml('timeseries'),
-      fetchXml('survey'),
+    const [yesterdayResult,todayResult,tomorrowResult,predictionResult,surveyResult,monthly] = await Promise.all([
+      fetchXml('highlow',{reqDate:yesterdayKey}).then(value=>({ok:true,value})).catch(error=>({ok:false,error})),
+      fetchXml('highlow',{reqDate:todayKey}).then(value=>({ok:true,value})).catch(error=>({ok:false,error})),
+      fetchXml('highlow',{reqDate:tomorrowKey}).then(value=>({ok:true,value})).catch(error=>({ok:false,error})),
+      fetchXml('timeseries').then(value=>({ok:true,value})).catch(error=>({ok:false,error})),
+      fetchXml('survey').then(value=>({ok:true,value})).catch(error=>({ok:false,error})),
       monthlyPromise
     ]);
-
-    const allEvents = [
-      ...parseHighLow(yesterdayXml),
-      ...parseHighLow(todayXml),
-      ...parseHighLow(tomorrowXml)
-    ].sort((a, b) => new Date(a.time) - new Date(b.time));
+    if(!predictionResult.ok)throw predictionResult.error;
+    const predictionXml=predictionResult.value;
+    const surveyXml=surveyResult.ok?surveyResult.value:null;
+    let allEvents=[yesterdayResult,todayResult,tomorrowResult].filter(result=>result.ok).flatMap(result=>parseHighLow(result.value)).sort((a,b)=>new Date(a.time)-new Date(b.time));
+    const monthlyFallback=monthlyEventsForDates(monthly,[yesterdayKey,todayKey,tomorrowKey]);
+    if(monthlyFallback.length){
+      const byKey=new Map(allEvents.map(event=>[`${event.type}:${event.time}`,event]));
+      monthlyFallback.forEach(event=>byKey.set(`${event.type}:${event.time}`,event));
+      allEvents=[...byKey.values()].sort((a,b)=>new Date(a.time)-new Date(b.time));
+    }
 
     const events = allEvents.filter(
       event => localDateKey(event.time) === todayKey
     );
 
     const prediction = parsePrediction(predictionXml);
-    const survey = parseSurvey(surveyXml);
+    const survey = surveyXml ? parseSurvey(surveyXml) : [];
     if (!prediction.length) {
       throw new Error('인천 조석예보 시계열 자료 없음');
     }
@@ -394,13 +403,23 @@
       monthly,
       monthlyError: monthly?.ok === false ? monthly.error : null,
       intervalMinutes: 1,
+      cacheStatus:'network',
       sourceLabel:
         '바다누리·공공데이터포털 인천 조석'
     };
   }
 
+  const CACHE_VERSION='v91.5';
+  function tideCacheKey(date=new Date()){return `hangangbus:tide:${CACHE_VERSION}:${settings().obsCode}:${kstDateKey(date)}`;}
+  function readTideCache(){try{const raw=localStorage.getItem(tideCacheKey());if(!raw)return null;const parsed=JSON.parse(raw);if(!parsed?.data||!parsed?.savedAt)return null;const savedAt=new Date(parsed.savedAt);if(Number.isNaN(savedAt.getTime()))return null;return {data:parsed.data,savedAt};}catch(_){return null;}}
+  function writeTideCache(data){try{localStorage.setItem(tideCacheKey(),JSON.stringify({savedAt:new Date().toISOString(),data}));}catch(_){}}
+  async function loadTide(options={}){
+    const force=Boolean(options.force);const cached=readTideCache();
+    if(cached&&!force)return {...cached.data,cacheStatus:'daily-cache',cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};
+    try{const tide=await fetchTideNetwork();writeTideCache(tide);return tide;}catch(error){if(cached)return {...cached.data,cacheStatus:'stale-cache',cacheWarning:error.message,cacheSavedAt:cached.savedAt.toISOString(),cacheAgeMinutes:Math.max(0,Math.round((Date.now()-cached.savedAt.getTime())/60000))};throw error;}
+  }
   async function testConnection() {
-    const tide = await loadTide();
+    const tide = await loadTide({force:true});
     return {
       ok: true,
       stationName: tide.stationName,
