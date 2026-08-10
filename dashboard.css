@@ -22,9 +22,10 @@
 html,
 body {
   width:100%;
-  height:100%;
+  min-height:100%;
   margin:0;
-  overflow:hidden;
+  overflow-x:hidden;
+  overflow-y:auto;
   font-family:"Noto Sans KR","Malgun Gothic",Arial,sans-serif;
   color:var(--text);
   background:var(--bg);
@@ -40,10 +41,9 @@ button {
 
 .control-shell {
   display:grid;
-  grid-template-columns:220px minmax(0,1fr);
-  width:100vw;
-  height:100vh;
-  min-height:720px;
+  grid-template-columns:205px minmax(0,1fr);
+  width:100%;
+  min-height:100vh;
 }
 
 .control-sidebar {
@@ -53,6 +53,9 @@ button {
   padding:16px 13px 12px;
   color:#eaf4fa;
   background:linear-gradient(180deg,#113f5c 0%,#0d3048 100%);
+  position:sticky;
+  top:0;
+  height:100vh;
   overflow:hidden;
 }
 
@@ -163,7 +166,7 @@ button {
   width:21px;
   height:21px;
   color:#b8d8e8;
-  font-size:13px;
+  font-size:14px;
   font-weight:900;
 }
 
@@ -219,10 +222,10 @@ button {
 
 .control-main {
   display:grid;
-  grid-template-rows:61px 37px minmax(0,1fr) 26px;
+  grid-template-rows:64px 40px auto 30px;
   min-width:0;
-  min-height:0;
-  padding:0 13px;
+  min-height:100vh;
+  padding:0 7px;
 }
 
 .control-header {
@@ -255,7 +258,19 @@ button {
 .control-header-actions {
   display:flex;
   align-items:center;
-  gap:8px;
+  justify-content:flex-end;
+  gap:7px;
+  flex-wrap:wrap;
+}
+
+.control-auto-refresh {
+  padding:5px 8px;
+  color:#315f76;
+  background:#edf5f9;
+  border:1px solid #c3d7e2;
+  border-radius:999px;
+  font-size:8px;
+  font-weight:900;
 }
 
 .control-mode {
@@ -323,17 +338,17 @@ button {
 
 .control-grid {
   display:grid;
-  grid-template-columns:minmax(260px,.92fr) minmax(450px,1.72fr) minmax(260px,.92fr);
-  grid-template-rows:minmax(190px,.93fr) minmax(180px,.92fr) minmax(140px,.72fr);
-  gap:9px;
+  grid-template-columns:minmax(270px,.96fr) minmax(520px,1.95fr) minmax(290px,1.02fr);
+  grid-template-rows:minmax(240px,auto) minmax(220px,auto) minmax(170px,auto);
+  gap:8px;
   min-height:0;
-  padding:5px 0;
+  padding:5px 0 9px;
 }
 
 .control-card {
   min-width:0;
   min-height:0;
-  padding:11px 12px;
+  padding:13px 14px;
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:12px;
@@ -1325,7 +1340,7 @@ button {
   }
 }
 
-/* v91.8 노선 색상 구분: 정상 상태에서도 동부선과 서부선을 즉시 구분 */
+/* v91.9 노선 색상 구분: 정상 상태에서도 동부선과 서부선을 즉시 구분 */
 .route-summary.route-east.blue {
   color:#0b7b52;
   background:#eaf8f1;
@@ -1343,4 +1358,23 @@ button {
 .route-summary.route-west.blue i {
   color:#ffffff;
   background:#167eae;
+}
+
+
+/* v91.9 화면 활용도·수집상태 동선 */
+.dashboard-health-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;padding-top:8px;border-top:1px solid #d7e3e9;color:#6a8290;font-size:8px;font-weight:800}
+.dashboard-health-footer a{padding:5px 8px;color:#12698f;background:#eaf5fb;border-radius:999px;text-decoration:none;font-weight:900;white-space:nowrap}
+@media(max-width:1500px){.control-grid{grid-template-columns:minmax(250px,.95fr) minmax(450px,1.75fr) minmax(260px,1fr)}}
+@media(max-width:1180px){html,body{overflow:auto}.control-shell{grid-template-columns:190px minmax(0,1fr)}.control-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto}.route-overview,.river-overview,.alerts-overview,.weather-overview,.timeline-overview,.health-overview{grid-column:auto;grid-row:auto}.river-overview,.timeline-overview{grid-column:1/-1}.control-sidebar{position:sticky}}
+
+
+/* v91.9 legacy fixed-height override: viewport clipping prevention */
+.main-view{height:auto!important;min-height:0!important}
+.main-view.active.dashboard-view{display:grid!important;height:auto!important;min-height:100vh!important;grid-template-rows:64px 40px auto 30px!important}
+@media(max-height:820px){
+  .control-shell{min-height:100vh!important}
+  .control-main{grid-template-rows:64px 40px auto 30px!important;min-height:100vh!important}
+  .control-grid{grid-template-rows:auto!important;gap:8px!important}
+  .control-card{padding:13px 14px!important}
+  .river-schematic{height:190px!important}
 }

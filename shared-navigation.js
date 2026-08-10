@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '91.8';
+  const VERSION = '91.9';
   const legacyHashRoutes = {
     '#analysis-dam':'analysis-dam.html',
     '#analysis-bridge':'analysis-bridge.html',

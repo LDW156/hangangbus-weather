@@ -5046,7 +5046,7 @@ details.rain-contribution-box {
 .embedded-detail .app-header,.embedded-detail footer{display:initial!important}
 .module-page .app-header,.app-header{position:relative!important;top:auto!important}
 
-/* v91.8 노선 상세화면 색상 구분 */
+/* v91.9 노선 상세화면 색상 구분 */
 .route-card.east-route.normal {
   background:#eaf8f1;
   border-color:#78c3a4;
@@ -5072,3 +5072,10 @@ details.rain-contribution-box {
 }
 .route-card.east-route::before { background:#148b60; }
 .route-card.west-route::before { background:#167eae; }
+
+
+/* v91.9 선착장 풍향·풍속 + 기온 */
+.wind-temperature{display:inline-flex!important;align-items:center;width:max-content;margin-top:5px;padding:3px 7px;border-radius:999px;background:#e7f4fa;color:#0c6389!important;font-size:8px!important;font-style:normal!important;font-weight:950!important}
+.wind-temperature.forecast{margin-top:4px;padding:2px 6px;background:#fff;border:1px solid #c9dce6}
+.wind-forecast-placeholder{display:grid;place-items:center;width:34px;height:34px;border:1px dashed #b9ced9;border-radius:50%;color:#78919e;font-weight:900}
+.wind-forecast-card.unavailable{min-height:76px}

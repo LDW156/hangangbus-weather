@@ -668,12 +668,6 @@
           : scoped;
 
         alerts.push(...activeScoped);
-      } else if (extractWeatherTypes(combinedText).length) {
-        alerts.push(officialUnclassifiedAlert({
-          source,
-          record:listItem,
-          detailText
-        }));
       }
     });
 
@@ -841,7 +835,12 @@
     const officialAlerts = dedupeAlerts([
       ...currentOfficialAlerts,
       ...activePreliminaryAlerts
-    ]).sort((a,b) => {
+    ])
+      .filter(alert =>
+        alert.scope === 'seoul-direct' ||
+        alert.scope === 'paldang-upstream'
+      )
+      .sort((a,b) => {
       const priority = {
         warning:0,
         advisory:1,
@@ -877,10 +876,6 @@
     const upstream = officialAlerts.filter(
       alert => alert.scope === 'paldang-upstream'
     );
-    const unclassified = officialAlerts.filter(
-      alert => alert.scope === 'official-unclassified'
-    );
-
     const latestIssuedAt = officialAlerts
       .map(alert => alert.issuedAt)
       .filter(Boolean)
@@ -903,9 +898,6 @@
         upstream:upstream.length
           ? upstream.map(alert => alert.title).join(' · ')
           : '팔당 상류 영향특보 없음',
-        unclassified:unclassified.length
-          ? unclassified.map(alert => alert.title).join(' · ')
-          : '',
         message:
           '운항 관련 특보만 표시: 호우·강풍·태풍'
       },
@@ -1252,6 +1244,129 @@
 
   const PALDANG_UPSTREAM_WEATHER_TYPES = ['호우', '태풍'];
 
+  const ALL_KMA_ALERT_TYPES = [
+    '호우',
+    '강풍',
+    '태풍',
+    '풍랑',
+    '폭염',
+    '한파',
+    '건조',
+    '대설',
+    '황사',
+    '폭풍해일'
+  ];
+
+  const KMA_ALERT_LEVELS = [
+    '예비특보',
+    '주의보',
+    '경보',
+    '특보'
+  ];
+
+  /*
+   * 기상청 전국 통보문을 개별 특보 구역으로 먼저 분리합니다.
+   * 문서 전체에 서울과 강풍이 각각 존재한다는 이유만으로
+   * 서울 강풍특보로 판정하는 오류를 차단합니다.
+   */
+  function splitKmaAlertSections(text) {
+    let source = cleanText(text);
+
+    if (!source) {
+      return { structured:false, sections:[] };
+    }
+
+    const allTypes = ALL_KMA_ALERT_TYPES.join('|');
+    const allLevels = KMA_ALERT_LEVELS.join('|');
+
+    source = source
+      .replace(
+        new RegExp(
+          `\\s+(?=(?:\\(\\d+\\)|\\d+[.)]|[○●◎□■※▶▷]|[oO])\\s*(?:${allTypes})\\s*(?:${allLevels}))`,
+          'g'
+        ),
+        '\n'
+      )
+      .replace(
+        new RegExp(
+          `\\s+(?=(?:${allTypes})\\s*(?:${allLevels})\\s*[:：])`,
+          'g'
+        ),
+        '\n'
+      );
+
+    const headingPattern = new RegExp(
+      `^\\s*(?:\\(\\d+\\)|\\d+[.)]|[○●◎□■※▶▷]|[oO])?\\s*` +
+      `(?:${allTypes})\\s*(?:${allLevels})`,
+      'gm'
+    );
+
+    const headings = [...source.matchAll(headingPattern)];
+
+    if (!headings.length) {
+      return { structured:false, sections:[source] };
+    }
+
+    return {
+      structured:true,
+      sections:headings.map((match,index) => {
+        const start = match.index;
+        const end = index + 1 < headings.length
+          ? headings[index + 1].index
+          : source.length;
+        return source.slice(start,end).trim();
+      }).filter(Boolean)
+    };
+  }
+
+  function contextualAlertSections(text, sourceType) {
+    const source = cleanText(text);
+    if (!source) return [];
+
+    const lines = source
+      .split(/\n+/)
+      .map(line => line.trim())
+      .filter(Boolean);
+    const sections = [];
+    const headingPattern = new RegExp(
+      `^(?:\\(\\d+\\)|\\d+[.)]|[○●◎□■※▶▷]|[oO])?\\s*` +
+      `(?:${ALL_KMA_ALERT_TYPES.join('|')})\\s*` +
+      `(?:${KMA_ALERT_LEVELS.join('|')})`
+    );
+
+    lines.forEach((line,index) => {
+      const hasTargetType = extractWeatherTypes(line).length > 0;
+      const hasAlertLevel =
+        hasSpecificWeatherAlert(line) ||
+        (sourceType === 'preliminary' && /예비특보/.test(line));
+
+      if (!hasTargetType || !hasAlertLevel) return;
+
+      const chunk = [line];
+      for (let nextIndex=index+1; nextIndex<lines.length && chunk.length<8; nextIndex+=1) {
+        const nextLine = lines[nextIndex];
+        if (headingPattern.test(nextLine)) break;
+        headingPattern.lastIndex = 0;
+        chunk.push(nextLine);
+      }
+      sections.push(chunk.join('\n'));
+    });
+
+    return sections;
+  }
+
+  function relevantAlertSections(text, sourceType) {
+    const parsed = splitKmaAlertSections(text);
+    const candidates = parsed.structured
+      ? parsed.sections
+      : contextualAlertSections(text, sourceType);
+
+    return candidates.filter(section => {
+      if (!extractWeatherTypes(section).length) return false;
+      if (sourceType === 'preliminary') return /예비특보/.test(section);
+      return hasSpecificWeatherAlert(section);
+    });
+  }
 
   function hasSpecificWeatherAlert(text) {
     const source = String(text || '');
@@ -1351,64 +1466,70 @@
     issuedAt
   }) {
     const alerts = [];
-    const period = parseAlertEffectivePeriod(text, issuedAt);
-    const weatherTypes = extractWeatherTypes(text);
-    const preliminaryFallback =
-      weatherTypes.length
+    const sections = relevantAlertSections(text, source);
+
+    sections.forEach(section => {
+      const period = parseAlertEffectivePeriod(section, issuedAt);
+      const weatherTypes = extractWeatherTypes(section);
+      const preliminaryFallback = weatherTypes.length
         ? weatherTypes.map(type => `${type} 예비특보`).join(' · ')
         : '기상 예비특보';
+      const baseTitle = extractAlertNames(
+        section,
+        source === 'preliminary'
+          ? preliminaryFallback
+          : '기상특보 발표'
+      );
 
-    const baseTitle = extractAlertNames(
-      text,
-      source === 'preliminary'
-        ? preliminaryFallback
-        : '기상특보 발표'
-    );
+      /*
+       * 서울 직접특보는 같은 개별 특보 구역 안에 서울이
+       * 명시된 경우에만 생성합니다. 다른 특보 구역 또는
+       * 전국 현황에 서울이 나온 것은 절대 결합하지 않습니다.
+       */
+      if (containsSeoulDirectArea(section)) {
+        alerts.push({
+          source,
+          scope:'seoul-direct',
+          operationImpact:true,
+          level:alertLevel(section, source),
+          levelLabel:alertLevelLabel(section, source),
+          weatherTypes,
+          area:'서울특별시',
+          title:baseTitle,
+          message:section,
+          issuedAt,
+          effectiveAt:period.effectiveAt,
+          effectiveEndAt:period.effectiveEndAt,
+          periodText:period.periodText,
+          periods:period.periods
+        });
+      }
 
-    if (containsSeoulDirectArea(text)) {
-      alerts.push({
-        source,
-        scope:'seoul-direct',
-        operationImpact:true,
-        level:alertLevel(text, source),
-        levelLabel:alertLevelLabel(text, source),
-        weatherTypes:extractWeatherTypes(text),
-        area:scopedAreaLabel('seoul-direct', text),
-        title:scopedTitle('seoul-direct', baseTitle),
-        message:text,
-        issuedAt,
-        effectiveAt:period.effectiveAt,
-        effectiveEndAt:period.effectiveEndAt,
-        periodText:period.periodText,
-        periods:period.periods
-      });
-    }
-
-    const upstreamAreas = matchedPaldangUpstreamAreas(text);
-
-    if (
-      upstreamAreas.length &&
-      containsPaldangUpstreamWeather(text)
-    ) {
-      alerts.push({
-        source,
-        scope:'paldang-upstream',
-        operationImpact:false,
-        level:'reference',
-        levelLabel:'상류 참고',
-        weatherTypes:extractWeatherTypes(text).filter(
-          type => PALDANG_UPSTREAM_WEATHER_TYPES.includes(type)
-        ),
-        area:scopedAreaLabel('paldang-upstream', text),
-        title:scopedTitle('paldang-upstream', baseTitle),
-        message:text,
-        issuedAt,
-        effectiveAt:period.effectiveAt,
-        effectiveEndAt:period.effectiveEndAt,
-        periodText:period.periodText,
-        periods:period.periods
-      });
-    }
+      const upstreamAreas = matchedPaldangUpstreamAreas(section);
+      if (
+        upstreamAreas.length &&
+        containsPaldangUpstreamWeather(section)
+      ) {
+        alerts.push({
+          source,
+          scope:'paldang-upstream',
+          operationImpact:false,
+          level:'reference',
+          levelLabel:'상류 참고',
+          weatherTypes:weatherTypes.filter(
+            type => PALDANG_UPSTREAM_WEATHER_TYPES.includes(type)
+          ),
+          area:`경기 동부 · ${upstreamAreas.join('·')}`,
+          title:`팔당 상류 영향 참고 · ${baseTitle}`,
+          message:section,
+          issuedAt,
+          effectiveAt:period.effectiveAt,
+          effectiveEndAt:period.effectiveEndAt,
+          periodText:period.periodText,
+          periods:period.periods
+        });
+      }
+    });
 
     return alerts;
   }
@@ -1886,17 +2007,28 @@
       const key=`${st.nx},${st.ny}`;
       const current=currentMap[key];
       const ultra=ultraMap[key];
+      const short=shortMap[key];
       const forecasts=[1,2].map(hour=>{
-        const f=forecastForHour(ultra.timeline,hour);
-        return f?{
-          hour, time:f.time, direction:direction16(f.VEC), directionDeg:num(f.VEC), speed:num(f.WSD)
-        }:null;
+        const ultraRow=forecastForHour(ultra.timeline,hour);
+        const shortRow=forecastForHour(short?.timeline||[],hour);
+        const f=ultraRow||shortRow;
+        if(!f)return null;
+        const temperature=num(f.T1H ?? f.TMP);
+        return {
+          hour,
+          time:f.time,
+          direction:direction16(f.VEC),
+          directionDeg:num(f.VEC),
+          speed:num(f.WSD),
+          temperature
+        };
       }).filter(Boolean);
 
       return {
         name:st.name, sector:st.sector, lat:st.lat, lon:st.lon,
         observedAt:current.observedAt,
         direction:current.direction, directionDeg:current.directionDeg, speed:current.speed,
+        temperature:current.temperature,
         sourceLabel:'기상청 초단기실황',
         forecasts
       };

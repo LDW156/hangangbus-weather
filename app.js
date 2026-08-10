@@ -911,6 +911,10 @@
     const releases=data.alertReleases||[];
 
     return [...(data.alerts||[])]
+      .filter(alert=>
+        alert?.scope==='seoul-direct' &&
+        alert?.operationImpact!==false
+      )
       .filter(isImportantOperationAlert)
       .filter(alert=>
         !releases.some(release=>
@@ -969,17 +973,7 @@
     const directAlerts=allActiveAlerts
       .filter(alert=>alert.scope==='seoul-direct');
 
-    const upstreamAlerts=allActiveAlerts
-      .filter(alert=>alert.scope==='paldang-upstream');
-
-    const unclassifiedAlerts=allActiveAlerts
-      .filter(alert=>alert.scope==='official-unclassified');
-
-    const alerts=directAlerts.length
-      ? directAlerts
-      : upstreamAlerts.length
-        ? upstreamAlerts
-        : unclassifiedAlerts;
+    const alerts=directAlerts;
 
     if(!alerts.length){
       root.hidden=true;
@@ -990,11 +984,9 @@
 
     const alert=alerts[0];
     const extra=alerts.length-1;
-    const isUpstream=alert.scope==='paldang-upstream';
-    const isUnclassified=alert.scope==='official-unclassified';
-    const bannerClass=isUpstream||isUnclassified
-      ? 'reference'
-      : alert.source==='preliminary'
+    const isUpstream=false;
+    const isUnclassified=false;
+    const bannerClass=alert.source==='preliminary'
         ? 'watch'
         : alert.level==='warning'
           ? 'warning'
@@ -1472,13 +1464,27 @@
     return `${y.toFixed(5)}°N, ${x.toFixed(5)}°E`;
   }
   function validWindForecast(x){
-    return x&&Number.isFinite(Number(x.speed));
+    return Boolean(
+      x && (
+        Number.isFinite(Number(x.speed)) ||
+        Number.isFinite(Number(x.temperature))
+      )
+    );
   }
   function forecastWindCard(x){
-    if(!validWindForecast(x))return `<div class="wind-forecast-card unavailable"><span>자료 없음</span></div>`;
+    if(!validWindForecast(x))return `<div class="wind-forecast-card unavailable"><span>풍속·기온 예보 없음</span></div>`;
+    const hasWind=Number.isFinite(Number(x.speed));
+    const hasTemp=Number.isFinite(Number(x.temperature));
     return `<div class="wind-forecast-card">
       <div class="wind-forecast-head"><span>${x.hour}시간 후</span><b>${timeText(x.time)}</b></div>
-      <div class="wind-forecast-body">${compass(x.directionDeg,x.speed,true)}<div><strong>${fmt(x.speed,1)}m/s</strong><em>${esc(x.direction)}</em></div></div>
+      <div class="wind-forecast-body">
+        ${hasWind?compass(x.directionDeg,x.speed,true):'<div class="wind-forecast-placeholder">-</div>'}
+        <div>
+          <strong>${hasWind?`${fmt(x.speed,1)}m/s`:'풍속 -'}</strong>
+          <em>${hasWind?esc(x.direction||'풍향 확인 중'):'풍향 자료 없음'}</em>
+          <span class="wind-temperature forecast">${hasTemp?`${fmt(x.temperature,1)}℃`:'기온 -'}</span>
+        </div>
+      </div>
     </div>`;
   }
   function renderWind(){
@@ -1502,6 +1508,7 @@
             <span>현재 ${timeText(w.observedAt)}</span>
             <b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
             <em>${esc(w.direction||'풍향 확인 중')}${Number.isFinite(Number(w.directionDeg))?` · ${fmt(w.directionDeg)}°`:''}</em>
+            <span class="wind-temperature current">기온 ${Number.isFinite(Number(w.temperature))?`${fmt(w.temperature,1)}℃`:'-'}</span>
           </div>
         </div>
 
@@ -2455,15 +2462,15 @@
   }
 
   const DETAIL_PAGE_FILES={
-    route:'./route.html?v=91.8',jamsu:'./jamsu.html?v=91.8',dam:'./paldang.html?v=91.8',river:'./river.html?v=91.8',
-    alerts:'./alerts.html?v=91.8',rain:'./rain.html?v=91.8',wind:'./wind.html?v=91.8',tide:'./tide.html?v=91.8'
+    route:'./route.html?v=91.9',jamsu:'./jamsu.html?v=91.9',dam:'./paldang.html?v=91.9',river:'./river.html?v=91.9',
+    alerts:'./alerts.html?v=91.9',rain:'./rain.html?v=91.9',wind:'./wind.html?v=91.9',tide:'./tide.html?v=91.9'
   };
 
   function requestDetailMode(section=''){
-    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=91.8'):'./detail.html?v=91.8';
+    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=91.9'):'./detail.html?v=91.9';
   }
 
-  /* v91.8 상세화면은 독립 최상위 페이지로만 운영합니다. */
+  /* v91.9 상세화면은 독립 최상위 페이지로만 운영합니다. */
 
   $('detailShowAll')?.addEventListener('click',()=>requestDetailMode(''));
   document.addEventListener('click',event=>{

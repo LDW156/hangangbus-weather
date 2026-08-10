@@ -400,6 +400,10 @@
     west = applyRain(west, westRain);
 
     const importantAlerts = (data.alerts || []).filter(alert => {
+      if(
+        alert?.scope!=='seoul-direct' ||
+        alert?.operationImpact===false
+      ) return false;
       const text = `${alert.title || ''} ${alert.message || ''}`;
       return ['호우','강풍','태풍'].some(type => text.includes(type));
     });
@@ -652,7 +656,9 @@
 
   function renderAlerts(alerts) {
     const root = $('dashboardAlertList');
-    const important = alerts.slice(0, 3);
+    const important = alerts
+      .filter(alert=>alert?.scope==='seoul-direct')
+      .slice(0, 3);
 
     if (!important.length) {
       root.innerHTML = `
@@ -825,7 +831,7 @@
     alerts:{
       eyebrow:'기상·조석',
       title:'운항 관련 특보 상세',
-      description:'서울 및 상류 영향권의 호우·강풍·태풍·폭염 특보와 운항 영향도를 확인합니다.'
+      description:'서울특별시가 대상지역에 명시된 호우·강풍·태풍 특보만 운항판정에 반영합니다.'
     },
     rain:{
       eyebrow:'기상·조석',
@@ -844,7 +850,7 @@
     }
   };
 
-  // v91.8: 데이터 분석은 독립 HTML 페이지에서 실행합니다.
+  // v91.9: 데이터 분석은 독립 HTML 페이지에서 실행합니다.
 
   $('dashboardRefresh')?.addEventListener('click', () => loadDashboardData('manual'));
 

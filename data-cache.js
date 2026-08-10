@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BUILD = '91.8';
+  const BUILD = '91.9';
   const TTL_MS = 10 * 60 * 1000;
   const KEY = `hangangbus:live-snapshot:${BUILD}`;
   const LOCK_KEY = `hangangbus:live-refresh-lock:${BUILD}`;
