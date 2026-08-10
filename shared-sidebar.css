@@ -38,3 +38,16 @@ html,body,body *,button,input,select,textarea{
 html,body,body *,button,input,select,textarea{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",Arial,sans-serif!important}
 .control-sidebar{position:sticky!important;top:0!important}
 .control-sidebar .side-nav a span:last-child{font-size:10px!important;font-weight:700!important;line-height:1.35!important}
+
+
+/* v92.0 좌측 메뉴 가독성 */
+:root{--shared-sidebar-width:220px}
+.control-sidebar .side-brand b{font-size:16px!important}
+.control-sidebar .side-brand span{font-size:9.5px!important}
+.control-sidebar .side-nav p{font-size:9px!important;margin-top:14px!important}
+.control-sidebar .side-nav a{min-height:39px!important;padding:8px 10px!important}
+.control-sidebar .side-nav a span:last-child{font-size:11.5px!important;font-weight:800!important;line-height:1.4!important}
+.control-sidebar .side-icon{font-size:14px!important}
+.control-sidebar .side-legend b{font-size:9px!important}
+.control-sidebar .side-legend span{font-size:8.5px!important}
+.control-sidebar .side-credit{font-size:8px!important}

@@ -5079,3 +5079,61 @@ details.rain-contribution-box {
 .wind-temperature.forecast{margin-top:4px;padding:2px 6px;background:#fff;border:1px solid #c9dce6}
 .wind-forecast-placeholder{display:grid;place-items:center;width:34px;height:34px;border:1px dashed #b9ced9;border-radius:50%;color:#78919e;font-weight:900}
 .wind-forecast-card.unavailable{min-height:76px}
+
+
+/* =========================================================
+   v92.0 상세 모니터링 가독성 + 기온 참고영역 분리
+========================================================= */
+.detail-content .app-header{max-width:1320px;padding:20px 22px 14px}
+.detail-content .app-header h1{font-size:28px!important}
+.detail-content .eyebrow{font-size:11px!important}
+.detail-content .header-sub,.detail-content .creator-credit{font-size:11px!important}
+.detail-content .system-banner,.detail-content .weather-alert-banner{max-width:1280px;font-size:11.5px!important}
+.detail-content .quick-nav{max-width:1320px;padding-left:22px;padding-right:22px}
+.detail-content .quick-nav a{font-size:11.5px!important;padding:9px 12px!important}
+.detail-content .container{max-width:1320px;padding-left:22px;padding-right:22px}
+.detail-content .section-head h2{font-size:18px!important}
+.detail-content .section-head small{font-size:10.5px!important}
+.detail-content .section-head span{font-size:10px!important;width:28px;height:28px}
+.detail-content .metric-label{font-size:10.5px!important}
+.detail-content .metric-value{font-size:25px!important}
+.detail-content .metric-sub,.detail-content .data-time,.detail-content .route-card-time{font-size:10px!important}
+.detail-content .panel-title h3{font-size:14px!important}
+.detail-content .panel-title span{font-size:9.5px!important}
+.detail-content .data-table{font-size:10px!important}
+.detail-content .data-table th,.detail-content .data-table td{font-size:10px!important;padding-top:8px!important;padding-bottom:8px!important}
+.detail-content .alert-card h3{font-size:14px!important}
+.detail-content .alert-card p,.detail-content .alert-time,.detail-content .alert-period{font-size:10px!important;line-height:1.55}
+.detail-content .rain-table-heading h4{font-size:14px!important}
+.detail-content .rain-table-heading span{font-size:9px!important}
+
+/* 선착장 풍향·풍속 카드 */
+.wind-card-v59{padding:12px!important}
+.wind-card-v59 .station-head h3{font-size:15px!important}
+.wind-card-v59 .station-coordinate{font-size:8.5px!important}
+.sector-pill-v59{font-size:10px!important;min-width:54px;padding:6px 9px!important}
+.wind-current-compact{grid-template-columns:66px minmax(0,1fr) 82px!important;gap:10px!important;padding:10px!important}
+.wind-current-value>span{font-size:9.5px!important}
+.wind-current-value>b{font-size:27px!important}
+.wind-current-value>b small{font-size:10px!important}
+.wind-current-value>em{font-size:10px!important}
+.wind-temp-reference{display:flex;flex-direction:column;align-items:center;justify-content:center;align-self:stretch;min-width:74px;padding:7px 8px;border-left:1px solid #c9dce6;background:#edf7fb;border-radius:0 8px 8px 0;text-align:center}
+.wind-temp-reference span{color:#6c8592!important;font-size:8px!important;font-weight:850!important;white-space:nowrap}
+.wind-temp-reference b{margin-top:3px;color:#0c6389!important;font-size:15px!important;font-weight:950!important;white-space:nowrap}
+.wind-temp-reference.forecast{min-width:58px;padding:5px 6px;background:#fff;border:1px solid #c9dce6;border-radius:7px}
+.wind-temp-reference.forecast span{font-size:7px!important}
+.wind-temp-reference.forecast b{font-size:11px!important}
+.wind-forecast-grid-v59 .wind-forecast-card{padding:8px!important}
+.wind-forecast-grid-v59 .wind-forecast-head{font-size:8.5px!important}
+.wind-forecast-grid-v59 .wind-forecast-body{display:grid!important;grid-template-columns:36px minmax(0,1fr) auto!important;align-items:center;gap:6px!important}
+.wind-forecast-grid-v59 .wind-forecast-body strong{font-size:11.5px!important}
+.wind-forecast-grid-v59 .wind-forecast-body em{font-size:8px!important}
+.wind-temperature{display:none!important}
+
+@media(max-width:1500px){
+  .detail-content .container,.detail-content .app-header,.detail-content .quick-nav{max-width:none!important}
+  .detail-content .container{padding-left:18px;padding-right:18px}
+}
+@media(max-width:1050px){
+  .wind-current-compact{grid-template-columns:60px minmax(0,1fr) 76px!important}
+}

@@ -66,3 +66,13 @@ body.module-autonomy{min-height:100vh;margin:0;background:var(--module-bg);color
 
 @media(max-width:1550px){.wind-autonomy-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1180px){.wind-autonomy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* v92.0 독립 상세 페이지 가독성 */
+.module-autonomy .autonomy-main{padding-left:22px!important;padding-right:22px!important}
+.module-autonomy .autonomy-topbar h1{font-size:27px!important}
+.module-autonomy .autonomy-topbar p{font-size:11px!important}
+.module-autonomy .module-hero h2{font-size:28px!important}
+.module-autonomy .module-hero p{font-size:11px!important;line-height:1.6}
+.module-autonomy .module-page-note{font-size:10.5px!important}
+.module-autonomy .module-panel h3,.module-autonomy .panel-title h3{font-size:15px!important}

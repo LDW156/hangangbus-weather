@@ -1479,10 +1479,13 @@
       <div class="wind-forecast-head"><span>${x.hour}시간 후</span><b>${timeText(x.time)}</b></div>
       <div class="wind-forecast-body">
         ${hasWind?compass(x.directionDeg,x.speed,true):'<div class="wind-forecast-placeholder">-</div>'}
-        <div>
+        <div class="wind-forecast-reading">
           <strong>${hasWind?`${fmt(x.speed,1)}m/s`:'풍속 -'}</strong>
           <em>${hasWind?esc(x.direction||'풍향 확인 중'):'풍향 자료 없음'}</em>
-          <span class="wind-temperature forecast">${hasTemp?`${fmt(x.temperature,1)}℃`:'기온 -'}</span>
+        </div>
+        <div class="wind-temp-reference forecast">
+          <span>참고 기온</span>
+          <b>${hasTemp?`${fmt(x.temperature,1)}℃`:'-'}</b>
         </div>
       </div>
     </div>`;
@@ -1508,7 +1511,10 @@
             <span>현재 ${timeText(w.observedAt)}</span>
             <b class="${windLevel(w)}">${fmt(w.speed,1)}<small>m/s</small></b>
             <em>${esc(w.direction||'풍향 확인 중')}${Number.isFinite(Number(w.directionDeg))?` · ${fmt(w.directionDeg)}°`:''}</em>
-            <span class="wind-temperature current">기온 ${Number.isFinite(Number(w.temperature))?`${fmt(w.temperature,1)}℃`:'-'}</span>
+          </div>
+          <div class="wind-temp-reference current">
+            <span>참고 기온</span>
+            <b>${Number.isFinite(Number(w.temperature))?`${fmt(w.temperature,1)}℃`:'-'}</b>
           </div>
         </div>
 

@@ -1378,3 +1378,59 @@ button {
   .control-card{padding:13px 14px!important}
   .river-schematic{height:190px!important}
 }
+
+
+/* =========================================================
+   v92.0 가독성·화면 여백 보정
+========================================================= */
+:root{--dashboard-side-w:220px}
+.control-shell{grid-template-columns:var(--dashboard-side-w) minmax(0,1fr)!important}
+.control-main{padding:0 18px 14px!important;min-width:0!important}
+.control-grid{gap:12px!important;padding:8px 0 14px!important}
+.control-card{padding:16px 17px!important}
+.control-header{min-height:72px;padding:0 2px}
+.control-header p{font-size:9px!important}
+.control-header h1{font-size:23px!important}
+.control-header-actions{gap:9px!important}
+.control-header button,.control-auto-refresh,.control-mode,.control-updated{font-size:9.5px!important}
+.dashboard-alert-strip{min-height:38px;font-size:10.5px!important;padding:8px 13px!important;white-space:normal!important;line-height:1.45}
+.card-heading>div>span{font-size:8.5px!important}
+.card-heading h2{font-size:15.5px!important}
+.card-heading a{font-size:8.5px!important;padding:5px 9px!important}
+.route-summary span{font-size:10.5px!important}
+.route-summary b{font-size:25px!important}
+.route-summary i{font-size:8.5px!important;padding:4px 8px!important}
+.route-summary em{font-size:9.5px!important;line-height:1.45}
+.route-reasons span{font-size:9.5px!important;line-height:1.45;padding:8px 10px!important}
+.river-node strong{font-size:9.5px!important}
+.river-node span{font-size:8px!important}
+.river-metrics span{font-size:9px!important}
+.river-metrics b{font-size:22px!important}
+.river-metrics em{font-size:8.5px!important}
+.dashboard-alert-item b,.dashboard-alert-empty b{font-size:10px!important}
+.dashboard-alert-item span,.dashboard-alert-empty span{font-size:8.5px!important;line-height:1.45}
+.weather-kpi span{font-size:8.5px!important}
+.weather-kpi b{font-size:23px!important}
+.weather-kpi em{font-size:8.5px!important}
+.dashboard-event-item b{font-size:9.5px!important}
+.dashboard-event-item span{font-size:8.5px!important;line-height:1.45}
+.health-row{min-height:34px!important;padding:7px 9px!important}
+.health-row span{font-size:9px!important}
+.health-row b{font-size:8.5px!important}
+.dashboard-health-footer{font-size:9px!important}
+.control-footer{font-size:8.5px!important;min-height:32px}
+
+@media(max-width:1500px){
+  .control-shell{grid-template-columns:220px minmax(0,1fr)!important}
+  .control-main{padding-left:14px!important;padding-right:14px!important}
+  .control-grid{grid-template-columns:minmax(255px,.95fr) minmax(430px,1.7fr) minmax(260px,1fr)!important}
+}
+@media(max-width:1180px){
+  .control-shell{grid-template-columns:200px minmax(0,1fr)!important}
+  .control-main{padding-left:12px!important;padding-right:12px!important}
+}
+@media(max-height:820px){
+  .control-card{padding:13px 14px!important}
+  .route-summary b{font-size:23px!important}
+  .weather-kpi b{font-size:21px!important}
+}
