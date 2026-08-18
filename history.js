@@ -419,23 +419,66 @@
     return localDateKey(date).slice(0, 7);
   }
 
+  function lastDayOfMonthKey(monthKey) {
+    const match = /^(\d{4})-(\d{2})$/.exec(monthKey || '');
+    if (!match) return '';
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = new Date(year, month, 0).getDate();
+    return `${match[1]}-${match[2]}-${String(day).padStart(2, '0')}`;
+  }
+
+  function updateAdvancedDateInputs() {
+    const fromInput = $('historyFromDate');
+    const toInput = $('historyToDate');
+    if (!fromInput || !toInput) return;
+
+    if (state.mode === 'monthly') {
+      const fromMonth = (fromInput.value || '').slice(0, 7);
+      const toMonth = (toInput.value || '').slice(0, 7);
+      fromInput.type = 'month';
+      toInput.type = 'month';
+      fromInput.min = '2020-01';
+      toInput.min = '2020-01';
+      fromInput.max = localMonthKey();
+      toInput.max = localMonthKey();
+      if (fromMonth) fromInput.value = fromMonth;
+      if (toMonth) toInput.value = toMonth;
+      return;
+    }
+
+    const fromWasMonth = /^\d{4}-\d{2}$/.test(fromInput.value || '');
+    const toWasMonth = /^\d{4}-\d{2}$/.test(toInput.value || '');
+    const fromValue = fromInput.value;
+    const toValue = toInput.value;
+
+    fromInput.type = 'date';
+    toInput.type = 'date';
+    fromInput.min = '2020-01-01';
+    toInput.min = '2020-01-01';
+    fromInput.max = localDateKey();
+    toInput.max = localDateKey();
+
+    if (fromWasMonth) fromInput.value = `${fromValue}-01`;
+    if (toWasMonth) toInput.value = lastDayOfMonthKey(toValue);
+  }
+
   function setAdvancedDates() {
     const to = new Date();
     const from = new Date(to.getTime() - 30 * 24 * 3600000);
     const fromInput = $('historyFromDate');
     const toInput = $('historyToDate');
 
-    if (fromInput && !fromInput.value) {
-      fromInput.value = localDateKey(from);
-      fromInput.min = '2020-01-01';
-      fromInput.max = localDateKey(to);
+    updateAdvancedDateInputs();
+
+    if (state.mode === 'monthly') {
+      if (fromInput && !fromInput.value) fromInput.value = localMonthKey(from);
+      if (toInput && !toInput.value) toInput.value = localMonthKey(to);
+      return;
     }
 
-    if (toInput && !toInput.value) {
-      toInput.value = localDateKey(to);
-      toInput.min = '2020-01-01';
-      toInput.max = localDateKey(to);
-    }
+    if (fromInput && !fromInput.value) fromInput.value = localDateKey(from);
+    if (toInput && !toInput.value) toInput.value = localDateKey(to);
   }
 
   function updateAdvancedFieldVisibility() {
@@ -537,18 +580,30 @@
 
   function rangeForMode() {
     if (state.entry === 'search') {
+      if (state.mode === 'monthly') {
+        const fromMonth = $('historyFromDate').value || localMonthKey();
+        const toMonth = $('historyToDate').value || localMonthKey();
+
+        if (fromMonth > toMonth) {
+          throw new Error('시작월은 종료월보다 늦을 수 없습니다.');
+        }
+
+        const from = `${fromMonth}-01`;
+        const to = lastDayOfMonthKey(toMonth);
+        return {
+          interval: '1mo',
+          from,
+          to,
+          display: `${fromMonth.replace('-', '.')} ~ ${toMonth.replace('-', '.')} 월별 통계`,
+          monthlyFrom: fromMonth,
+          monthlyTo: toMonth
+        };
+      }
+
       const from = $('historyFromDate').value || localDateKey();
       const to = $('historyToDate').value || localDateKey();
-      const interval = state.mode === 'hourly'
-        ? '10m'
-        : state.mode === 'daily'
-          ? '1d'
-          : '1mo';
-      const label = state.mode === 'hourly'
-        ? '10분 원자료'
-        : state.mode === 'daily'
-          ? '일별 통계'
-          : '월별 통계';
+      const interval = state.mode === 'hourly' ? '10m' : '1d';
+      const label = state.mode === 'hourly' ? '10분 원자료' : '일별 통계';
 
       if (from > to) {
         throw new Error('시작일은 종료일보다 늦을 수 없습니다.');
@@ -1163,6 +1218,8 @@
           : (index / (rows.length - 1)) * plotWidth);
     };
 
+    state.chartXPositions = rows.map((_, index) => scaleX(index));
+
     const makeScaleY = range => value =>
       margin.top +
       ((range.max - value) / (range.max - range.min)) * plotHeight;
@@ -1271,6 +1328,17 @@
       `;
     }).join('');
 
+    const monthlyMarkers = state.mode === 'monthly'
+      ? series.map(item => {
+          const yScale = item.axis === 'right' ? rightY : leftY;
+          return rows.map((row, index) => {
+            const value = number(row[item.key]);
+            if (value === null) return '';
+            return `<circle cx="${scaleX(index)}" cy="${yScale(value)}" r="5" fill="${item.color}" stroke="#ffffff" stroke-width="2.4"></circle>`;
+          }).join('');
+        }).join('')
+      : '';
+
     svg.innerHTML = `
       <rect x="0" y="0" width="${width}" height="${height}" rx="12" fill="#ffffff"></rect>
       ${grid.join('')}
@@ -1280,6 +1348,7 @@
       ${axisLabels.join('')}
       ${xLabels}
       ${paths}
+      ${monthlyMarkers}
       <line id="historyHoverLine" x1="0" y1="${margin.top}" x2="0" y2="${height - margin.bottom}" stroke="#35586a" stroke-width="1.2" stroke-dasharray="5 4" visibility="hidden"></line>
       <g id="historyHoverPoints"></g>
       <rect
@@ -1339,10 +1408,24 @@
       const viewX = ((event.clientX - rect.left) / rect.width) * 1200;
       const left = Number(layer.dataset.left);
       const plotWidth = Number(layer.dataset.width);
-      const ratio = Math.max(0, Math.min(1, (viewX - left) / plotWidth));
-      const index = Math.round(ratio * (state.chartRows.length - 1));
+      let index = 0;
+      let bestDistance = Infinity;
+      const positions = state.chartXPositions?.length === state.chartRows.length
+        ? state.chartXPositions
+        : state.chartRows.map((_, itemIndex) =>
+            left + (itemIndex / Math.max(1, state.chartRows.length - 1)) * plotWidth
+          );
+
+      positions.forEach((position, itemIndex) => {
+        const distance = Math.abs(viewX - position);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          index = itemIndex;
+        }
+      });
+
       const row = state.chartRows[index];
-      const x = left + (index / Math.max(1, state.chartRows.length - 1)) * plotWidth;
+      const x = positions[index];
 
       line.setAttribute('x1', x);
       line.setAttribute('x2', x);
@@ -1577,6 +1660,10 @@
     state.mode = mode;
     state.tableFilter = 'all';
     setDateInput();
+    if (state.entry === 'search') {
+      updateAdvancedDateInputs();
+      setAdvancedDates();
+    }
     $('historyExport').disabled = true;
     state.exportUrl = '';
   }
