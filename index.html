@@ -31,7 +31,7 @@
 <link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
 <link href="./assets/hangangbus-logo.png?v=88" rel="shortcut icon" type="image/png"/>
 <link href="./assets/hangangbus-logo.png?v=88" rel="apple-touch-icon"/>
-<link href="dashboard.css?v=92.1" rel="stylesheet"/>
+<link href="dashboard.css?v=92.4" rel="stylesheet"/>
 <link href="shared-sidebar.css?v=92.1" rel="stylesheet"/>
 </head>
 <body class="dashboard-body">
@@ -96,63 +96,66 @@
 </div>
 <div class="route-reasons" id="dashboardRouteReasons"></div>
 </article>
-<article class="control-card river-overview">
-<div class="card-heading">
+<article class="control-card river-overview hydro-impact-overview">
+<div class="card-heading hydro-heading">
 <div>
-<span>한강 수문 상황</span>
-<h2>핵심 수위·방류 현황</h2>
+<span>수문·조석 운항 영향</span>
+<h2>상류 → 잠수교 → 하류 영향 흐름</h2>
 </div>
-<a href="./jamsu.html?v=92.1">상세보기</a>
+<a href="./river.html?v=92.4">수문 상세</a>
 </div>
-<div class="river-schematic">
-<div class="river-line"></div>
-<a class="river-node dam" href="./paldang.html?v=92.1">
-<i class="blue" id="nodePaldang"></i>
-<strong>팔당댐</strong>
-<span id="dashPaldang">-</span>
-</a>
-<a class="river-node jamsil" href="./rain.html?v=92.1">
-<i class="blue" id="nodeJamsil"></i>
-<strong>잠실</strong>
-<span id="dashJamsilRain">-</span>
-</a>
-<a class="river-node jamsu" href="./jamsu.html?v=92.1">
-<i class="blue" id="nodeJamsu"></i>
-<strong>잠수교</strong>
-<span id="dashJamsu">-</span>
-</a>
-<a class="river-node yeouido" href="./river.html?v=92.1">
-<i class="blue" id="nodeYeouido"></i>
-<strong>여의도</strong>
-<span id="dashHangang">-</span>
-</a>
-<a class="river-node magok" href="./rain.html?v=92.1">
-<i class="blue" id="nodeMagok"></i>
-<strong>마곡</strong>
-<span id="dashMagokRain">-</span>
-</a>
-<a class="river-node incheon" href="./tide.html?v=92.1">
-<i class="blue" id="nodeIncheon"></i>
-<strong>인천 조석</strong>
-<span id="dashTide">-</span>
-</a>
-</div>
-<div class="river-metrics">
+<div class="hydro-impact-summary" id="hydroImpactSummary">
 <div>
-<span>잠수교 통과높이</span>
-<b id="dashClearance">-</b>
-<em id="dashClearanceTrend">-</em>
+<span>현재 수문 영향</span>
+<b id="hydroImpactState">판단 중</b>
 </div>
-<div>
-<span>팔당댐 방류량</span>
-<b id="dashOutflow">-</b>
-<em id="dashOutflowTrend">-</em>
+<p id="hydroImpactText">팔당댐 방류, 잠수교 통과여유, 하류 조석을 종합해 운항 영향도를 표시합니다.</p>
 </div>
-<div>
-<span>다음 만조</span>
-<b id="dashNextHigh">-</b>
-<em id="dashNextHighHeight">-</em>
+<div class="hydro-flow-grid">
+<a class="hydro-flow-card upstream" href="./paldang.html?v=92.4">
+<div class="hydro-flow-top">
+<span>① 상류 유입 요인</span>
+<i id="hydroPaldangState">확인 중</i>
 </div>
+<strong>팔당댐 방류량</strong>
+<b id="hydroPaldangValue">-</b>
+<em id="hydroPaldangTrend">-</em>
+<div class="hydro-threshold-lines">
+<span id="hydroPaldangEastMargin">동부선 기준 여유 -</span>
+<span id="hydroPaldangWestMargin">서부선 기준 여유 -</span>
+</div>
+</a>
+<div class="hydro-flow-arrow" aria-hidden="true">→</div>
+<a class="hydro-flow-card bottleneck" href="./jamsu.html?v=92.4">
+<div class="hydro-flow-top">
+<span>② 동부선 병목</span>
+<i id="hydroJamsuState">확인 중</i>
+</div>
+<strong>잠수교 통과높이</strong>
+<b id="hydroJamsuValue">-</b>
+<em id="hydroJamsuTrend">-</em>
+<div class="hydro-threshold-lines single">
+<span id="hydroJamsuMargin">운항중지 기준 여유 -</span>
+</div>
+</a>
+<div class="hydro-flow-arrow" aria-hidden="true">→</div>
+<a class="hydro-flow-card downstream" href="./tide.html?v=92.4">
+<div class="hydro-flow-top">
+<span>③ 하류 조석 영향</span>
+<i id="hydroTideState">확인 중</i>
+</div>
+<strong>인천 다음 만조</strong>
+<b id="hydroTideValue">-</b>
+<em id="hydroTideHeight">-</em>
+<div class="hydro-threshold-lines single">
+<span id="hydroTideCountdown">만조 영향 확인 중</span>
+</div>
+</a>
+</div>
+<div class="hydro-secondary-strip">
+<a href="./river.html?v=92.4"><span>한강대교 수위</span><b id="hydroHangangLevel">-</b></a>
+<a href="./jamsu.html?v=92.4"><span>잠수교 수위</span><b id="hydroJamsuLevel">-</b></a>
+<span class="hydro-guide">이 카드는 값 자체보다 <b>운항기준까지 남은 여유와 변화방향</b>을 우선 표시합니다.</span>
 </div>
 </article>
 <article class="control-card alerts-overview">
@@ -227,7 +230,7 @@
 <script src="hrfco.js?v=92.1"></script>
 <script src="kma.js?v=92.1"></script>
 <script src="ocean.js?v=92.1"></script>
-<script src="dashboard.js?v=92.1"></script>
+<script src="dashboard.js?v=92.4"></script>
 <script src="shared-navigation.js?v=92.1"></script>
 <script src="./app-bootstrap.js?v=92.1"></script></body>
 </html>

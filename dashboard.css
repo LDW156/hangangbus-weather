@@ -1434,3 +1434,41 @@ button {
   .route-summary b{font-size:23px!important}
   .weather-kpi b{font-size:21px!important}
 }
+
+
+/* v92.4 수문·조석 운항영향 카드 */
+.hydro-impact-overview{overflow:visible!important}
+.hydro-heading{margin-bottom:7px}
+.hydro-impact-summary{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:12px;margin:2px 0 10px;padding:10px 12px;border:1px solid #cddde6;border-radius:10px;background:#f5f9fb}
+.hydro-impact-summary>div span,.hydro-impact-summary>div b{display:block}
+.hydro-impact-summary>div span{color:#698494;font-size:8.5px;font-weight:900}
+.hydro-impact-summary>div b{margin-top:2px;color:#136d96;font-size:18px;letter-spacing:-.03em}
+.hydro-impact-summary p{margin:0;color:#466879;font-size:9px;font-weight:800;line-height:1.45}
+.hydro-impact-summary.caution{background:#fff8e6;border-color:#e2bd59}
+.hydro-impact-summary.caution>div b{color:#8b6200}
+.hydro-impact-summary.stop{background:#fff0f2;border-color:#df7c88}
+.hydro-impact-summary.stop>div b{color:#b51f30}
+.hydro-flow-grid{display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr) 24px minmax(0,1fr);align-items:stretch;gap:7px}
+.hydro-flow-card{display:block;min-width:0;padding:11px 12px;color:inherit;background:#fff;border:1px solid #cddce5;border-top:4px solid #2b91bd;border-radius:10px;text-decoration:none;transition:.15s ease}
+.hydro-flow-card:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(24,73,96,.08)}
+.hydro-flow-card.upstream{border-top-color:#3188b5}
+.hydro-flow-card.bottleneck{border-top-color:#168f70}
+.hydro-flow-card.downstream{border-top-color:#775fb1}
+.hydro-flow-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.hydro-flow-top span{color:#607d8c;font-size:8px;font-weight:900}
+.hydro-flow-top i{padding:3px 7px;border-radius:999px;color:#fff;background:#1789b3;font-size:7px;font-style:normal;font-weight:950}
+.hydro-flow-top i.caution{background:#d69b00}.hydro-flow-top i.stop{background:#d63645}
+.hydro-flow-card strong,.hydro-flow-card>b,.hydro-flow-card>em{display:block}
+.hydro-flow-card strong{color:#31586d;font-size:9px}
+.hydro-flow-card>b{margin-top:4px;color:#0d5d87;font-size:23px;letter-spacing:-.04em}
+.hydro-flow-card>em{min-height:17px;margin-top:3px;color:#67808e;font-size:8px;font-style:normal;font-weight:850}
+.hydro-flow-card>em.rise{color:#d83a44}.hydro-flow-card>em.fall{color:#1877b3}.hydro-flow-card>em.flat{color:#69818e}
+.hydro-threshold-lines{display:grid;gap:4px;margin-top:9px;padding-top:8px;border-top:1px solid #e0e8ed}
+.hydro-threshold-lines span{display:block;color:#4b6b7b;font-size:7.7px;font-weight:850;line-height:1.35}
+.hydro-flow-arrow{display:flex;align-items:center;justify-content:center;color:#7aa8bd;font-size:20px;font-weight:900}
+.hydro-secondary-strip{display:grid;grid-template-columns:150px 150px minmax(0,1fr);gap:7px;margin-top:9px}
+.hydro-secondary-strip>a,.hydro-secondary-strip>.hydro-guide{min-width:0;padding:7px 9px;border-radius:8px;background:#f3f7f9;border:1px solid #d8e3e9}
+.hydro-secondary-strip>a{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#4c6d7d;text-decoration:none}
+.hydro-secondary-strip>a span{font-size:7.5px;font-weight:850}.hydro-secondary-strip>a b{color:#0d648f;font-size:11px;white-space:nowrap}
+.hydro-secondary-strip>.hydro-guide{color:#637e8c;font-size:7.5px;font-weight:800;line-height:1.4}.hydro-secondary-strip>.hydro-guide b{color:#244f66}
+@media(max-width:1120px){.hydro-flow-grid{grid-template-columns:1fr}.hydro-flow-arrow{display:none}.hydro-secondary-strip{grid-template-columns:1fr 1fr}.hydro-secondary-strip>.hydro-guide{grid-column:1/-1}}

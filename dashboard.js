@@ -543,85 +543,112 @@
       `잠실 3시간 ${calc.eastRain.next3hDisplay || fmt(calc.eastRain.next3h, 1)}mm`
     ].map(text => `<span>${text}</span>`).join('');
 
-    $('dashClearance').textContent = `${fmt(calc.clearance, 2)}m`;
-    $('dashClearanceTrend').className =
-      calc.clearanceDelta > .004
-        ? 'rise'
-        : calc.clearanceDelta < -.004
-          ? 'fall'
-          : 'flat';
-    $('dashClearanceTrend').textContent =
-      calc.clearanceDelta > .004
-        ? `▲ ${signed(calc.clearanceDelta, 2, 'm')} 상승`
-        : calc.clearanceDelta < -.004
-          ? `▼ ${signed(calc.clearanceDelta, 2, 'm')} 하락`
-          : '― 0.00m 보합';
-
-    $('dashOutflow').textContent = `${fmt(calc.outflow)}㎥/s`;
-    $('dashOutflowTrend').className =
-      calc.outflowDelta > 0 ? 'rise' : calc.outflowDelta < 0 ? 'fall' : 'flat';
-    $('dashOutflowTrend').textContent =
-      calc.outflowDelta > 0
-        ? `▲ ${signed(calc.outflowDelta, 0, '㎥/s')}`
-        : calc.outflowDelta < 0
-          ? `▼ ${signed(calc.outflowDelta, 0, '㎥/s')}`
-          : '― 변화 없음';
-
+    const paldangEastMargin = cfg.THRESHOLDS.paldang.eastStopCms - calc.outflow;
+    const paldangWestMargin = cfg.THRESHOLDS.paldang.westStopCms - calc.outflow;
+    const jamsuMargin = calc.clearance - cfg.THRESHOLDS.jamsu.stopClearanceM;
     const nextHigh = data?.tide?.nextHigh;
-    $('dashNextHigh').textContent = nextHigh?.time
-      ? dateTimeText(nextHigh.time)
-      : '-';
-    $('dashNextHighHeight').textContent =
-      nextHigh?.heightCm !== undefined
-        ? `${fmt(nextHigh.heightCm)}cm`
-        : '조석자료 확인';
 
-    $('dashPaldang').textContent = `${fmt(calc.outflow)}㎥/s`;
-    $('dashJamsu').textContent = `${fmt(calc.clearance, 2)}m`;
-    $('dashHangang').textContent =
-      `${fmt(data?.hydrology?.hangangBridge?.waterLevelM, 2)}m`;
-    $('dashJamsilRain').textContent =
-      `${calc.eastRain.next3hDisplay || fmt(calc.eastRain.next3h, 1)}mm`;
-    $('dashMagokRain').textContent =
-      `${calc.westRain.next3hDisplay || fmt(calc.westRain.next3h, 1)}mm`;
-    $('dashTide').textContent = nextHigh?.time
-      ? `${timeText(nextHigh.time)} 만조`
-      : '-';
-
-    setStateClass(
-      $('nodePaldang'),
+    const paldangState =
       calc.outflow >= cfg.THRESHOLDS.paldang.westStopCms
         ? 'stop'
         : calc.outflow >= cfg.THRESHOLDS.paldang.eastCautionCms
           ? 'caution'
-          : 'normal'
-    );
-    setStateClass($('nodeJamsu'), calc.jamsuState);
-    setStateClass(
-      $('nodeJamsil'),
-      metricState(
-        calc.eastRain.next3h,
-        cfg.THRESHOLDS.rainfall.stop3hMm * .65,
-        cfg.THRESHOLDS.rainfall.stop3hMm
-      )
-    );
-    setStateClass(
-      $('nodeMagok'),
-      metricState(
-        calc.westRain.next3h,
-        cfg.THRESHOLDS.rainfall.stop3hMm * .65,
-        cfg.THRESHOLDS.rainfall.stop3hMm
-      )
-    );
-    setStateClass($('nodeYeouido'), calc.west);
-    setStateClass(
-      $('nodeIncheon'),
+          : 'normal';
+    const tideState =
       data?.tide?.overlapRisk === '높음'
         ? 'stop'
         : data?.tide?.overlapRisk === '보통'
           ? 'caution'
-          : 'normal'
-    );
+          : 'normal';
+
+    const stateRank = { normal:0, caution:1, stop:2 };
+    const hydroState = [paldangState, calc.jamsuState, tideState]
+      .sort((a,b) => stateRank[b] - stateRank[a])[0] || 'normal';
+    const hydroStateLabel =
+      hydroState === 'stop' ? '영향 높음' : hydroState === 'caution' ? '주의 필요' : '영향 낮음';
+
+    const impactSummary = $('hydroImpactSummary');
+    setStateClass(impactSummary, hydroState);
+    $('hydroImpactState').textContent = hydroStateLabel;
+
+    const summaryParts = [];
+    if (Number.isFinite(jamsuMargin)) {
+      summaryParts.push(`잠수교 기준 ${jamsuMargin >= 0 ? '+' : ''}${fmt(jamsuMargin,2)}m`);
+    }
+    if (Number.isFinite(paldangEastMargin)) {
+      summaryParts.push(`팔당 동부선 기준 ${paldangEastMargin >= 0 ? '+' : ''}${fmt(paldangEastMargin,0)}㎥/s`);
+    }
+    if (nextHigh?.time) {
+      summaryParts.push(`다음 만조 ${timeText(nextHigh.time)}`);
+    }
+    $('hydroImpactText').textContent = summaryParts.join(' · ') || '수문·조석 자료를 확인 중입니다.';
+
+    const setHydroChip = (id, state) => {
+      const el = $(id);
+      if (!el) return;
+      el.className = state;
+      el.textContent = state === 'stop' ? '위험' : state === 'caution' ? '주의' : '정상';
+    };
+
+    setHydroChip('hydroPaldangState', paldangState);
+    setHydroChip('hydroJamsuState', calc.jamsuState);
+    setHydroChip('hydroTideState', tideState);
+
+    $('hydroPaldangValue').textContent = `${fmt(calc.outflow)}㎥/s`;
+    $('hydroPaldangTrend').className =
+      calc.outflowDelta > 0 ? 'rise' : calc.outflowDelta < 0 ? 'fall' : 'flat';
+    $('hydroPaldangTrend').textContent =
+      calc.outflowDelta > 0
+        ? `▲ 10분 전 대비 ${signed(calc.outflowDelta,0,'㎥/s')}`
+        : calc.outflowDelta < 0
+          ? `▼ 10분 전 대비 ${signed(calc.outflowDelta,0,'㎥/s')}`
+          : '― 10분 전 대비 변화 없음';
+    $('hydroPaldangEastMargin').textContent =
+      paldangEastMargin >= 0
+        ? `동부선 중지기준까지 ${fmt(paldangEastMargin,0)}㎥/s 여유`
+        : `동부선 중지기준 ${fmt(Math.abs(paldangEastMargin),0)}㎥/s 초과`;
+    $('hydroPaldangWestMargin').textContent =
+      paldangWestMargin >= 0
+        ? `서부선 중지기준까지 ${fmt(paldangWestMargin,0)}㎥/s 여유`
+        : `서부선 중지기준 ${fmt(Math.abs(paldangWestMargin),0)}㎥/s 초과`;
+
+    $('hydroJamsuValue').textContent = `${fmt(calc.clearance,2)}m`;
+    $('hydroJamsuTrend').className =
+      calc.clearanceDelta > .004 ? 'rise' : calc.clearanceDelta < -.004 ? 'fall' : 'flat';
+    $('hydroJamsuTrend').textContent =
+      calc.clearanceDelta > .004
+        ? `▲ 10분 전 대비 ${signed(calc.clearanceDelta,2,'m')} 개선`
+        : calc.clearanceDelta < -.004
+          ? `▼ 10분 전 대비 ${signed(calc.clearanceDelta,2,'m')} 감소`
+          : '― 10분 전 대비 보합';
+    $('hydroJamsuMargin').textContent =
+      jamsuMargin >= 0
+        ? `운항중지 통과높이까지 ${fmt(jamsuMargin,2)}m 여유`
+        : `운항중지 통과높이 ${fmt(Math.abs(jamsuMargin),2)}m 초과`;
+
+    $('hydroTideValue').textContent = nextHigh?.time ? timeText(nextHigh.time) : '-';
+    $('hydroTideHeight').textContent =
+      nextHigh?.heightCm !== undefined ? `${fmt(nextHigh.heightCm)}cm 예상` : '조석자료 확인';
+
+    let tideCountdown = '만조 영향 확인 중';
+    if (nextHigh?.time) {
+      const target = new Date(nextHigh.time);
+      if (!Number.isNaN(target.getTime())) {
+        const diffMin = Math.round((target.getTime() - Date.now()) / 60000);
+        if (diffMin > 0) {
+          const h = Math.floor(diffMin / 60);
+          const m = diffMin % 60;
+          tideCountdown = h > 0 ? `만조까지 약 ${h}시간 ${m}분` : `만조까지 약 ${m}분`;
+        } else if (diffMin > -90) {
+          tideCountdown = '현재 만조 영향 시간대';
+        }
+      }
+    }
+    $('hydroTideCountdown').textContent = tideCountdown;
+
+    $('hydroHangangLevel').textContent = `${fmt(data?.hydrology?.hangangBridge?.waterLevelM,2)}m`;
+    $('hydroJamsuLevel').textContent = `${fmt(calc.waterLevel,2)}m`;
+
 
     renderWeatherKpi(
       $('westRainKpi'),
