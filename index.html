@@ -4,7 +4,7 @@
 <head><script>
 (() => {
   'use strict';
-  const BUILD = '92.0';
+  const BUILD = '92.1';
   const LEGACY_ROUTES={
     '#analysis-dam':'analysis-dam.html',
     '#analysis-bridge':'analysis-bridge.html',
@@ -31,8 +31,8 @@
 <link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
 <link href="./assets/hangangbus-logo.png?v=88" rel="shortcut icon" type="image/png"/>
 <link href="./assets/hangangbus-logo.png?v=88" rel="apple-touch-icon"/>
-<link href="dashboard.css?v=92.0" rel="stylesheet"/>
-<link href="shared-sidebar.css?v=92.0" rel="stylesheet"/>
+<link href="dashboard.css?v=92.1" rel="stylesheet"/>
+<link href="shared-sidebar.css?v=92.1" rel="stylesheet"/>
 </head>
 <body class="dashboard-body">
 <div class="control-shell">
@@ -42,22 +42,22 @@
 <div><b>한강버스</b><span>통합 상황관리</span></div>
 </div>
 <nav aria-label="대시보드 메뉴" class="side-nav">
-<a data-nav-file="index.html" href="./index.html?v=92.0"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
-<a data-nav-file="detail.html" href="./detail.html?v=92.0"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<a data-nav-file="index.html" href="./index.html?v=92.1"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=92.1"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
 <p>운항·수문</p>
-<a data-nav-file="route.html" href="./route.html?v=92.0"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
-<a data-nav-file="jamsu.html" href="./jamsu.html?v=92.0"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
-<a data-nav-file="paldang.html" href="./paldang.html?v=92.0"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
-<a data-nav-file="river.html" href="./river.html?v=92.0"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<a data-nav-file="route.html" href="./route.html?v=92.1"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=92.1"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=92.1"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=92.1"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
 <p>기상·조석</p>
-<a data-nav-file="alerts.html" href="./alerts.html?v=92.0"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
-<a data-nav-file="rain.html" href="./rain.html?v=92.0"><span class="side-icon">☂</span><span>강수 예보</span></a>
-<a data-nav-file="wind.html" href="./wind.html?v=92.0"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
-<a data-nav-file="tide.html" href="./tide.html?v=92.0"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<a data-nav-file="alerts.html" href="./alerts.html?v=92.1"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=92.1"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=92.1"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=92.1"><span class="side-icon">◒</span><span>인천 조석</span></a>
 <p>데이터 분석</p>
-<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=92.0"><span class="side-icon">≋</span><span>댐 방류량</span></a>
-<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=92.0"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
-<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=92.0"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=92.1"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=92.1"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=92.1"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
 </nav>
 <div class="side-legend">
 <b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
@@ -88,7 +88,7 @@
 <span>운항판정</span>
 <h2>노선별 현재 상태</h2>
 </div>
-<a href="./route.html?v=92.0">상세보기</a>
+<a href="./route.html?v=92.1">상세보기</a>
 </div>
 <div class="route-summary-grid">
 <div class="route-summary blue" id="dashboardEastRoute"></div>
@@ -102,36 +102,36 @@
 <span>한강 수문 상황</span>
 <h2>핵심 수위·방류 현황</h2>
 </div>
-<a href="./jamsu.html?v=92.0">상세보기</a>
+<a href="./jamsu.html?v=92.1">상세보기</a>
 </div>
 <div class="river-schematic">
 <div class="river-line"></div>
-<a class="river-node dam" href="./paldang.html?v=92.0">
+<a class="river-node dam" href="./paldang.html?v=92.1">
 <i class="blue" id="nodePaldang"></i>
 <strong>팔당댐</strong>
 <span id="dashPaldang">-</span>
 </a>
-<a class="river-node jamsil" href="./rain.html?v=92.0">
+<a class="river-node jamsil" href="./rain.html?v=92.1">
 <i class="blue" id="nodeJamsil"></i>
 <strong>잠실</strong>
 <span id="dashJamsilRain">-</span>
 </a>
-<a class="river-node jamsu" href="./jamsu.html?v=92.0">
+<a class="river-node jamsu" href="./jamsu.html?v=92.1">
 <i class="blue" id="nodeJamsu"></i>
 <strong>잠수교</strong>
 <span id="dashJamsu">-</span>
 </a>
-<a class="river-node yeouido" href="./river.html?v=92.0">
+<a class="river-node yeouido" href="./river.html?v=92.1">
 <i class="blue" id="nodeYeouido"></i>
 <strong>여의도</strong>
 <span id="dashHangang">-</span>
 </a>
-<a class="river-node magok" href="./rain.html?v=92.0">
+<a class="river-node magok" href="./rain.html?v=92.1">
 <i class="blue" id="nodeMagok"></i>
 <strong>마곡</strong>
 <span id="dashMagokRain">-</span>
 </a>
-<a class="river-node incheon" href="./tide.html?v=92.0">
+<a class="river-node incheon" href="./tide.html?v=92.1">
 <i class="blue" id="nodeIncheon"></i>
 <strong>인천 조석</strong>
 <span id="dashTide">-</span>
@@ -161,7 +161,7 @@
 <span>운항 관련 특보</span>
 <h2>호우·강풍·태풍</h2>
 </div>
-<a href="./alerts.html?v=92.0">상세보기</a>
+<a href="./alerts.html?v=92.1">상세보기</a>
 </div>
 <div class="dashboard-alert-list" id="dashboardAlertList"></div>
 </article>
@@ -171,7 +171,7 @@
 <span>기상 전망</span>
 <h2>강수·풍속 핵심값</h2>
 </div>
-<a href="./rain.html?v=92.0">상세보기</a>
+<a href="./rain.html?v=92.1">상세보기</a>
 </div>
 <div class="weather-kpi-grid">
 <div class="weather-kpi blue" id="westRainKpi">
@@ -208,7 +208,7 @@
 <div class="dashboard-health" id="dashboardHealth"></div>
 <div class="dashboard-health-footer">
 <span>페이지 이동 시 공유 캐시 사용</span>
-<a href="./detail.html?v=92.0#health">전체 상태 보기</a>
+<a href="./detail.html?v=92.1#health">전체 상태 보기</a>
 </div>
 </article>
 </section>
@@ -219,15 +219,15 @@
 </section>
 </main>
 </div>
-<script src="shared-config.js?v=92.0"></script>
-<script src="weather-config.js?v=92.0"></script>
-<script src="ocean-config.js?v=92.0"></script>
-<script src="config.js?v=92.0"></script>
-<script src="data-cache.js?v=92.0"></script>
-<script src="hrfco.js?v=92.0"></script>
-<script src="kma.js?v=92.0"></script>
-<script src="ocean.js?v=92.0"></script>
-<script src="dashboard.js?v=92.0"></script>
-<script src="shared-navigation.js?v=92.0"></script>
-<script src="./app-bootstrap.js?v=92.0"></script></body>
+<script src="shared-config.js?v=92.1"></script>
+<script src="weather-config.js?v=92.1"></script>
+<script src="ocean-config.js?v=92.1"></script>
+<script src="config.js?v=92.1"></script>
+<script src="data-cache.js?v=92.1"></script>
+<script src="hrfco.js?v=92.1"></script>
+<script src="kma.js?v=92.1"></script>
+<script src="ocean.js?v=92.1"></script>
+<script src="dashboard.js?v=92.1"></script>
+<script src="shared-navigation.js?v=92.1"></script>
+<script src="./app-bootstrap.js?v=92.1"></script></body>
 </html>

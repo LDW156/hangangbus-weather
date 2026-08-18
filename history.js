@@ -1103,11 +1103,65 @@
     const leftExtent = extent(rows, series, 'left');
     const rightExtent = extent(rows, series, 'right');
 
-    const scaleX = index =>
-      margin.left +
-      (rows.length === 1
-        ? plotWidth / 2
-        : (index / (rows.length - 1)) * plotWidth);
+    const monthOrdinal = value => {
+      const date = dateParts(value);
+      return date ? date.getFullYear() * 12 + date.getMonth() : null;
+    };
+
+    let monthlyAxis = null;
+
+    if (state.mode === 'monthly') {
+      let startYear;
+      let startMonth;
+      let endYear;
+      let endMonth;
+
+      if (state.entry === 'search') {
+        const from = $('historyFromDate')?.value || '';
+        const to = $('historyToDate')?.value || '';
+        const fromMatch = /^(\d{4})-(\d{2})/.exec(from);
+        const toMatch = /^(\d{4})-(\d{2})/.exec(to);
+
+        if (fromMatch && toMatch) {
+          startYear = Number(fromMatch[1]);
+          startMonth = Number(fromMatch[2]) - 1;
+          endYear = Number(toMatch[1]);
+          endMonth = Number(toMatch[2]) - 1;
+        }
+      } else {
+        const year = Number($('historyDate')?.value || new Date().getFullYear());
+        if (Number.isFinite(year)) {
+          startYear = year;
+          startMonth = 0;
+          endYear = year;
+          endMonth = 11;
+        }
+      }
+
+      if ([startYear, startMonth, endYear, endMonth].every(Number.isFinite)) {
+        const startOrdinal = startYear * 12 + startMonth;
+        const endOrdinal = endYear * 12 + endMonth;
+        if (endOrdinal >= startOrdinal) {
+          monthlyAxis = { startOrdinal, endOrdinal };
+        }
+      }
+    }
+
+    const scaleX = index => {
+      if (monthlyAxis) {
+        const ordinal = monthOrdinal(rows[index]?.time);
+        if (ordinal !== null) {
+          const span = Math.max(1, monthlyAxis.endOrdinal - monthlyAxis.startOrdinal);
+          return margin.left +
+            ((ordinal - monthlyAxis.startOrdinal) / span) * plotWidth;
+        }
+      }
+
+      return margin.left +
+        (rows.length === 1
+          ? plotWidth / 2
+          : (index / (rows.length - 1)) * plotWidth);
+    };
 
     const makeScaleY = range => value =>
       margin.top +
@@ -1142,27 +1196,66 @@
       }
     }
 
-    const labelIndexes = new Set();
-    const labelCount = Math.min(9, rows.length);
-    for (let i = 0; i < labelCount; i += 1) {
-      labelIndexes.add(
-        Math.round((i / Math.max(1, labelCount - 1)) * (rows.length - 1))
-      );
-    }
+    let xLabels = '';
 
-    const xLabels = [...labelIndexes].map(index => {
-      const x = scaleX(index);
-      return `
-        <line x1="${x}" y1="${height - margin.bottom}" x2="${x}" y2="${height - margin.bottom + 6}" stroke="${COLORS.axis}"/>
-        <text
-          x="${x}"
-          y="${height - margin.bottom + 24}"
-          text-anchor="middle"
-          fill="${COLORS.text}"
-          font-size="11"
-        >${escapeHtml(formatAxisTime(rows[index].time, state.mode))}</text>
-      `;
-    }).join('');
+    if (monthlyAxis) {
+      const monthCount = monthlyAxis.endOrdinal - monthlyAxis.startOrdinal + 1;
+      // 연도별 월별 통계는 1~12월을 빠짐없이 표시한다.
+      // 조건검색처럼 기간이 긴 경우에만 겹침 방지를 위해 간격을 줄인다.
+      const maxMonthlyLabels = state.entry === 'search' ? 18 : 12;
+      const step = Math.max(1, Math.ceil(monthCount / maxMonthlyLabels));
+      const ordinals = [];
+
+      for (let ordinal = monthlyAxis.startOrdinal; ordinal <= monthlyAxis.endOrdinal; ordinal += step) {
+        ordinals.push(ordinal);
+      }
+
+      if (ordinals.at(-1) !== monthlyAxis.endOrdinal) {
+        ordinals.push(monthlyAxis.endOrdinal);
+      }
+
+      xLabels = ordinals.map(ordinal => {
+        const x = monthCount === 1
+          ? margin.left + plotWidth / 2
+          : margin.left +
+            ((ordinal - monthlyAxis.startOrdinal) / Math.max(1, monthlyAxis.endOrdinal - monthlyAxis.startOrdinal)) * plotWidth;
+        const year = Math.floor(ordinal / 12);
+        const month = ordinal % 12;
+        const labelDate = new Date(year, month, 1);
+        return `
+          <line x1="${x}" y1="${height - margin.bottom}" x2="${x}" y2="${height - margin.bottom + 6}" stroke="${COLORS.axis}"/>
+          <text
+            x="${x}"
+            y="${height - margin.bottom + 24}"
+            text-anchor="middle"
+            fill="${COLORS.text}"
+            font-size="10.5"
+          >${escapeHtml(formatAxisTime(labelDate, 'monthly'))}</text>
+        `;
+      }).join('');
+    } else {
+      const labelIndexes = new Set();
+      const labelCount = Math.min(state.mode === 'daily' ? 12 : 9, rows.length);
+      for (let i = 0; i < labelCount; i += 1) {
+        labelIndexes.add(
+          Math.round((i / Math.max(1, labelCount - 1)) * (rows.length - 1))
+        );
+      }
+
+      xLabels = [...labelIndexes].map(index => {
+        const x = scaleX(index);
+        return `
+          <line x1="${x}" y1="${height - margin.bottom}" x2="${x}" y2="${height - margin.bottom + 6}" stroke="${COLORS.axis}"/>
+          <text
+            x="${x}"
+            y="${height - margin.bottom + 24}"
+            text-anchor="middle"
+            fill="${COLORS.text}"
+            font-size="11"
+          >${escapeHtml(formatAxisTime(rows[index].time, state.mode))}</text>
+        `;
+      }).join('');
+    }
 
     const paths = series.map(item => {
       const yScale = item.axis === 'right' ? rightY : leftY;

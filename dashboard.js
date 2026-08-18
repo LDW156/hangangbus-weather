@@ -108,14 +108,27 @@
         return;
       }
 
+      // 만료된 직전값도 즉시 보여주고, 실제 갱신은 뒤에서 수행합니다.
+      const warm = sharedCache.readAny();
+      if (warm) renderCachedDashboard(warm);
+
       if (!sharedCache.acquireLock(false)) {
-        const existing = sharedCache.readAny();
-        if (existing) renderCachedDashboard(existing);
-        setTimeout(() => {
-          const updated = sharedCache.readFresh();
-          if (updated) renderCachedDashboard(updated);
-        }, 1400);
-        return;
+        if (warm) {
+          setTimeout(() => {
+            const updated = sharedCache.readAny();
+            if (updated && updated.savedAt > warm.savedAt) renderCachedDashboard(updated);
+          }, 1800);
+          return;
+        }
+
+        const arrived = await sharedCache.waitForSnapshot?.(2500);
+        if (arrived) {
+          renderCachedDashboard(arrived);
+          return;
+        }
+
+        // 최초 진입에서 스냅샷이 끝내 오지 않으면 빈 화면 방지 차원에서 직접 갱신합니다.
+        sharedCache.acquireLock(true);
       }
     } else if (force && sharedCache) {
       sharedCache.acquireLock(true);
@@ -131,11 +144,14 @@
 
     const cachedPrevious = sharedCache?.readAny()?.data || null;
     previousData = data ? structuredClone(data) : (cachedPrevious ? structuredClone(cachedPrevious) : null);
-    data = structuredClone(
-      window.HANGANG_DEMO_DATA?.normal ||
-      window.HANGANG_DEMO_DATA?.caution ||
-      {}
-    );
+    // API 갱신이 시작돼도 기존 카드 값을 비우지 않습니다.
+    data = previousData
+      ? structuredClone(previousData)
+      : structuredClone(
+          window.HANGANG_DEMO_DATA?.normal ||
+          window.HANGANG_DEMO_DATA?.caution ||
+          {}
+        );
     data.tide=previousData?.tide||{referenceAt:new Date().toISOString(),updatedAt:null,stationName:'인천',phase:'자료 확인',rangeClass:'자료 확인',rangeCm:null,overlapRisk:'자료 확인',currentObserved:null,currentPredicted:null,previousHigh:null,previousLow:null,nextHigh:null,nextLow:null,events:[],allEvents:[],timeline:[],monthly:{ok:false,daily:[],summary:null},monthlyError:null,sourceLabel:'조석자료 확인 중'};
     data.health=(data.health||[]).filter(item=>!['한강수위','팔당댐','수문정보','기상관측','기상예보','기상특보','조석','조석정보'].includes(item.name));
 

@@ -87,14 +87,29 @@
         return;
       }
 
+      // 10분이 지난 자료라도 빈 화면보다 먼저 즉시 표시한 뒤 백그라운드 갱신합니다.
+      const warm=sharedCache.readAny();
+      if(warm)renderSharedSnapshot(warm);
+
       if(!sharedCache.acquireLock(false)){
-        const existing=sharedCache.readAny();
-        if(existing)renderSharedSnapshot(existing);
-        setTimeout(()=>{
-          const updated=sharedCache.readFresh();
-          if(updated)renderSharedSnapshot(updated);
-        },1400);
-        return;
+        if(warm){
+          // 다른 페이지가 갱신 중이면 현재 직전값을 유지하고 새 스냅샷을 기다립니다.
+          setTimeout(()=>{
+            const updated=sharedCache.readAny();
+            if(updated&&updated.savedAt>warm.savedAt)renderSharedSnapshot(updated);
+          },1800);
+          return;
+        }
+
+        // 첫 방문인데 다른 탭이 갱신 중인 경우 잠시 결과를 기다립니다.
+        const arrived=await sharedCache.waitForSnapshot?.(2500);
+        if(arrived){
+          renderSharedSnapshot(arrived);
+          return;
+        }
+
+        // 캐시도 결과도 없으면 빈 화면 방지를 위해 이 페이지가 갱신권을 인계받습니다.
+        sharedCache.acquireLock(true);
       }
     }else if(force&&sharedCache){
       sharedCache.acquireLock(true);
@@ -106,7 +121,10 @@
 
     const cachedPrevious=sharedCache?.readAny()?.data||null;
     const previousData=data?structuredClone(data):(cachedPrevious?structuredClone(cachedPrevious):null);
-    data=structuredClone(window.HANGANG_DEMO_DATA[scenario]);
+    // 갱신 중에도 직전 정상값을 화면에서 지우지 않습니다.
+    data=previousData
+      ? structuredClone(previousData)
+      : structuredClone(window.HANGANG_DEMO_DATA[scenario]);
     data.health=(data.health||[]).filter(x=>!['한강수위','팔당댐','수문정보','기상관측','기상예보','기상특보','조석','조석정보'].includes(x.name));
     data.meta=data.meta||{};
     data.meta.dataTimes=data.meta.dataTimes||{};
@@ -2468,12 +2486,12 @@
   }
 
   const DETAIL_PAGE_FILES={
-    route:'./route.html?v=91.9',jamsu:'./jamsu.html?v=91.9',dam:'./paldang.html?v=91.9',river:'./river.html?v=91.9',
-    alerts:'./alerts.html?v=91.9',rain:'./rain.html?v=91.9',wind:'./wind.html?v=91.9',tide:'./tide.html?v=91.9'
+    route:'./route.html?v=92.1',jamsu:'./jamsu.html?v=92.1',dam:'./paldang.html?v=92.1',river:'./river.html?v=92.1',
+    alerts:'./alerts.html?v=92.1',rain:'./rain.html?v=92.1',wind:'./wind.html?v=92.1',tide:'./tide.html?v=92.1'
   };
 
   function requestDetailMode(section=''){
-    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=91.9'):'./detail.html?v=91.9';
+    window.location.href=section?(DETAIL_PAGE_FILES[section]||'./detail.html?v=92.1'):'./detail.html?v=92.1';
   }
 
   /* v91.9 상세화면은 독립 최상위 페이지로만 운영합니다. */

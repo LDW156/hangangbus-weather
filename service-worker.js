@@ -1,12 +1,12 @@
-const CACHE = 'hangangbus-ui-v92-0';
+const CACHE = 'hangangbus-ui-v92-2';
 const STATIC_ASSETS = [
-  './dashboard.css?v=92.0','./history.css?v=92.0','./styles.css?v=92.0',
-  './module-pages.css?v=92.0','./shared-sidebar.css?v=92.0',
-  './dashboard.js?v=92.0','./history.js?v=92.0','./app.js?v=92.0',
-  './module-pages.js?v=92.0','./shared-navigation.js?v=92.0','./app-bootstrap.js?v=92.0',
-  './shared-config.js?v=92.0','./weather-config.js?v=92.0','./ocean-config.js?v=92.0',
-  './config.js?v=92.0','./data-cache.js?v=92.0','./hrfco.js?v=92.0','./kma.js?v=92.0','./ocean.js?v=92.0',
-  './history-config.js?v=92.0','./assets/hangangbus-logo.png?v=88'
+  './dashboard.css?v=92.1','./history.css?v=92.1','./styles.css?v=92.1',
+  './module-pages.css?v=92.1','./shared-sidebar.css?v=92.1',
+  './dashboard.js?v=92.1','./history.js?v=92.2','./app.js?v=92.1',
+  './module-pages.js?v=92.1','./shared-navigation.js?v=92.1','./app-bootstrap.js?v=92.1',
+  './shared-config.js?v=92.1','./weather-config.js?v=92.1','./ocean-config.js?v=92.1',
+  './config.js?v=92.1','./data-cache.js?v=92.1','./hrfco.js?v=92.1','./kma.js?v=92.1','./ocean.js?v=92.1',
+  './history-config.js?v=92.1','./assets/hangangbus-logo.png?v=88'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting()));

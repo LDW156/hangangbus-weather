@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const BUILD = '91.9';
+  const BUILD = '92.1';
   const KEY = 'hangangbus:ui-build';
 
   async function migrate() {
