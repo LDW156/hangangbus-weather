@@ -1,8 +1,8 @@
 const CACHE = 'hangangbus-dashboard-stopdecision-v92-5';
 const STATIC_ASSETS = [
-  './dashboard.css?v=92.5','./history.css?v=92.1','./styles.css?v=92.1',
+  './dashboard.css?v=92.6','./history.css?v=92.1','./styles.css?v=92.1',
   './module-pages.css?v=92.1','./shared-sidebar.css?v=92.1',
-  './dashboard.js?v=92.5','./history.js?v=92.3','./app.js?v=92.1',
+  './dashboard.js?v=92.6','./history.js?v=92.3','./app.js?v=92.1',
   './module-pages.js?v=92.1','./shared-navigation.js?v=92.1','./app-bootstrap.js?v=92.1',
   './shared-config.js?v=92.1','./weather-config.js?v=92.1','./ocean-config.js?v=92.1',
   './config.js?v=92.1','./data-cache.js?v=92.1','./hrfco.js?v=92.1','./kma.js?v=92.1','./ocean.js?v=92.1',
