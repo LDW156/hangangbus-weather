@@ -4,7 +4,7 @@
   back?.addEventListener('click',event=>{
     if (back.tagName === 'A') return;
     event.preventDefault();
-    window.location.href='./index.html?v=91.9';
+    window.location.href='./dashboard.html?v=93.0';
   });
 
   window.addEventListener('hangangbus-data-rendered',event=>{

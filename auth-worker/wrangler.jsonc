@@ -1,0 +1,1 @@
+{"$schema":"node_modules/wrangler/config-schema.json","name":"hangangbus-auth-api","main":"worker.js","compatibility_date":"2026-08-01","vars":{"ADMIN_EMAIL":"change-me@example.com","ALLOWED_ORIGIN":"https://YOUR-SITE.example.com"},"d1_databases":[{"binding":"AUTH_DB","database_name":"hangangbus-auth","database_id":"PUT_D1_DATABASE_ID_HERE"}]}

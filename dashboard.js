@@ -574,15 +574,15 @@
     const hydroState = [eastHydroState, westHydroState]
       .sort((a,b) => stateRank[b] - stateRank[a])[0] || 'normal';
 
-    let hydroStateLabel = '수문 기준 정상 · 운항 가능';
+    let hydroStateLabel = '운항중단 조건 미충족';
     if (eastHydroState === 'stop' && westHydroState === 'stop') {
-      hydroStateLabel = '전 노선 운항중단 기준 도달';
+      hydroStateLabel = '전 노선 중단기준 충족';
     } else if (eastHydroState === 'stop') {
-      hydroStateLabel = '동부선 운항중단 기준 도달';
+      hydroStateLabel = '동부선 중단기준 충족';
     } else if (westHydroState === 'stop') {
-      hydroStateLabel = '서부선 운항중단 기준 도달';
+      hydroStateLabel = '서부선 중단기준 충족';
     } else if (hydroState === 'caution') {
-      hydroStateLabel = '수문 기준 주의 · 추이 확인';
+      hydroStateLabel = '중단기준 미충족 · 주의구간 접근';
     }
 
     const impactSummary = $('hydroImpactSummary');
@@ -590,10 +590,43 @@
     $('hydroImpactState').textContent = hydroStateLabel;
 
     const summaryParts = [];
-    if (Number.isFinite(jamsuMargin)) summaryParts.push(`잠수교 여유 ${fmt(jamsuMargin,2)}m`);
-    if (Number.isFinite(paldangEastMargin)) summaryParts.push(`팔당 동부 여유 ${fmt(paldangEastMargin,0)}㎥/s`);
-    if (Number.isFinite(paldangWestMargin)) summaryParts.push(`서부 여유 ${fmt(paldangWestMargin,0)}㎥/s`);
-    $('hydroImpactText').textContent = summaryParts.join(' · ') || '수문 기준을 확인 중입니다.';
+    if (Number.isFinite(jamsuMargin)) {
+      summaryParts.push(`잠수교 ${fmt(jamsuMargin,2)}m 여유`);
+    }
+    if (Number.isFinite(paldangEastMargin)) {
+      summaryParts.push(`팔당 동부 ${fmt(paldangEastMargin,0)}㎥/s 여유`);
+    }
+    if (Number.isFinite(paldangWestMargin)) {
+      summaryParts.push(`팔당 서부 ${fmt(paldangWestMargin,0)}㎥/s 여유`);
+    }
+    $('hydroImpactText').textContent = summaryParts.join(' · ') || '수문 운항중단 기준을 확인 중입니다.';
+
+    const stateText = state => state === 'stop' ? '중단기준 충족' : state === 'caution' ? '주의' : '미충족';
+    const applyDecisionState = (id, state) => {
+      const el = $(id);
+      if (!el) return;
+      el.classList.remove('normal','caution','stop');
+      el.classList.add(state);
+    };
+
+    applyDecisionState('hydroEastDecision', eastHydroState);
+    applyDecisionState('hydroWestDecision', westHydroState);
+    $('hydroEastDecisionText').textContent = stateText(eastHydroState);
+    $('hydroWestDecisionText').textContent = stateText(westHydroState);
+    $('hydroEastDecisionReason').textContent =
+      calc.jamsuState === 'stop'
+        ? `잠수교 ${fmt(calc.clearance,2)}m · 기준 7.30m 이하`
+        : paldangEastState === 'stop'
+          ? `팔당 ${fmt(calc.outflow)}㎥/s · 기준 2,000 이상`
+          : eastHydroState === 'caution'
+            ? '중단기준 접근 · 상세값 확인'
+            : `잠수교 +${fmt(Math.max(0,jamsuMargin),2)}m · 팔당 +${fmt(Math.max(0,paldangEastMargin),0)}㎥/s`;
+    $('hydroWestDecisionReason').textContent =
+      paldangWestState === 'stop'
+        ? `팔당 ${fmt(calc.outflow)}㎥/s · 기준 3,000 이상`
+        : paldangWestState === 'caution'
+          ? '팔당 방류량 서부선 기준 접근'
+          : `팔당 기준까지 ${fmt(Math.max(0,paldangWestMargin),0)}㎥/s`;
 
     const setHydroChip = (id, state, reference = false) => {
       const el = $(id);
@@ -606,14 +639,13 @@
       }
     };
 
-    const paldangCombinedState = stateRank[paldangEastState] >= stateRank[paldangWestState]
-      ? paldangEastState
-      : paldangWestState;
-    setHydroChip('hydroPaldangState', paldangCombinedState);
+    setHydroChip('hydroPaldangEastState', paldangEastState);
+    setHydroChip('hydroPaldangWestState', paldangWestState);
     setHydroChip('hydroJamsuState', calc.jamsuState);
     setHydroChip('hydroTideState', tideState, true);
 
     $('hydroPaldangValue').textContent = `${fmt(calc.outflow)}㎥/s`;
+    $('hydroPaldangValueWest').textContent = `${fmt(calc.outflow)}㎥/s`;
     $('hydroPaldangTrend').className =
       calc.outflowDelta > 0 ? 'rise' : calc.outflowDelta < 0 ? 'fall' : 'flat';
     $('hydroPaldangTrend').textContent =
@@ -664,6 +696,9 @@
       }
     }
     $('hydroTideCountdown').textContent = tideCountdown;
+
+    $('hydroHangangLevel').textContent = `${fmt(data?.hydrology?.hangangBridge?.waterLevelM,2)}m`;
+    $('hydroJamsuLevel').textContent = `${fmt(calc.waterLevel,2)}m`;
 
 
     renderWeatherKpi(
