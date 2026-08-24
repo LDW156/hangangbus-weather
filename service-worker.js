@@ -1,7 +1,5 @@
-const CACHE = 'hangangbus-portal-v93-0';
+const CACHE = 'hangangbus-dashboard-stopdecision-v92-5';
 const STATIC_ASSETS = [
-  './home.css?v=93.0','./home.js?v=93.0','./auth-config.js?v=93.0','./auth-client.js?v=93.0',
-  './user-management.css?v=93.0','./user-management.js?v=93.0',
   './dashboard.css?v=92.5','./history.css?v=92.1','./styles.css?v=92.1',
   './module-pages.css?v=92.1','./shared-sidebar.css?v=92.1',
   './dashboard.js?v=92.5','./history.js?v=92.3','./app.js?v=92.1',

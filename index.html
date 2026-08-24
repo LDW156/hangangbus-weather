@@ -1,154 +1,233 @@
 <!DOCTYPE html>
+
 <html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0d3f5e" />
-  <title>한강버스 운항환경 통합관리 포털</title>
-  <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88" />
-  <link rel="stylesheet" href="./home.css?v=93.0" />
+<head><script>
+(() => {
+  'use strict';
+  const BUILD = '92.5';
+  const LEGACY_ROUTES={
+    '#analysis-dam':'analysis-dam.html',
+    '#analysis-bridge':'analysis-bridge.html',
+    '#analysis-search':'analysis-search.html',
+    '#history':'analysis-dam.html'
+  };
+  if(LEGACY_ROUTES[location.hash]){
+    location.replace(`./${LEGACY_ROUTES[location.hash]}?v=${BUILD}`);
+    return;
+  }
+  if (window.top !== window.self) {
+    window.top.location.replace(window.location.href);
+    return;
+  }
+  window.HANGANG_BUILD = BUILD;
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#eef3f7" name="theme-color"/>
+<meta content="한강버스 상황실용 종합 기상·수문 대시보드" name="description"/>
+<title>한강버스 종합 상황 대시보드</title>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="shortcut icon" type="image/png"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="apple-touch-icon"/>
+<link href="dashboard.css?v=92.5" rel="stylesheet"/>
+<link href="shared-sidebar.css?v=92.1" rel="stylesheet"/>
 </head>
-<body>
-  <div class="portal-shell">
-    <header class="portal-header">
-      <a class="portal-brand" href="./index.html?v=93.0" aria-label="한강버스 메인 홈">
-        <img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고" />
-        <div>
-          <b>한강버스</b>
-          <span>운항환경 통합관리 포털</span>
-        </div>
-      </a>
-      <div class="portal-user-zone">
-        <div class="portal-access-state" id="portalAccessState"><span class="auth-dot"></span><div><b id="portalAccessUser">인증 준비 중</b><span id="portalAccessRole">Cloudflare Access 연동 예정</span></div></div></div>
-          <button id="portalLogoutButton" type="button">로그아웃</button>
-        </div>
-        <div class="portal-clock">
-          <span>현재 시각</span>
-          <b id="portalClock">--:--</b>
-        </div>
+<body class="dashboard-body">
+<div class="control-shell">
+<aside aria-label="한강버스 공통 메뉴" class="control-sidebar">
+<div class="side-brand">
+<img alt="한강버스 로고" src="./assets/hangangbus-logo.png?v=88"/>
+<div><b>한강버스</b><span>통합 상황관리</span></div>
+</div>
+<nav aria-label="대시보드 메뉴" class="side-nav">
+<a data-nav-file="index.html" href="./index.html?v=92.1"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=92.1"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<p>운항·수문</p>
+<a data-nav-file="route.html" href="./route.html?v=92.1"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=92.1"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=92.1"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=92.1"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<p>기상·조석</p>
+<a data-nav-file="alerts.html" href="./alerts.html?v=92.1"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=92.1"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=92.1"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=92.1"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<p>데이터 분석</p>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=92.1"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=92.1"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=92.1"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+</nav>
+<div class="side-legend">
+<b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+</div>
+<div class="side-credit">제작 · 운항감독 이대운</div>
+</aside>
+<main class="control-main">
+<section class="main-view dashboard-view active" id="dashboardView">
+<header class="control-header">
+<div>
+<p>HANGANG BUS CONTROL DASHBOARD</p>
+<h1>한강버스 종합 상황 대시보드</h1>
+</div>
+<div class="control-header-actions">
+<button id="dashboardRefresh" type="button">↻ 수동 업데이트</button>
+<span class="control-auto-refresh">자동 10분</span>
+<span class="control-updated" id="dashboardUpdated">갱신 확인 중</span>
+<span class="control-mode" id="dashboardMode">LOADING</span>
+</div>
+</header>
+<div class="dashboard-alert-strip blue" id="dashboardAlertStrip">
+        핵심 데이터를 불러오는 중입니다.
       </div>
-    </header>
-
-    <main>
-<section class="hero">
-        <div class="hero-copy">
-          <p class="hero-eyebrow">HANGANG BUS OPERATIONS CONTROL</p>
-          <h1>운항 판단부터 데이터 분석까지<br/>한 곳에서 관리합니다.</h1>
-          <p class="hero-desc">
-            한강버스 운항에 필요한 수문·기상·조석 정보를 통합하고,
-            실시간 판단과 과거 데이터 분석을 한 화면 체계로 연결합니다.
-          </p>
-          <div class="hero-actions">
-            <a class="primary" href="./dashboard.html?v=93.0" data-protected="true">종합 상황 대시보드</a>
-            <a class="secondary" href="./detail.html?v=93.0" data-protected="true">전체 상세 모니터링</a>
-          </div>
-        </div>
-        <div class="hero-visual" aria-hidden="true">
-          <div class="river-band river-one"></div>
-          <div class="river-band river-two"></div>
-          <div class="river-stations">
-            <span style="--x:6%"><i></i><b>마곡</b></span>
-            <span style="--x:18%"><i></i><b>망원</b></span>
-            <span style="--x:31%"><i></i><b>여의도</b></span>
-            <span style="--x:45%"><i></i><b>압구정</b></span>
-            <span style="--x:57%"><i></i><b>옥수</b></span>
-            <span style="--x:69%"><i></i><b>서울숲</b></span>
-            <span style="--x:81%"><i></i><b>뚝섬</b></span>
-            <span style="--x:94%"><i></i><b>잠실</b></span>
-          </div>
-          <div class="hero-status-card">
-            <span>통합 모니터링</span>
-            <strong>운항환경 상황관리</strong>
-            <small>수문 · 기상 · 조석 · 데이터 분석</small>
-          </div>
-        </div>
-      </section>
-
-      <section class="portal-summary-grid">
-        <article class="summary-card emphasis">
-          <span class="summary-kicker">OPERATIONS</span>
-          <h2>종합 상황</h2>
-          <p>운항판정과 핵심 위험요인을 가장 먼저 확인합니다.</p>
-          <a href="./dashboard.html?v=93.0" data-protected="true">대시보드 열기 <span>→</span></a>
-        </article>
-        <article class="summary-card">
-          <span class="summary-kicker">MONITORING</span>
-          <h2>전체 상세</h2>
-          <p>수문·기상·조석 세부값을 한 화면에서 점검합니다.</p>
-          <a href="./detail.html?v=93.0" data-protected="true">상세 모니터링 <span>→</span></a>
-        </article>
-        <article class="summary-card">
-          <span class="summary-kicker">ANALYTICS</span>
-          <h2>데이터 분석</h2>
-          <p>과거 수문자료와 조건별 데이터를 조회·비교합니다.</p>
-          <a href="./analysis-search.html?v=93.0" data-protected="true">데이터 검색 <span>→</span></a>
-        </article>
-        <article class="summary-card admin-card">
-          <span class="summary-kicker">ADMIN</span>
-          <h2>사용자 관리</h2>
-          <p>승인 사용자·권한·활성상태·접속기록을 관리합니다.</p>
-          <a class="admin-entry" href="./user-management.html?v=93.0">사용자 관리 열기 <span>→</span></a>
-        </article>
-      </section>
-
-      <section class="module-section">
-        <div class="section-heading">
-          <div>
-            <span>QUICK ACCESS</span>
-            <h2>운항환경 바로가기</h2>
-          </div>
-          <p>필요한 업무 화면으로 바로 이동합니다.</p>
-        </div>
-
-        <div class="module-groups">
-          <article class="module-group hydro">
-            <div class="group-title">
-              <span class="group-icon">≈</span>
-              <div><small>운항·수문</small><h3>수문 및 운항판정</h3></div>
-            </div>
-            <div class="module-links">
-              <a href="./route.html?v=93.0" data-protected="true"><b>노선 운항판정</b><span>동·서부선 운항 가능 여부</span></a>
-              <a href="./jamsu.html?v=93.0" data-protected="true"><b>잠수교 통과높이</b><span>현재 여유높이와 수위 변화</span></a>
-              <a href="./paldang.html?v=93.0" data-protected="true"><b>팔당댐 방류량</b><span>상류 방류와 운항기준 비교</span></a>
-              <a href="./river.html?v=93.0" data-protected="true"><b>한강 교량별 수위</b><span>교량 관측망과 수위 현황</span></a>
-            </div>
-          </article>
-
-          <article class="module-group weather">
-            <div class="group-title">
-              <span class="group-icon">◌</span>
-              <div><small>기상·조석</small><h3>기상 및 하류 영향</h3></div>
-            </div>
-            <div class="module-links">
-              <a href="./alerts.html?v=93.0" data-protected="true"><b>운항 관련 특보</b><span>서울 운항권역 공식 특보</span></a>
-              <a href="./rain.html?v=93.0" data-protected="true"><b>강수 예보</b><span>시간대별 강수량·강수확률</span></a>
-              <a href="./wind.html?v=93.0" data-protected="true"><b>풍향·풍속</b><span>선착장별 바람과 기온</span></a>
-              <a href="./tide.html?v=93.0" data-protected="true"><b>인천 조석</b><span>만·간조와 하류 조석 영향</span></a>
-            </div>
-          </article>
-
-          <article class="module-group analytics">
-            <div class="group-title">
-              <span class="group-icon">⌕</span>
-              <div><small>데이터 분석</small><h3>과거자료 및 조건검색</h3></div>
-            </div>
-            <div class="module-links">
-              <a href="./analysis-dam.html?v=93.0" data-protected="true"><b>댐 방류량 분석</b><span>기간별 방류·유입 장기 추세</span></a>
-              <a href="./analysis-bridge.html?v=93.0" data-protected="true"><b>교량 수위 분석</b><span>잠수교·한강대교 수위 이력</span></a>
-              <a href="./analysis-search.html?v=93.0" data-protected="true"><b>조건별 데이터 검색</b><span>기간·수위·통과높이 조건 조회</span></a>
-            </div>
-          </article>
-        </div>
-      </section>
-    </main>
-
-    <footer class="portal-footer">
-      <span>한강버스 운항환경 통합관리 시스템</span>
-      <span>제작 · 운항감독 이대운</span>
-    </footer>
-  </div>
-  <script src="./auth-config.js?v=93.0"></script>
-  <script src="./auth-client.js?v=93.0"></script>
-  <script src="./home.js?v=93.0"></script>
-</body>
+<section class="control-grid">
+<article class="control-card route-overview">
+<div class="card-heading">
+<div>
+<span>운항판정</span>
+<h2>노선별 현재 상태</h2>
+</div>
+<a href="./route.html?v=92.1">상세보기</a>
+</div>
+<div class="route-summary-grid">
+<div class="route-summary blue" id="dashboardEastRoute"></div>
+<div class="route-summary blue" id="dashboardWestRoute"></div>
+</div>
+<div class="route-reasons" id="dashboardRouteReasons"></div>
+</article>
+<article class="control-card river-overview hydro-impact-overview">
+<div class="card-heading hydro-heading">
+<div>
+<span>수문 운항중단 판단</span>
+<h2>중단기준 충족 여부를 바로 확인</h2>
+</div>
+<a href="./river.html?v=92.5">수문 상세</a>
+</div>
+<div class="hydro-decision-banner" id="hydroImpactSummary">
+<div class="hydro-decision-main">
+<span>현재 수문 기준</span>
+<b id="hydroImpactState">판단 중</b>
+<p id="hydroImpactText">잠수교 통과높이와 팔당댐 방류량을 기준으로 운항중단 조건을 확인합니다.</p>
+</div>
+<div class="hydro-route-decisions">
+<div class="hydro-route-decision" id="hydroEastDecision">
+<span>동부선</span>
+<b id="hydroEastDecisionText">판단 중</b>
+<em id="hydroEastDecisionReason">잠수교·팔당 기준 확인 중</em>
+</div>
+<div class="hydro-route-decision west" id="hydroWestDecision">
+<span>서부선</span>
+<b id="hydroWestDecisionText">판단 중</b>
+<em id="hydroWestDecisionReason">팔당 기준 확인 중</em>
+</div>
+</div>
+</div>
+<div class="hydro-stop-grid">
+<a class="hydro-stop-card jamsu" href="./jamsu.html?v=92.5">
+<div class="hydro-flow-top"><span>동부선 중단조건 ①</span><i id="hydroJamsuState">확인 중</i></div>
+<strong>잠수교 통과높이</strong>
+<div class="hydro-value-line"><b id="hydroJamsuValue">-</b><em id="hydroJamsuTrend">-</em></div>
+<div class="hydro-threshold-row"><span>중단기준 ≤ 7.30m</span><b id="hydroJamsuMargin">여유 -</b></div>
+</a>
+<a class="hydro-stop-card paldang-east" href="./paldang.html?v=92.5">
+<div class="hydro-flow-top"><span>동부선 중단조건 ②</span><i id="hydroPaldangEastState">확인 중</i></div>
+<strong>팔당댐 방류량</strong>
+<div class="hydro-value-line"><b id="hydroPaldangValue">-</b><em id="hydroPaldangTrend">-</em></div>
+<div class="hydro-threshold-row"><span>중단기준 ≥ 2,000㎥/s</span><b id="hydroPaldangEastMargin">여유 -</b></div>
+</a>
+<a class="hydro-stop-card paldang-west" href="./paldang.html?v=92.5">
+<div class="hydro-flow-top"><span>서부선 중단조건</span><i id="hydroPaldangWestState">확인 중</i></div>
+<strong>팔당댐 방류량</strong>
+<div class="hydro-value-line"><b id="hydroPaldangValueWest">-</b><em>서부선 기준</em></div>
+<div class="hydro-threshold-row"><span>중단기준 ≥ 3,000㎥/s</span><b id="hydroPaldangWestMargin">여유 -</b></div>
+</a>
+</div>
+<div class="hydro-reference-row">
+<a class="hydro-tide-reference" href="./tide.html?v=92.5">
+<div><span>하류 조석 참고</span><b id="hydroTideValue">-</b><em id="hydroTideHeight">-</em></div>
+<div class="hydro-tide-status"><i id="hydroTideState">참고</i><span id="hydroTideCountdown">만조 영향 확인 중</span></div>
+</a>
+<div class="hydro-secondary-strip">
+<a href="./river.html?v=92.5"><span>한강대교 수위</span><b id="hydroHangangLevel">-</b></a>
+<a href="./jamsu.html?v=92.5"><span>잠수교 수위</span><b id="hydroJamsuLevel">-</b></a>
+<span class="hydro-guide"><b>조석은 직접 운항중단 기준이 아닌 참고요인</b>으로 분리 표시합니다.</span>
+</div>
+</div>
+</article>
+<article class="control-card alerts-overview">
+<div class="card-heading">
+<div>
+<span>운항 관련 특보</span>
+<h2>호우·강풍·태풍</h2>
+</div>
+<a href="./alerts.html?v=92.1">상세보기</a>
+</div>
+<div class="dashboard-alert-list" id="dashboardAlertList"></div>
+</article>
+<article class="control-card weather-overview">
+<div class="card-heading">
+<div>
+<span>기상 전망</span>
+<h2>강수·풍속 핵심값</h2>
+</div>
+<a href="./rain.html?v=92.1">상세보기</a>
+</div>
+<div class="weather-kpi-grid">
+<div class="weather-kpi blue" id="westRainKpi">
+<span>마곡 3시간 강수</span><b>-</b><em>서부선</em>
+</div>
+<div class="weather-kpi blue" id="eastRainKpi">
+<span>잠실 3시간 강수</span><b>-</b><em>동부선</em>
+</div>
+<div class="weather-kpi blue" id="westWindKpi">
+<span>서부선 최대풍속</span><b>-</b><em>현재 관측</em>
+</div>
+<div class="weather-kpi blue" id="eastWindKpi">
+<span>동부선 최대풍속</span><b>-</b><em>현재 관측</em>
+</div>
+</div>
+</article>
+<article class="control-card timeline-overview">
+<div class="card-heading">
+<div>
+<span>최근 변화</span>
+<h2>상황 이벤트</h2>
+</div>
+<span class="card-time" id="dashboardEventTime">-</span>
+</div>
+<div class="dashboard-event-list" id="dashboardEventList"></div>
+</article>
+<article class="control-card health-overview">
+<div class="card-heading">
+<div>
+<span>데이터 연결</span>
+<h2>수집 상태</h2>
+</div>
+</div>
+<div class="dashboard-health" id="dashboardHealth"></div>
+<div class="dashboard-health-footer">
+<span>페이지 이동 시 공유 캐시 사용</span>
+<a href="./detail.html?v=92.1#health">전체 상태 보기</a>
+</div>
+</article>
+</section>
+<footer class="control-footer">
+<span>공식기관 자료 취합 운항 참고화면 · 실제 운항판단은 회사 지침과 현장 확인 우선</span>
+<span>서울 운항권역 특보만 판정 반영</span>
+</footer>
+</section>
+</main>
+</div>
+<script src="shared-config.js?v=92.1"></script>
+<script src="weather-config.js?v=92.1"></script>
+<script src="ocean-config.js?v=92.1"></script>
+<script src="config.js?v=92.1"></script>
+<script src="data-cache.js?v=92.1"></script>
+<script src="hrfco.js?v=92.1"></script>
+<script src="kma.js?v=92.1"></script>
+<script src="ocean.js?v=92.1"></script>
+<script src="dashboard.js?v=92.5"></script>
+<script src="shared-navigation.js?v=92.1"></script>
+<script src="./app-bootstrap.js?v=92.1"></script></body>
 </html>
