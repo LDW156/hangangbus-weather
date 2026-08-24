@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d3f5e" />
   <title>한강버스 운항환경 통합관리 포털</title>
   <link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88" />
-  <link rel="stylesheet" href="./home.css?v=1" />
+  <link rel="stylesheet" href="./home.css?v=2" />
 </head>
 <body>
   <div class="portal-shell">
@@ -19,18 +19,40 @@
         </div>
       </a>
       <div class="portal-user-zone">
+        <form id="portalLoginForm" class="portal-login" autocomplete="off" novalidate>
+          <label>
+            <span>ID</span>
+            <input id="portalLoginId" name="userId" type="text" autocomplete="username" placeholder="사용자 ID" />
+          </label>
+          <label>
+            <span>PW</span>
+            <input id="portalLoginPw" name="password" type="password" autocomplete="current-password" placeholder="비밀번호" />
+          </label>
+          <button id="portalLoginButton" type="submit">로그인</button>
+        </form>
+        <div id="portalSession" class="portal-session" hidden>
+          <div class="portal-session-user">
+            <span class="auth-dot online"></span>
+            <div><b id="portalSessionId">-</b><span>승인 사용자</span></div>
+          </div>
+          <button id="portalLogoutButton" type="button">로그아웃</button>
+        </div>
         <div class="portal-clock">
           <span>현재 시각</span>
           <b id="portalClock">--:--</b>
-        </div>
-        <div class="portal-auth-chip">
-          <span class="auth-dot"></span>
-          <span>인증체계 연동 예정</span>
         </div>
       </div>
     </header>
 
     <main>
+      <section id="portalLockNotice" class="portal-lock-notice">
+        <div class="lock-icon">⌾</div>
+        <div>
+          <b>로그인 후 이용 가능합니다.</b>
+          <span>승인된 사용자 ID와 비밀번호를 입력하면 전체 메뉴가 활성화됩니다.</span>
+        </div>
+      </section>
+
       <section class="hero">
         <div class="hero-copy">
           <p class="hero-eyebrow">HANGANG BUS OPERATIONS CONTROL</p>
@@ -40,8 +62,8 @@
             실시간 판단과 과거 데이터 분석을 한 화면 체계로 연결합니다.
           </p>
           <div class="hero-actions">
-            <a class="primary" href="./index.html?v=92.5">종합 상황 대시보드</a>
-            <a class="secondary" href="./detail.html?v=92.5">전체 상세 모니터링</a>
+            <a class="primary" href="./index.html?v=92.5" data-protected="true">종합 상황 대시보드</a>
+            <a class="secondary" href="./detail.html?v=92.5" data-protected="true">전체 상세 모니터링</a>
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true">
@@ -67,25 +89,25 @@
           <span class="summary-kicker">OPERATIONS</span>
           <h2>종합 상황</h2>
           <p>운항판정과 핵심 위험요인을 가장 먼저 확인합니다.</p>
-          <a href="./index.html?v=92.5">대시보드 열기 <span>→</span></a>
+          <a href="./index.html?v=92.5" data-protected="true">대시보드 열기 <span>→</span></a>
         </article>
         <article class="summary-card">
           <span class="summary-kicker">MONITORING</span>
           <h2>전체 상세</h2>
           <p>수문·기상·조석 세부값을 한 화면에서 점검합니다.</p>
-          <a href="./detail.html?v=92.5">상세 모니터링 <span>→</span></a>
+          <a href="./detail.html?v=92.5" data-protected="true">상세 모니터링 <span>→</span></a>
         </article>
         <article class="summary-card">
           <span class="summary-kicker">ANALYTICS</span>
           <h2>데이터 분석</h2>
           <p>과거 수문자료와 조건별 데이터를 조회·비교합니다.</p>
-          <a href="./analysis-search.html?v=92.5">데이터 검색 <span>→</span></a>
+          <a href="./analysis-search.html?v=92.5" data-protected="true">데이터 검색 <span>→</span></a>
         </article>
         <article class="summary-card admin-card">
           <span class="summary-kicker">ADMIN</span>
           <h2>사용자 관리</h2>
           <p>승인 사용자·권한·활성상태·접속기록을 관리합니다.</p>
-          <button type="button" disabled>인증 구축 후 활성화</button>
+          <button type="button" class="admin-entry" data-protected="true" disabled>사용자 관리 준비 중</button>
         </article>
       </section>
 
@@ -105,10 +127,10 @@
               <div><small>운항·수문</small><h3>수문 및 운항판정</h3></div>
             </div>
             <div class="module-links">
-              <a href="./route.html?v=92.5"><b>노선 운항판정</b><span>동·서부선 운항 가능 여부</span></a>
-              <a href="./jamsu.html?v=92.5"><b>잠수교 통과높이</b><span>현재 여유높이와 수위 변화</span></a>
-              <a href="./paldang.html?v=92.5"><b>팔당댐 방류량</b><span>상류 방류와 운항기준 비교</span></a>
-              <a href="./river.html?v=92.5"><b>한강 교량별 수위</b><span>교량 관측망과 수위 현황</span></a>
+              <a href="./route.html?v=92.5" data-protected="true"><b>노선 운항판정</b><span>동·서부선 운항 가능 여부</span></a>
+              <a href="./jamsu.html?v=92.5" data-protected="true"><b>잠수교 통과높이</b><span>현재 여유높이와 수위 변화</span></a>
+              <a href="./paldang.html?v=92.5" data-protected="true"><b>팔당댐 방류량</b><span>상류 방류와 운항기준 비교</span></a>
+              <a href="./river.html?v=92.5" data-protected="true"><b>한강 교량별 수위</b><span>교량 관측망과 수위 현황</span></a>
             </div>
           </article>
 
@@ -118,10 +140,10 @@
               <div><small>기상·조석</small><h3>기상 및 하류 영향</h3></div>
             </div>
             <div class="module-links">
-              <a href="./alerts.html?v=92.5"><b>운항 관련 특보</b><span>서울 운항권역 공식 특보</span></a>
-              <a href="./rain.html?v=92.5"><b>강수 예보</b><span>시간대별 강수량·강수확률</span></a>
-              <a href="./wind.html?v=92.5"><b>풍향·풍속</b><span>선착장별 바람과 기온</span></a>
-              <a href="./tide.html?v=92.5"><b>인천 조석</b><span>만·간조와 하류 조석 영향</span></a>
+              <a href="./alerts.html?v=92.5" data-protected="true"><b>운항 관련 특보</b><span>서울 운항권역 공식 특보</span></a>
+              <a href="./rain.html?v=92.5" data-protected="true"><b>강수 예보</b><span>시간대별 강수량·강수확률</span></a>
+              <a href="./wind.html?v=92.5" data-protected="true"><b>풍향·풍속</b><span>선착장별 바람과 기온</span></a>
+              <a href="./tide.html?v=92.5" data-protected="true"><b>인천 조석</b><span>만·간조와 하류 조석 영향</span></a>
             </div>
           </article>
 
@@ -131,9 +153,9 @@
               <div><small>데이터 분석</small><h3>과거자료 및 조건검색</h3></div>
             </div>
             <div class="module-links">
-              <a href="./analysis-dam.html?v=92.5"><b>댐 방류량 분석</b><span>기간별 방류·유입 장기 추세</span></a>
-              <a href="./analysis-bridge.html?v=92.5"><b>교량 수위 분석</b><span>잠수교·한강대교 수위 이력</span></a>
-              <a href="./analysis-search.html?v=92.5"><b>조건별 데이터 검색</b><span>기간·수위·통과높이 조건 조회</span></a>
+              <a href="./analysis-dam.html?v=92.5" data-protected="true"><b>댐 방류량 분석</b><span>기간별 방류·유입 장기 추세</span></a>
+              <a href="./analysis-bridge.html?v=92.5" data-protected="true"><b>교량 수위 분석</b><span>잠수교·한강대교 수위 이력</span></a>
+              <a href="./analysis-search.html?v=92.5" data-protected="true"><b>조건별 데이터 검색</b><span>기간·수위·통과높이 조건 조회</span></a>
             </div>
           </article>
         </div>
@@ -145,6 +167,6 @@
       <span>제작 · 운항감독 이대운</span>
     </footer>
   </div>
-  <script src="./home.js?v=1"></script>
+  <script src="./home.js?v=2"></script>
 </body>
 </html>
