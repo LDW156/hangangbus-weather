@@ -1589,3 +1589,38 @@ button {
     align-self:stretch!important;
   }
 }
+
+
+/* =========================================================
+   v92.7 종합대시보드 수문 카드 간소화
+   - 동일 상태/여유값 반복 제거
+   - 잠수교 + 팔당댐 2개 핵심 카드로 통합
+========================================================= */
+.hydro-internal-hidden{display:none!important}
+.hydro-compact-card{padding:13px 14px!important}
+.hydro-compact-card .hydro-heading{margin-bottom:7px!important}
+.hydro-decision-simple{display:block!important;margin:0 0 8px!important;padding:9px 11px!important}
+.hydro-decision-simple .hydro-decision-main{display:flex;align-items:center;gap:12px;min-height:34px}
+.hydro-decision-simple .hydro-decision-main>span{font-size:10px!important;white-space:nowrap}
+.hydro-decision-simple .hydro-decision-main>b{margin:0!important;font-size:20px!important;line-height:1.05!important}
+.hydro-core-grid{display:grid;grid-template-columns:.88fr 1.12fr;gap:8px}
+.hydro-core-card{display:block;min-width:0;padding:10px 11px;color:inherit;background:#fff;border:1px solid #ccdce5;border-top:4px solid #168f70;border-radius:9px;text-decoration:none}
+.hydro-core-card.paldang{border-top-color:#2387b4}
+.hydro-core-label{color:#5f7a88;font-size:9.5px;font-weight:900;margin-bottom:3px}
+.hydro-core-card>strong{display:block;color:#355a6d;font-size:11px;font-weight:900}
+.hydro-core-card .hydro-value-line{margin-top:2px}
+.hydro-core-card .hydro-value-line>b{font-size:25px!important}
+.hydro-core-card .hydro-threshold-row{margin-top:7px;padding-top:6px}
+.hydro-core-card .hydro-threshold-row span{font-size:10px!important}
+.hydro-core-card .hydro-threshold-row b{font-size:11px!important}
+.hydro-dual-threshold{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px;padding-top:7px;border-top:1px solid #dfe8ed}
+.hydro-dual-threshold>div{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;padding:0 2px}
+.hydro-dual-threshold span{color:#536f7f;font-size:9.5px;font-weight:850;white-space:nowrap}
+.hydro-dual-threshold b{color:#0e668f;font-size:10.5px;white-space:nowrap}
+.hydro-tide-compact{margin-top:8px!important;padding:7px 10px!important}
+.hydro-tide-compact>div:first-child{display:flex;align-items:baseline;gap:8px}
+.hydro-tide-compact>div:first-child span,.hydro-tide-compact>div:first-child b,.hydro-tide-compact>div:first-child em{display:inline!important;margin:0!important}
+.hydro-tide-compact>div:first-child b{font-size:16px!important}
+.hydro-tide-compact>div:first-child em{font-size:9px!important}
+@media(max-width:1350px){.hydro-core-grid{grid-template-columns:1fr}.hydro-dual-threshold{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.hydro-dual-threshold{grid-template-columns:1fr}.hydro-decision-simple .hydro-decision-main{align-items:flex-start;flex-direction:column;gap:2px}}

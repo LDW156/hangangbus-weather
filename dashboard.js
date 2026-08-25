@@ -574,7 +574,7 @@
     const hydroState = [eastHydroState, westHydroState]
       .sort((a,b) => stateRank[b] - stateRank[a])[0] || 'normal';
 
-    let hydroStateLabel = '운항중단 조건 미충족';
+    let hydroStateLabel = '중단조건 이상 없음';
     if (eastHydroState === 'stop' && westHydroState === 'stop') {
       hydroStateLabel = '전 노선 중단기준 충족';
     } else if (eastHydroState === 'stop') {
@@ -582,24 +582,19 @@
     } else if (westHydroState === 'stop') {
       hydroStateLabel = '서부선 중단기준 충족';
     } else if (hydroState === 'caution') {
-      hydroStateLabel = '중단기준 미충족 · 주의구간 접근';
+      hydroStateLabel = '주의구간 접근';
     }
 
     const impactSummary = $('hydroImpactSummary');
     setStateClass(impactSummary, hydroState);
     $('hydroImpactState').textContent = hydroStateLabel;
 
-    const summaryParts = [];
-    if (Number.isFinite(jamsuMargin)) {
-      summaryParts.push(`잠수교 ${fmt(jamsuMargin,2)}m 여유`);
-    }
-    if (Number.isFinite(paldangEastMargin)) {
-      summaryParts.push(`팔당 동부 ${fmt(paldangEastMargin,0)}㎥/s 여유`);
-    }
-    if (Number.isFinite(paldangWestMargin)) {
-      summaryParts.push(`팔당 서부 ${fmt(paldangWestMargin,0)}㎥/s 여유`);
-    }
-    $('hydroImpactText').textContent = summaryParts.join(' · ') || '수문 운항중단 기준을 확인 중입니다.';
+    $('hydroImpactText').textContent =
+      hydroState === 'stop'
+        ? '운항중단 기준 충족 항목이 있습니다.'
+        : hydroState === 'caution'
+          ? '중단기준에 접근한 항목이 있습니다.'
+          : '잠수교·팔당댐 핵심 기준 정상';
 
     const stateText = state => state === 'stop' ? '중단기준 충족' : state === 'caution' ? '주의' : '미충족';
     const applyDecisionState = (id, state) => {
