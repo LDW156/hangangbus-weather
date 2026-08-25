@@ -1,76 +1,233 @@
 <!DOCTYPE html>
+
 <html lang="ko">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#0d3f5e" />
-<title>한강버스 운항환경 통합관리 포털</title>
-<link rel="icon" type="image/png" href="./assets/hangangbus-logo.png?v=88" />
-<style>
-:root{--navy:#0d3e5b;--navy2:#082f46;--blue:#117cae;--green:#0b8d68;--sky:#edf7fc;--ink:#14384d;--muted:#688391;--line:#d3e0e8;--bg:#edf3f7;--white:#fff;--shadow:0 12px 32px rgba(16,63,91,.10)}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;color:var(--ink);background:var(--bg)}a{color:inherit;text-decoration:none}button,input{font:inherit}
-body{min-width:320px}.portal{min-height:100vh}.top{height:70px;padding:0 clamp(18px,3vw,46px);display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:11px}.brand img{width:40px;height:40px;padding:5px;border:1px solid #dce7ed;border-radius:11px;background:#fff}.brand b,.brand span{display:block}.brand b{font-size:18px;font-weight:950}.brand span{margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}
-.top-right{display:flex;align-items:center;gap:9px}.clock{padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:#f8fbfd}.clock span,.clock b{display:block}.clock span{font-size:8px;color:var(--muted);font-weight:800}.clock b{font-size:13px;margin-top:1px}.session-pill{display:none;align-items:center;gap:9px;padding:7px 10px;border:1px solid #c8ddd5;border-radius:10px;background:#f4fbf8}.session-pill.show{display:flex}.session-pill b{font-size:11px}.session-pill span{font-size:8px;color:#708b7f}.session-pill button{border:0;border-radius:7px;padding:6px 10px;background:#536d7b;color:#fff;font-size:9px;font-weight:900;cursor:pointer}
-main{width:min(1480px,calc(100% - 34px));margin:0 auto;padding:18px 0 28px}.hero{position:relative;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(410px,.92fr);min-height:390px;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,#0d3d5b 0%,#0c5470 48%,#0c7170 100%);color:#fff;box-shadow:var(--shadow)}
-.hero-copy{padding:46px clamp(28px,4vw,58px);display:flex;flex-direction:column;justify-content:center}.eyebrow{margin:0 0 12px;color:#88d6f2;font-size:10px;font-weight:950;letter-spacing:.16em}.hero h1{margin:0;font-size:clamp(34px,3vw,50px);line-height:1.16;letter-spacing:-.05em}.hero-desc{max-width:700px;margin:18px 0 0;color:#d6eaf2;font-size:14px;line-height:1.75;font-weight:650}.hero-actions{display:flex;gap:9px;margin-top:26px}.hero-actions a{min-height:45px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;font-size:12px;font-weight:900}.hero-actions .primary{background:#fff;color:#0c4d69}.hero-actions .secondary{border:1px solid rgba(255,255,255,.34);background:rgba(255,255,255,.09)}
-.hero-visual{position:relative;min-height:390px;background:radial-gradient(circle at 72% 28%,rgba(105,220,225,.25),transparent 36%)}.hero-visual:before{content:"";position:absolute;inset:28px;border:1px solid rgba(255,255,255,.14);border-radius:21px}.river1,.river2{position:absolute;left:5%;right:-8%;border-radius:50%;transform:rotate(-4deg)}.river1{top:48%;height:66px;background:linear-gradient(90deg,rgba(75,190,229,.12),rgba(98,224,225,.60),rgba(68,168,213,.10))}.river2{top:55%;height:38px;background:linear-gradient(90deg,rgba(121,217,244,.04),rgba(174,240,241,.42),rgba(114,194,228,.04))}.stations span{position:absolute;left:var(--x);top:52%;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:7px}.stations i{width:17px;height:17px;border:4px solid #fff;border-radius:50%;background:#21a2c7;box-shadow:0 0 0 4px rgba(255,255,255,.13)}.stations b{font-size:9px;white-space:nowrap}
-.login-card{position:absolute;right:28px;bottom:27px;width:min(360px,calc(100% - 56px));padding:18px;border:1px solid rgba(255,255,255,.24);border-radius:16px;background:rgba(4,41,57,.78);backdrop-filter:blur(10px);z-index:3}.login-card .login-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.login-title div span,.login-title div b{display:block}.login-title div span{font-size:8px;color:#91d3e7;font-weight:900;letter-spacing:.1em}.login-title div b{margin-top:3px;font-size:17px}.login-badge{padding:5px 8px;border-radius:999px;background:#164e66;color:#bfe7f2;font-size:8px;font-weight:900}.login-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.login-grid label span{display:block;margin:0 0 4px 2px;color:#b8dbe7;font-size:8px;font-weight:900}.login-grid input{width:100%;height:39px;padding:0 11px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:#fff;color:#17394c;outline:none;font-size:11px;font-weight:750}.login-grid input:focus{border-color:#76c9e6;box-shadow:0 0 0 3px rgba(118,201,230,.12)}.login-submit{width:100%;height:41px;margin-top:9px;border:0;border-radius:9px;background:#fff;color:#0b5879;font-size:11px;font-weight:950;cursor:pointer}.login-note{margin:8px 0 0;color:#a8cad6;font-size:8px;line-height:1.45}
-.unlocked-card{display:none}.auth-unlocked .login-form-wrap{display:none}.auth-unlocked .unlocked-card{display:block}.unlocked-card b{display:block;font-size:17px}.unlocked-card p{margin:6px 0 12px;color:#c4dfe8;font-size:9px}.unlocked-links{display:grid;grid-template-columns:1fr 1fr;gap:7px}.unlocked-links a{padding:10px;border-radius:9px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.16);font-size:9px;font-weight:900;text-align:center}
-.lock-banner{display:flex;align-items:center;gap:10px;margin:14px 0 0;padding:11px 14px;border:1px solid #bcd8e6;border-radius:12px;background:#f5fbfe}.lock-banner i{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#deeff7;color:#0c6e99;font-style:normal;font-weight:950}.lock-banner b,.lock-banner span{display:block}.lock-banner b{font-size:11px}.lock-banner span{margin-top:2px;color:var(--muted);font-size:9px}.auth-unlocked .lock-banner{display:none}
-.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}.card{min-height:170px;padding:19px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(22,58,77,.05)}.card strong{display:block;margin:7px 0 6px;font-size:20px}.card p{min-height:39px;margin:0;color:var(--muted);font-size:10px;line-height:1.55;font-weight:650}.kicker{font-size:8px;font-weight:950;color:#2b84ae;letter-spacing:.09em}.card a,.card button{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:16px;padding:10px 11px;border:0;border-radius:9px;background:#eef6fa;color:#0c5f85;font-size:10px;font-weight:900}.admin{background:linear-gradient(180deg,#fbfbff,#f5f3fb)}.admin button{justify-content:center;color:#9485a5;background:#ece8f2}
-.quick{margin-top:26px}.quick-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:12px}.quick-head span{color:#2b80aa;font-size:8px;font-weight:950;letter-spacing:.12em}.quick-head h2{margin:4px 0 0;font-size:24px}.quick-head p{margin:0;color:var(--muted);font-size:10px;font-weight:750}.groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.group{padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff}.group h3{margin:0 0 11px;padding-bottom:10px;border-bottom:1px solid #e4edf2;font-size:16px}.links{display:grid;gap:6px}.links a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border-radius:9px;background:#f7fafc}.links b{font-size:10px}.links span{font-size:8px;color:var(--muted);text-align:right}
-[data-protected="true"].locked{pointer-events:none;opacity:.44;filter:saturate(.45)}.card [data-protected="true"].locked,.links [data-protected="true"].locked{background:#f1f4f6;color:#7d909a}.footer{display:flex;justify-content:space-between;gap:12px;padding:17px 2px 3px;color:#78919d;font-size:8px;font-weight:750}
-@media(max-width:1100px){.hero{grid-template-columns:1fr}.hero-visual{min-height:300px}.summary{grid-template-columns:repeat(2,1fr)}.groups{grid-template-columns:1fr}}
-@media(max-width:720px){.top{height:auto;padding:11px 14px}.top-right{gap:6px}.clock{display:none}main{width:calc(100% - 20px);padding-top:10px}.hero{border-radius:17px}.hero-copy{padding:30px 22px}.hero h1{font-size:31px}.hero-desc{font-size:12px}.hero-actions{display:none}.hero-visual{min-height:330px}.login-card{right:18px;bottom:18px;width:calc(100% - 36px)}.login-grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr}.quick-head{align-items:flex-start;flex-direction:column;gap:5px}.footer{flex-direction:column}}
-</style>
-</head>
-<body class="auth-locked">
-<div class="portal">
-<header class="top">
-  <a class="brand" href="./index.html?v=93.0" aria-label="한강버스 메인 홈"><img src="./assets/hangangbus-logo.png?v=88" alt="한강버스 로고"><div><b>한강버스</b><span>운항환경 통합관리 포털</span></div></a>
-  <div class="top-right">
-    <div id="sessionPill" class="session-pill"><div><b id="sessionUser">-</b><span>승인 사용자</span></div><button id="logoutBtn" type="button">로그아웃</button></div>
-    <div class="clock"><span>현재 시각</span><b id="clock">--:--:--</b></div>
-  </div>
-</header>
-<main>
-<section class="hero">
-  <div class="hero-copy"><p class="eyebrow">HANGANG BUS OPERATIONS CONTROL</p><h1>운항 판단부터 데이터 분석까지<br>한 곳에서 관리합니다.</h1><p class="hero-desc">한강버스 운항에 필요한 수문·기상·조석 정보를 통합하고, 실시간 판단과 과거 데이터 분석을 하나의 업무체계로 연결합니다.</p><div class="hero-actions"><a class="primary locked" href="./dashboard.html?v=93.0" data-protected="true">종합 상황 대시보드</a><a class="secondary locked" href="./detail.html?v=93.0" data-protected="true">전체 상세 모니터링</a></div></div>
-  <div class="hero-visual"><div class="river1"></div><div class="river2"></div><div class="stations"><span style="--x:10%"><i></i><b>마곡</b></span><span style="--x:31%"><i></i><b>여의도</b></span><span style="--x:52%"><i></i><b>잠수교</b></span><span style="--x:72%"><i></i><b>뚝섬</b></span><span style="--x:90%"><i></i><b>잠실</b></span></div></div>
-  <aside class="login-card">
-    <div class="login-form-wrap"><div class="login-title"><div><span>AUTHORIZED ACCESS</span><b>승인 사용자 로그인</b></div><span class="login-badge">인증 준비 단계</span></div><form id="loginForm"><div class="login-grid"><label><span>ID</span><input id="loginId" type="text" autocomplete="username" placeholder="사용자 ID"></label><label><span>PW</span><input id="loginPw" type="password" autocomplete="current-password" placeholder="비밀번호"></label></div><button class="login-submit" type="submit">로그인</button><p class="login-note">현재는 화면 동선 검증용 게이트입니다. 실제 계정 인증은 다음 단계에서 Worker + D1로 연결합니다.</p></form></div>
-    <div class="unlocked-card"><span class="kicker">ACCESS GRANTED</span><b id="welcomeUser">승인 사용자</b><p>업무 메뉴가 활성화되었습니다.</p><div class="unlocked-links"><a href="./dashboard.html?v=93.0">종합 대시보드</a><a href="./detail.html?v=93.0">전체 상세</a></div></div>
-  </aside>
-</section>
-<section class="lock-banner"><i>⌾</i><div><b>로그인 후 업무 화면으로 이동할 수 있습니다.</b><span>로그인 전에도 포털 구성은 확인할 수 있으나 모든 업무 링크는 잠겨 있습니다.</span></div></section>
-<section class="summary">
-  <article class="card"><span class="kicker">OPERATIONS</span><strong>종합 상황</strong><p>운항판정과 핵심 위험요인을 가장 먼저 확인합니다.</p><a class="locked" href="./dashboard.html?v=93.0" data-protected="true">대시보드 열기 <span>→</span></a></article>
-  <article class="card"><span class="kicker">MONITORING</span><strong>전체 상세</strong><p>수문·기상·조석 세부값을 한 화면에서 점검합니다.</p><a class="locked" href="./detail.html?v=93.0" data-protected="true">상세 모니터링 <span>→</span></a></article>
-  <article class="card"><span class="kicker">ANALYTICS</span><strong>데이터 분석</strong><p>과거 수문자료와 조건별 데이터를 조회·비교합니다.</p><a class="locked" href="./analysis-search.html?v=93.0" data-protected="true">데이터 검색 <span>→</span></a></article>
-  <article class="card admin"><span class="kicker">ADMIN</span><strong>사용자 관리</strong><p>승인 사용자·권한·활성상태·접속기록을 관리합니다.</p><button type="button" disabled>인증 구축 후 활성화</button></article>
-</section>
-<section class="quick"><div class="quick-head"><div><span>QUICK ACCESS</span><h2>운항환경 바로가기</h2></div><p>필요한 업무 화면으로 바로 이동합니다.</p></div><div class="groups">
-  <article class="group"><h3>운항·수문</h3><div class="links"><a class="locked" href="./route.html?v=93.0" data-protected="true"><b>노선 운항판정</b><span>동·서부선 운항 가능 여부</span></a><a class="locked" href="./jamsu.html?v=93.0" data-protected="true"><b>잠수교 통과높이</b><span>현재 여유높이와 수위 변화</span></a><a class="locked" href="./paldang.html?v=93.0" data-protected="true"><b>팔당댐 방류량</b><span>상류 방류와 운항기준 비교</span></a><a class="locked" href="./river.html?v=93.0" data-protected="true"><b>한강 교량별 수위</b><span>교량 관측망과 수위 현황</span></a></div></article>
-  <article class="group"><h3>기상·조석</h3><div class="links"><a class="locked" href="./alerts.html?v=93.0" data-protected="true"><b>운항 관련 특보</b><span>서울 운항권역 공식 특보</span></a><a class="locked" href="./rain.html?v=93.0" data-protected="true"><b>강수 예보</b><span>시간대별 강수량·강수확률</span></a><a class="locked" href="./wind.html?v=93.0" data-protected="true"><b>풍향·풍속</b><span>선착장별 바람과 기온</span></a><a class="locked" href="./tide.html?v=93.0" data-protected="true"><b>인천 조석</b><span>만·간조와 하류 조석 영향</span></a></div></article>
-  <article class="group"><h3>데이터 분석</h3><div class="links"><a class="locked" href="./analysis-dam.html?v=93.0" data-protected="true"><b>댐 방류량 분석</b><span>기간별 방류·유입 장기 추세</span></a><a class="locked" href="./analysis-bridge.html?v=93.0" data-protected="true"><b>교량 수위 분석</b><span>잠수교·한강대교 수위 이력</span></a><a class="locked" href="./analysis-search.html?v=93.0" data-protected="true"><b>조건별 데이터 검색</b><span>기간·수위·통과높이 조건 조회</span></a></div></article>
-</div></section>
-<footer class="footer"><span>한강버스 운항환경 통합관리 시스템</span><span>제작 · 운항감독 이대운</span></footer>
-</main>
-</div>
-<script>
+<head><script>
 (() => {
   'use strict';
-  const KEY='hangangbus_portal_preview_auth_v3';
-  const body=document.body, form=document.getElementById('loginForm'), id=document.getElementById('loginId'), pw=document.getElementById('loginPw'), pill=document.getElementById('sessionPill'), user=document.getElementById('sessionUser'), welcome=document.getElementById('welcomeUser'), logout=document.getElementById('logoutBtn'), clock=document.getElementById('clock');
-  const protectedLinks=[...document.querySelectorAll('[data-protected="true"]')];
-  const read=()=>{try{return JSON.parse(sessionStorage.getItem(KEY)||'null')}catch{return null}};
-  const apply=(s)=>{const ok=!!(s&&s.userId);body.classList.toggle('auth-unlocked',ok);body.classList.toggle('auth-locked',!ok);pill.classList.toggle('show',ok);user.textContent=ok?s.userId:'-';welcome.textContent=ok?`${s.userId} 님`:'승인 사용자';protectedLinks.forEach(a=>a.classList.toggle('locked',!ok));};
-  document.addEventListener('click',e=>{const a=e.target.closest('[data-protected="true"]');if(!a||body.classList.contains('auth-unlocked'))return;e.preventDefault();id.focus();document.querySelector('.login-card').scrollIntoView({behavior:'smooth',block:'center'});},true);
-  form.addEventListener('submit',e=>{e.preventDefault();const u=id.value.trim(),p=pw.value;if(!u||!p){(!u?id:pw).focus();return;}const sess={userId:u,signedInAt:new Date().toISOString()};sessionStorage.setItem(KEY,JSON.stringify(sess));pw.value='';apply(sess);const next=new URLSearchParams(location.search).get('next');const allowed=['dashboard.html','detail.html','route.html','jamsu.html','paldang.html','river.html','alerts.html','rain.html','wind.html','tide.html','analysis-dam.html','analysis-bridge.html','analysis-search.html'];if(next&&allowed.includes(next)){location.href=`./${next}?v=93.0`;}});
-  logout.addEventListener('click',()=>{sessionStorage.removeItem(KEY);id.value='';pw.value='';apply(null);id.focus();});
-  const tick=()=>clock.textContent=new Intl.DateTimeFormat('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());tick();setInterval(tick,1000);apply(read());
+  const BUILD = '92.5';
+  const LEGACY_ROUTES={
+    '#analysis-dam':'analysis-dam.html',
+    '#analysis-bridge':'analysis-bridge.html',
+    '#analysis-search':'analysis-search.html',
+    '#history':'analysis-dam.html'
+  };
+  if(LEGACY_ROUTES[location.hash]){
+    location.replace(`./${LEGACY_ROUTES[location.hash]}?v=${BUILD}`);
+    return;
+  }
+  if (window.top !== window.self) {
+    window.top.location.replace(window.location.href);
+    return;
+  }
+  window.HANGANG_BUILD = BUILD;
 })();
 </script>
-</body>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#eef3f7" name="theme-color"/>
+<meta content="한강버스 상황실용 종합 기상·수문 대시보드" name="description"/>
+<title>한강버스 종합 상황 대시보드</title>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="icon" type="image/png"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="shortcut icon" type="image/png"/>
+<link href="./assets/hangangbus-logo.png?v=88" rel="apple-touch-icon"/>
+<link href="dashboard.css?v=92.5" rel="stylesheet"/>
+<link href="shared-sidebar.css?v=92.1" rel="stylesheet"/>
+</head>
+<body class="dashboard-body">
+<div class="control-shell">
+<aside aria-label="한강버스 공통 메뉴" class="control-sidebar">
+<div class="side-brand">
+<img alt="한강버스 로고" src="./assets/hangangbus-logo.png?v=88"/>
+<div><b>한강버스</b><span>통합 상황관리</span></div>
+</div>
+<nav aria-label="대시보드 메뉴" class="side-nav">
+<a data-nav-file="index.html" href="./index.html?v=92.1"><span class="side-icon">▦</span><span>종합 대시보드</span></a>
+<a data-nav-file="detail.html" href="./detail.html?v=92.1"><span class="side-icon">▤</span><span>전체 상세 모니터링</span></a>
+<p>운항·수문</p>
+<a data-nav-file="route.html" href="./route.html?v=92.1"><span class="side-icon">◉</span><span>노선 운항판정</span></a>
+<a data-nav-file="jamsu.html" href="./jamsu.html?v=92.1"><span class="side-icon">↕</span><span>잠수교 통과높이</span></a>
+<a data-nav-file="paldang.html" href="./paldang.html?v=92.1"><span class="side-icon">≋</span><span>팔당댐 방류량</span></a>
+<a data-nav-file="river.html" href="./river.html?v=92.1"><span class="side-icon">⌁</span><span>한강 교량별 수위</span></a>
+<p>기상·조석</p>
+<a data-nav-file="alerts.html" href="./alerts.html?v=92.1"><span class="side-icon">!</span><span>운항 관련 특보</span></a>
+<a data-nav-file="rain.html" href="./rain.html?v=92.1"><span class="side-icon">☂</span><span>강수 예보</span></a>
+<a data-nav-file="wind.html" href="./wind.html?v=92.1"><span class="side-icon">➤</span><span>풍향·풍속</span></a>
+<a data-nav-file="tide.html" href="./tide.html?v=92.1"><span class="side-icon">◒</span><span>인천 조석</span></a>
+<p>데이터 분석</p>
+<a data-nav-file="analysis-dam.html" href="./analysis-dam.html?v=92.1"><span class="side-icon">≋</span><span>댐 방류량</span></a>
+<a data-nav-file="analysis-bridge.html" href="./analysis-bridge.html?v=92.1"><span class="side-icon">⌁</span><span>교량 수위 정보</span></a>
+<a data-nav-file="analysis-search.html" href="./analysis-search.html?v=92.1"><span class="side-icon">⌕</span><span>조건별 데이터 검색</span></a>
+</nav>
+<div class="side-legend">
+<b>위험상태</b><span><i class="blue"></i> 정상</span><span><i class="yellow"></i> 주의</span><span><i class="red"></i> 위험·운항중지</span>
+</div>
+<div class="side-credit">제작 · 운항감독 이대운</div>
+</aside>
+<main class="control-main">
+<section class="main-view dashboard-view active" id="dashboardView">
+<header class="control-header">
+<div>
+<p>HANGANG BUS CONTROL DASHBOARD</p>
+<h1>한강버스 종합 상황 대시보드</h1>
+</div>
+<div class="control-header-actions">
+<button id="dashboardRefresh" type="button">↻ 수동 업데이트</button>
+<span class="control-auto-refresh">자동 10분</span>
+<span class="control-updated" id="dashboardUpdated">갱신 확인 중</span>
+<span class="control-mode" id="dashboardMode">LOADING</span>
+</div>
+</header>
+<div class="dashboard-alert-strip blue" id="dashboardAlertStrip">
+        핵심 데이터를 불러오는 중입니다.
+      </div>
+<section class="control-grid">
+<article class="control-card route-overview">
+<div class="card-heading">
+<div>
+<span>운항판정</span>
+<h2>노선별 현재 상태</h2>
+</div>
+<a href="./route.html?v=92.1">상세보기</a>
+</div>
+<div class="route-summary-grid">
+<div class="route-summary blue" id="dashboardEastRoute"></div>
+<div class="route-summary blue" id="dashboardWestRoute"></div>
+</div>
+<div class="route-reasons" id="dashboardRouteReasons"></div>
+</article>
+<article class="control-card river-overview hydro-impact-overview">
+<div class="card-heading hydro-heading">
+<div>
+<span>수문 운항중단 판단</span>
+<h2>중단기준 충족 여부를 바로 확인</h2>
+</div>
+<a href="./river.html?v=92.5">수문 상세</a>
+</div>
+<div class="hydro-decision-banner" id="hydroImpactSummary">
+<div class="hydro-decision-main">
+<span>현재 수문 기준</span>
+<b id="hydroImpactState">판단 중</b>
+<p id="hydroImpactText">잠수교 통과높이와 팔당댐 방류량을 기준으로 운항중단 조건을 확인합니다.</p>
+</div>
+<div class="hydro-route-decisions">
+<div class="hydro-route-decision" id="hydroEastDecision">
+<span>동부선</span>
+<b id="hydroEastDecisionText">판단 중</b>
+<em id="hydroEastDecisionReason">잠수교·팔당 기준 확인 중</em>
+</div>
+<div class="hydro-route-decision west" id="hydroWestDecision">
+<span>서부선</span>
+<b id="hydroWestDecisionText">판단 중</b>
+<em id="hydroWestDecisionReason">팔당 기준 확인 중</em>
+</div>
+</div>
+</div>
+<div class="hydro-stop-grid">
+<a class="hydro-stop-card jamsu" href="./jamsu.html?v=92.5">
+<div class="hydro-flow-top"><span>동부선 중단조건 ①</span><i id="hydroJamsuState">확인 중</i></div>
+<strong>잠수교 통과높이</strong>
+<div class="hydro-value-line"><b id="hydroJamsuValue">-</b><em id="hydroJamsuTrend">-</em></div>
+<div class="hydro-threshold-row"><span>중단기준 ≤ 7.30m</span><b id="hydroJamsuMargin">여유 -</b></div>
+</a>
+<a class="hydro-stop-card paldang-east" href="./paldang.html?v=92.5">
+<div class="hydro-flow-top"><span>동부선 중단조건 ②</span><i id="hydroPaldangEastState">확인 중</i></div>
+<strong>팔당댐 방류량</strong>
+<div class="hydro-value-line"><b id="hydroPaldangValue">-</b><em id="hydroPaldangTrend">-</em></div>
+<div class="hydro-threshold-row"><span>중단기준 ≥ 2,000㎥/s</span><b id="hydroPaldangEastMargin">여유 -</b></div>
+</a>
+<a class="hydro-stop-card paldang-west" href="./paldang.html?v=92.5">
+<div class="hydro-flow-top"><span>서부선 중단조건</span><i id="hydroPaldangWestState">확인 중</i></div>
+<strong>팔당댐 방류량</strong>
+<div class="hydro-value-line"><b id="hydroPaldangValueWest">-</b><em>서부선 기준</em></div>
+<div class="hydro-threshold-row"><span>중단기준 ≥ 3,000㎥/s</span><b id="hydroPaldangWestMargin">여유 -</b></div>
+</a>
+</div>
+<div class="hydro-reference-row">
+<a class="hydro-tide-reference" href="./tide.html?v=92.5">
+<div><span>하류 조석 참고</span><b id="hydroTideValue">-</b><em id="hydroTideHeight">-</em></div>
+<div class="hydro-tide-status"><i id="hydroTideState">참고</i><span id="hydroTideCountdown">만조 영향 확인 중</span></div>
+</a>
+<div class="hydro-secondary-strip">
+<a href="./river.html?v=92.5"><span>한강대교 수위</span><b id="hydroHangangLevel">-</b></a>
+<a href="./jamsu.html?v=92.5"><span>잠수교 수위</span><b id="hydroJamsuLevel">-</b></a>
+<span class="hydro-guide"><b>조석은 직접 운항중단 기준이 아닌 참고요인</b>으로 분리 표시합니다.</span>
+</div>
+</div>
+</article>
+<article class="control-card alerts-overview">
+<div class="card-heading">
+<div>
+<span>운항 관련 특보</span>
+<h2>호우·강풍·태풍</h2>
+</div>
+<a href="./alerts.html?v=92.1">상세보기</a>
+</div>
+<div class="dashboard-alert-list" id="dashboardAlertList"></div>
+</article>
+<article class="control-card weather-overview">
+<div class="card-heading">
+<div>
+<span>기상 전망</span>
+<h2>강수·풍속 핵심값</h2>
+</div>
+<a href="./rain.html?v=92.1">상세보기</a>
+</div>
+<div class="weather-kpi-grid">
+<div class="weather-kpi blue" id="westRainKpi">
+<span>마곡 3시간 강수</span><b>-</b><em>서부선</em>
+</div>
+<div class="weather-kpi blue" id="eastRainKpi">
+<span>잠실 3시간 강수</span><b>-</b><em>동부선</em>
+</div>
+<div class="weather-kpi blue" id="westWindKpi">
+<span>서부선 최대풍속</span><b>-</b><em>현재 관측</em>
+</div>
+<div class="weather-kpi blue" id="eastWindKpi">
+<span>동부선 최대풍속</span><b>-</b><em>현재 관측</em>
+</div>
+</div>
+</article>
+<article class="control-card timeline-overview">
+<div class="card-heading">
+<div>
+<span>최근 변화</span>
+<h2>상황 이벤트</h2>
+</div>
+<span class="card-time" id="dashboardEventTime">-</span>
+</div>
+<div class="dashboard-event-list" id="dashboardEventList"></div>
+</article>
+<article class="control-card health-overview">
+<div class="card-heading">
+<div>
+<span>데이터 연결</span>
+<h2>수집 상태</h2>
+</div>
+</div>
+<div class="dashboard-health" id="dashboardHealth"></div>
+<div class="dashboard-health-footer">
+<span>페이지 이동 시 공유 캐시 사용</span>
+<a href="./detail.html?v=92.1#health">전체 상태 보기</a>
+</div>
+</article>
+</section>
+<footer class="control-footer">
+<span>공식기관 자료 취합 운항 참고화면 · 실제 운항판단은 회사 지침과 현장 확인 우선</span>
+<span>서울 운항권역 특보만 판정 반영</span>
+</footer>
+</section>
+</main>
+</div>
+<script src="shared-config.js?v=92.1"></script>
+<script src="weather-config.js?v=92.1"></script>
+<script src="ocean-config.js?v=92.1"></script>
+<script src="config.js?v=92.1"></script>
+<script src="data-cache.js?v=92.1"></script>
+<script src="hrfco.js?v=92.1"></script>
+<script src="kma.js?v=92.1"></script>
+<script src="ocean.js?v=92.1"></script>
+<script src="dashboard.js?v=92.5"></script>
+<script src="shared-navigation.js?v=92.1"></script>
+<script src="./app-bootstrap.js?v=92.1"></script></body>
 </html>

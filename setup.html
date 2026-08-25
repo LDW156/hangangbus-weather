@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>한강버스 최초 관리자 등록</title>
+<style>
+:root{--navy:#0d3e5b;--line:#d3e0e8;--bg:#edf3f7;--muted:#6b8491;--blue:#117cae}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);font-family:"Malgun Gothic",Arial,sans-serif;color:#153c52}.wrap{width:min(760px,calc(100% - 28px));background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 16px 42px rgba(13,62,91,.12);overflow:hidden}.head{padding:28px 32px;background:linear-gradient(135deg,#0d3e5b,#0d7072);color:#fff}.head span{font-size:11px;letter-spacing:.13em;font-weight:900;color:#9cd8e8}.head h1{margin:8px 0 7px;font-size:28px}.head p{margin:0;color:#d8ecf2;font-size:13px}.form{padding:26px 32px 30px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label span{display:block;margin:0 0 6px;font-size:11px;font-weight:900;color:#496777}input{width:100%;height:44px;border:1px solid #cbd9e1;border-radius:10px;padding:0 12px;font-size:13px}input:focus{outline:0;border-color:#47a7cf;box-shadow:0 0 0 3px rgba(71,167,207,.12)}.note{margin:18px 0;padding:12px 14px;border-radius:10px;background:#f4f8fa;color:#5b7684;font-size:11px;line-height:1.6}.actions{display:flex;gap:10px;align-items:center}button{height:44px;border:0;border-radius:10px;padding:0 18px;background:#0f739e;color:#fff;font-weight:900;cursor:pointer}.status{font-size:12px;color:#607c89}.status.error{color:#c63b3b}.status.ok{color:#0b8765}@media(max-width:680px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.head,.form{padding-left:20px;padding-right:20px}}
+</style>
+</head><body>
+<div class="wrap">
+  <section class="head"><span>HANGANG BUS SECURE PORTAL</span><h1>최초 관리자 계정 등록</h1><p>이 화면은 사용자 테이블이 비어 있을 때만 열립니다.</p></section>
+  <form id="form" class="form">
+    <div class="grid">
+      <label class="full"><span>1회용 부트스트랩 토큰</span><input id="token" type="password" autocomplete="off" required></label>
+      <label><span>관리자 ID</span><input id="userId" placeholder="예: admin01" required></label>
+      <label><span>관리자 이름</span><input id="displayName" required></label>
+      <label class="full"><span>관리자 이메일</span><input id="email" type="email" required></label>
+      <label><span>소속</span><input id="organization" value="한강버스"></label>
+      <label><span>직책</span><input id="position"></label>
+      <label><span>비밀번호</span><input id="password" type="password" minlength="10" required></label>
+      <label><span>비밀번호 확인</span><input id="confirm" type="password" minlength="10" required></label>
+    </div>
+    <div class="note">관리자 생성이 끝나면 이 초기설정 화면은 자동으로 닫힙니다. 이후 신규 사용자는 관리자 화면에서만 등록합니다.</div>
+    <div class="actions"><button type="submit">관리자 생성</button><span id="status" class="status">대기 중</span></div>
+  </form>
+</div>
+<script>
+const $=id=>document.getElementById(id);const form=$('form'),status=$('status');
+(async()=>{try{const r=await fetch('/api/auth/bootstrap/status',{cache:'no-store'});const j=await r.json();if(!j.needsBootstrap)location.replace('/home.html');}catch{}})();
+form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='생성 중...';if($('password').value!==$('confirm').value){status.className='status error';status.textContent='비밀번호 확인이 일치하지 않습니다.';return;}try{const r=await fetch('/api/auth/bootstrap',{method:'POST',headers:{'content-type':'application/json','x-bootstrap-token':$('token').value},body:JSON.stringify({userId:$('userId').value,displayName:$('displayName').value,email:$('email').value,organization:$('organization').value,position:$('position').value,password:$('password').value})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.message||j.error||'생성 실패');status.className='status ok';status.textContent='관리자 생성 완료. 로그인 화면으로 이동합니다.';setTimeout(()=>location.replace('/home.html'),900);}catch(err){status.className='status error';status.textContent=err.message;}});
+</script>
+</body></html>

@@ -57,7 +57,7 @@ main{width:min(1480px,calc(100% - 34px));margin:0 auto;padding:18px 0 28px}.hero
       <div class="route-zones"><span>서부권 · 마곡~여의도</span><span>도심 연결</span><span>동부권 · 압구정~잠실</span></div>
     </div>
   <aside class="login-card">
-    <div class="login-form-wrap"><div class="login-title"><div><span>AUTHORIZED ACCESS</span><b>승인 사용자 로그인</b></div><span class="login-badge">인증 준비 단계</span></div><form id="loginForm"><div class="login-grid"><label><span>ID</span><input id="loginId" type="text" autocomplete="username" placeholder="사용자 ID"></label><label><span>PW</span><input id="loginPw" type="password" autocomplete="current-password" placeholder="비밀번호"></label></div><button class="login-submit" type="submit">로그인</button><p class="login-note">현재는 화면 동선 검증용 게이트입니다. 실제 계정 인증은 다음 단계에서 Worker + D1로 연결합니다.</p></form></div>
+    <div class="login-form-wrap"><div class="login-title"><div><span>AUTHORIZED ACCESS</span><b>승인 사용자 로그인</b></div><span class="login-badge">보안 인증</span></div><form id="loginForm"><div class="login-grid"><label><span>ID</span><input id="loginId" type="text" autocomplete="username" placeholder="사용자 ID"></label><label><span>PW</span><input id="loginPw" type="password" autocomplete="current-password" placeholder="비밀번호"></label></div><button class="login-submit" type="submit">로그인</button><p class="login-note">승인된 사용자 계정만 접근할 수 있습니다. 로그인 상태는 보안 세션으로 관리됩니다.</p></form></div>
     <div class="unlocked-card"><span class="kicker">ACCESS GRANTED</span><b id="welcomeUser">승인 사용자</b><p>업무 메뉴가 활성화되었습니다.</p><div class="unlocked-links"><a href="./index.html?v=92.5">종합 대시보드</a><a href="./detail.html?v=92.5">전체 상세</a></div></div>
   </aside>
   </div>
@@ -67,7 +67,7 @@ main{width:min(1480px,calc(100% - 34px));margin:0 auto;padding:18px 0 28px}.hero
   <article class="card"><span class="kicker">OPERATIONS</span><strong>종합 상황</strong><p>운항판정과 핵심 위험요인을 가장 먼저 확인합니다.</p><a class="locked" href="./index.html?v=92.5" data-protected="true">대시보드 열기 <span>→</span></a></article>
   <article class="card"><span class="kicker">MONITORING</span><strong>전체 상세</strong><p>수문·기상·조석 세부값을 한 화면에서 점검합니다.</p><a class="locked" href="./detail.html?v=92.5" data-protected="true">상세 모니터링 <span>→</span></a></article>
   <article class="card"><span class="kicker">ANALYTICS</span><strong>데이터 분석</strong><p>과거 수문자료와 조건별 데이터를 조회·비교합니다.</p><a class="locked" href="./analysis-search.html?v=92.5" data-protected="true">데이터 검색 <span>→</span></a></article>
-  <article class="card admin"><span class="kicker">ADMIN</span><strong>사용자 관리</strong><p>승인 사용자·권한·활성상태·접속기록을 관리합니다.</p><button type="button" disabled>인증 구축 후 활성화</button></article>
+  <article class="card admin"><span class="kicker">ADMIN</span><strong>사용자 관리</strong><p>승인 사용자·권한·활성상태·접속기록을 관리합니다.</p><a id="adminUsersLink" class="locked" href="./admin-users.html" data-protected="true">사용자 관리 <span>→</span></a></article>
 </section>
 <section class="quick"><div class="quick-head"><div><span>QUICK ACCESS</span><h2>운항환경 바로가기</h2></div><p>필요한 업무 화면으로 바로 이동합니다.</p></div><div class="groups">
   <article class="group"><h3>운항·수문</h3><div class="links"><a class="locked" href="./route.html?v=92.5" data-protected="true"><b>노선 운항판정</b><span>동·서부선 운항 가능 여부</span></a><a class="locked" href="./jamsu.html?v=92.5" data-protected="true"><b>잠수교 통과높이</b><span>현재 여유높이와 수위 변화</span></a><a class="locked" href="./paldang.html?v=92.5" data-protected="true"><b>팔당댐 방류량</b><span>상류 방류와 운항기준 비교</span></a><a class="locked" href="./river.html?v=92.5" data-protected="true"><b>한강 교량별 수위</b><span>교량 관측망과 수위 현황</span></a></div></article>
@@ -80,15 +80,80 @@ main{width:min(1480px,calc(100% - 34px));margin:0 auto;padding:18px 0 28px}.hero
 <script>
 (() => {
   'use strict';
-  const KEY='hangangbus_portal_preview_auth_v3';
-  const body=document.body, form=document.getElementById('loginForm'), id=document.getElementById('loginId'), pw=document.getElementById('loginPw'), pill=document.getElementById('sessionPill'), user=document.getElementById('sessionUser'), welcome=document.getElementById('welcomeUser'), logout=document.getElementById('logoutBtn'), clock=document.getElementById('clock');
+  const body=document.body;
+  const form=document.getElementById('loginForm');
+  const id=document.getElementById('loginId');
+  const pw=document.getElementById('loginPw');
+  const pill=document.getElementById('sessionPill');
+  const user=document.getElementById('sessionUser');
+  const welcome=document.getElementById('welcomeUser');
+  const logout=document.getElementById('logoutBtn');
+  const clock=document.getElementById('clock');
+  const adminLink=document.getElementById('adminUsersLink');
   const protectedLinks=[...document.querySelectorAll('[data-protected="true"]')];
-  const read=()=>{try{return JSON.parse(sessionStorage.getItem(KEY)||'null')}catch{return null}};
-  const apply=(s)=>{const ok=!!(s&&s.userId);body.classList.toggle('auth-unlocked',ok);body.classList.toggle('auth-locked',!ok);pill.classList.toggle('show',ok);user.textContent=ok?s.userId:'-';welcome.textContent=ok?`${s.userId} 님`:'승인 사용자';protectedLinks.forEach(a=>a.classList.toggle('locked',!ok));};
-  document.addEventListener('click',e=>{const a=e.target.closest('[data-protected="true"]');if(!a||body.classList.contains('auth-unlocked'))return;e.preventDefault();id.focus();document.querySelector('.login-card').scrollIntoView({behavior:'smooth',block:'center'});},true);
-  form.addEventListener('submit',e=>{e.preventDefault();const u=id.value.trim(),p=pw.value;if(!u||!p){(!u?id:pw).focus();return;}const s={userId:u,signedInAt:new Date().toISOString()};sessionStorage.setItem(KEY,JSON.stringify(s));pw.value='';apply(s);});
-  logout.addEventListener('click',()=>{sessionStorage.removeItem(KEY);id.value='';pw.value='';apply(null);id.focus();});
-  const tick=()=>clock.textContent=new Intl.DateTimeFormat('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());tick();setInterval(tick,1000);apply(read());
+  let currentUser=null;
+
+  function apply(session){
+    const ok=!!session;
+    currentUser=session||null;
+    body.classList.toggle('auth-unlocked',ok);
+    body.classList.toggle('auth-locked',!ok);
+    pill.classList.toggle('show',ok);
+    user.textContent=ok?(session.displayName||session.userId):'-';
+    welcome.textContent=ok?`${session.displayName||session.userId} 님`:'승인 사용자';
+    protectedLinks.forEach(a=>a.classList.toggle('locked',!ok));
+    if(adminLink){
+      const isAdmin=ok&&session.role==='admin';
+      adminLink.style.display=isAdmin?'flex':'none';
+      adminLink.classList.toggle('locked',!isAdmin);
+    }
+  }
+
+  async function loadSession(){
+    try{
+      const r=await fetch('/api/auth/me',{credentials:'same-origin',cache:'no-store'});
+      if(!r.ok){apply(null);return;}
+      const j=await r.json();
+      apply(j.ok?j.user:null);
+    }catch{apply(null);}
+  }
+
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('[data-protected="true"]');
+    if(!a||currentUser)return;
+    e.preventDefault();
+    id.focus();
+    document.querySelector('.login-card').scrollIntoView({behavior:'smooth',block:'center'});
+  },true);
+
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const u=id.value.trim(),p=pw.value;
+    if(!u||!p){(!u?id:pw).focus();return;}
+    const submit=form.querySelector('button[type="submit"]');
+    const original=submit.textContent;
+    submit.disabled=true;submit.textContent='인증 중...';
+    try{
+      const r=await fetch('/api/auth/login',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({userId:u,password:p})});
+      const j=await r.json();
+      if(!r.ok||!j.ok)throw new Error(j.message||'로그인에 실패했습니다.');
+      pw.value='';
+      apply(j.user);
+      const ret=new URL(location.href).searchParams.get('return');
+      if(ret&&ret.startsWith('/')&&!ret.startsWith('//')) location.href=ret;
+    }catch(err){
+      alert(err.message);
+      pw.select();
+    }finally{submit.disabled=false;submit.textContent=original;}
+  });
+
+  logout.addEventListener('click',async()=>{
+    try{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'});}catch{}
+    id.value='';pw.value='';apply(null);id.focus();
+  });
+
+  const tick=()=>clock.textContent=new Intl.DateTimeFormat('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());
+  tick();setInterval(tick,1000);loadSession();
 })();
 </script>
 </body>
