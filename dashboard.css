@@ -1477,13 +1477,6 @@ button {
 /* =========================================================
    v92.5 수문 운항중단 판단 카드 - 고밀도/고가독성
 ========================================================= */
-.control-grid{align-items:start!important;grid-template-rows:auto auto auto!important}
-.route-overview{grid-row:1!important;align-self:start!important}
-.river-overview{grid-row:1!important;align-self:start!important}
-.alerts-overview{grid-row:1!important;align-self:start!important}
-.weather-overview{grid-row:2!important;grid-column:1!important;align-self:start!important}
-.timeline-overview{grid-row:2!important;grid-column:2!important;align-self:start!important}
-.health-overview{grid-row:2!important;grid-column:3!important;align-self:start!important}
 .hydro-impact-overview{padding:14px 15px!important}
 .hydro-heading{margin-bottom:8px!important}
 .hydro-heading>div>span{font-size:10px!important}
@@ -1545,9 +1538,54 @@ button {
   .hydro-reference-row{grid-template-columns:1fr}
 }
 @media(max-width:1180px){
-  .weather-overview,.timeline-overview,.health-overview{grid-column:auto!important;grid-row:auto!important}
   .hydro-stop-grid{grid-template-columns:1fr}
   .hydro-stop-card.paldang-west{grid-column:auto}
   .hydro-secondary-strip{grid-template-columns:1fr 1fr!important}
   .hydro-secondary-strip>.hydro-guide{grid-column:1/-1}
+}
+
+
+/* =========================================================
+   v92.6 종합대시보드 레이아웃 정상화
+   - v92.3의 안정적인 3열/3행 배치를 canonical layout으로 복구
+   - v92.5의 수문 운항중단 판단 콘텐츠는 그대로 유지
+========================================================= */
+@media (min-width:1181px){
+  .control-grid{
+    display:grid!important;
+    grid-template-columns:minmax(270px,.96fr) minmax(520px,1.95fr) minmax(290px,1.02fr)!important;
+    grid-template-rows:minmax(240px,auto) minmax(220px,auto) minmax(170px,auto)!important;
+    gap:12px!important;
+    align-items:stretch!important;
+  }
+  .route-overview{
+    grid-column:1!important;
+    grid-row:1 / span 2!important;
+    align-self:stretch!important;
+  }
+  .river-overview{
+    grid-column:2!important;
+    grid-row:1 / span 2!important;
+    align-self:stretch!important;
+  }
+  .alerts-overview{
+    grid-column:3!important;
+    grid-row:1!important;
+    align-self:stretch!important;
+  }
+  .weather-overview{
+    grid-column:3!important;
+    grid-row:2!important;
+    align-self:stretch!important;
+  }
+  .timeline-overview{
+    grid-column:1 / span 2!important;
+    grid-row:3!important;
+    align-self:stretch!important;
+  }
+  .health-overview{
+    grid-column:3!important;
+    grid-row:3!important;
+    align-self:stretch!important;
+  }
 }
