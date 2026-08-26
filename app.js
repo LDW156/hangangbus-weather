@@ -1486,13 +1486,14 @@
   }
   function forecastWindCard(x){
     if(!validWindForecast(x))return `<div class="wind-forecast-card unavailable"><span>풍향·풍속 예보 없음</span></div>`;
+    const hasWind=Number.isFinite(Number(x.speed));
     return `<div class="wind-forecast-card">
       <div class="wind-forecast-head"><span>${x.hour}시간 후</span><b>${timeText(x.time)}</b></div>
-      <div class="wind-forecast-body">
-        ${compass(x.directionDeg,x.speed,true)}
+      <div class="wind-forecast-body no-forecast-temp">
+        ${hasWind?compass(x.directionDeg,x.speed,true):'<div class="wind-forecast-placeholder">-</div>'}
         <div class="wind-forecast-reading">
-          <strong>${fmt(x.speed,1)}m/s</strong>
-          <em>${esc(x.direction||'풍향 확인 중')}</em>
+          <strong>${hasWind?`${fmt(x.speed,1)}m/s`:'풍속 -'}</strong>
+          <em>${hasWind?esc(x.direction||'풍향 확인 중'):'풍향 자료 없음'}</em>
         </div>
       </div>
     </div>`;
