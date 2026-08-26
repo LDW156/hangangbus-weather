@@ -1482,28 +1482,17 @@
     return `${y.toFixed(5)}°N, ${x.toFixed(5)}°E`;
   }
   function validWindForecast(x){
-    return Boolean(
-      x && (
-        Number.isFinite(Number(x.speed)) ||
-        Number.isFinite(Number(x.temperature))
-      )
-    );
+    return Boolean(x && Number.isFinite(Number(x.speed)));
   }
   function forecastWindCard(x){
-    if(!validWindForecast(x))return `<div class="wind-forecast-card unavailable"><span>풍속·기온 예보 없음</span></div>`;
-    const hasWind=Number.isFinite(Number(x.speed));
-    const hasTemp=Number.isFinite(Number(x.temperature));
+    if(!validWindForecast(x))return `<div class="wind-forecast-card unavailable"><span>풍향·풍속 예보 없음</span></div>`;
     return `<div class="wind-forecast-card">
       <div class="wind-forecast-head"><span>${x.hour}시간 후</span><b>${timeText(x.time)}</b></div>
       <div class="wind-forecast-body">
-        ${hasWind?compass(x.directionDeg,x.speed,true):'<div class="wind-forecast-placeholder">-</div>'}
+        ${compass(x.directionDeg,x.speed,true)}
         <div class="wind-forecast-reading">
-          <strong>${hasWind?`${fmt(x.speed,1)}m/s`:'풍속 -'}</strong>
-          <em>${hasWind?esc(x.direction||'풍향 확인 중'):'풍향 자료 없음'}</em>
-        </div>
-        <div class="wind-temp-reference forecast">
-          <span>참고 기온</span>
-          <b>${hasTemp?`${fmt(x.temperature,1)}℃`:'-'}</b>
+          <strong>${fmt(x.speed,1)}m/s</strong>
+          <em>${esc(x.direction||'풍향 확인 중')}</em>
         </div>
       </div>
     </div>`;

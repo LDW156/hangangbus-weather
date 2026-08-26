@@ -5137,3 +5137,9 @@ details.rain-contribution-box {
 @media(max-width:1050px){
   .wind-current-compact{grid-template-columns:60px minmax(0,1fr) 76px!important}
 }
+
+
+/* v93.1 wind forecast: current temperature only */
+.wind-temp-reference.forecast{display:none!important}
+.wind-forecast-grid-v59 .wind-forecast-body{grid-template-columns:36px minmax(0,1fr)!important}
+.wind-forecast-grid-v59 .wind-forecast-reading{min-width:0!important}

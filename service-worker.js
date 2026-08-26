@@ -1,9 +1,9 @@
-const CACHE = 'hangangbus-dashboard-simplified-v92-7';
+const CACHE = 'hangangbus-dashboard-v93-1';
 const STATIC_ASSETS = [
   './dashboard.css?v=92.7','./history.css?v=92.1','./styles.css?v=92.1',
   './module-pages.css?v=92.1','./shared-sidebar.css?v=92.1',
-  './dashboard.js?v=92.7','./history.js?v=92.3','./app.js?v=92.1',
-  './module-pages.js?v=92.1','./shared-navigation.js?v=92.1','./app-bootstrap.js?v=92.1',
+  './dashboard.js?v=92.7','./history.js?v=92.3','./app.js?v=93.1',
+  './module-pages.js?v=92.1','./shared-navigation.js?v=93.1','./app-bootstrap.js?v=92.1',
   './shared-config.js?v=92.1','./weather-config.js?v=92.1','./ocean-config.js?v=92.1',
   './config.js?v=92.1','./data-cache.js?v=92.1','./hrfco.js?v=92.1','./kma.js?v=92.1','./ocean.js?v=92.1',
   './history-config.js?v=92.1','./assets/hangangbus-logo.png?v=88'

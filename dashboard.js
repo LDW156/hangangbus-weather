@@ -778,11 +778,11 @@
   }
 
   function renderEvents(calc) {
-    $('dashboardEventTime').textContent =
-      dateTimeText(data?.meta?.generatedAt);
+    $('dashboardEventTime').textContent = dateTimeText(data?.meta?.generatedAt);
 
     const events = [];
-    const add = (state, title, detail) => events.push({state, title, detail});
+    const add = (state, time, title, detail) => events.push({state, time, title, detail});
+    const sourceTime = value => timeText(value || data?.meta?.generatedAt);
 
     add(
       calc.clearance <= cfg.THRESHOLDS.jamsu.stopClearanceM
@@ -790,6 +790,7 @@
         : calc.clearance <= cfg.THRESHOLDS.jamsu.cautionClearanceM
           ? 'yellow'
           : 'blue',
+      sourceTime(data?.hydrology?.jamsuBridge?.observedAt),
       '잠수교 통과높이',
       `${fmt(calc.clearance, 2)}m · ${
         calc.clearanceDelta > .004
@@ -806,38 +807,61 @@
         : calc.outflow >= cfg.THRESHOLDS.paldang.eastCautionCms
           ? 'yellow'
           : 'blue',
+      sourceTime(data?.hydrology?.paldang?.observedAt),
       '팔당댐 방류량',
       `${fmt(calc.outflow)}㎥/s · 10분 전 대비 ${signed(calc.outflowDelta, 0, '㎥/s')}`
     );
 
+    const westRain = Number(calc.westRain?.next3h) || 0;
+    const eastRain = Number(calc.eastRain?.next3h) || 0;
+    const rainIsWest = westRain >= eastRain;
+    const rain = rainIsWest ? calc.westRain : calc.eastRain;
+    const rainName = rainIsWest ? '마곡' : '잠실';
+    const rainValue = rain?.next3hDisplay || fmt(rain?.next3h, 1);
     add(
-      calc.eastRain.next12h >= cfg.THRESHOLDS.rainfall.stop12hMm
+      Number(rain?.next3h) >= cfg.THRESHOLDS.rainfall.stop3hMm
         ? 'red'
-        : calc.eastRain.next12h >= cfg.THRESHOLDS.rainfall.stop12hMm * .65
+        : Number(rain?.next3h) >= cfg.THRESHOLDS.rainfall.stop3hMm * .65
           ? 'yellow'
           : 'blue',
-      '잠실 강수 전망',
-      `12시간 ${calc.eastRain.next12hDisplay || fmt(calc.eastRain.next12h, 1)}mm`
+      sourceTime(rain?.forecastStartAt || data?.meta?.dataTimes?.weatherForecastIssued),
+      '강수량 변동',
+      `${rainName} 3시간 강수 ${rainValue}mm`
     );
 
-    const nextHigh = data?.tide?.nextHigh;
-    if (nextHigh) {
-      add(
-        data?.tide?.overlapRisk === '높음'
-          ? 'red'
-          : data?.tide?.overlapRisk === '보통'
-            ? 'yellow'
-            : 'blue',
-        '인천 다음 만조',
-        `${dateTimeText(nextHigh.time)} · ${fmt(nextHigh.heightCm)}cm`
-      );
-    }
+    const windIsWest = calc.westWind >= calc.eastWind;
+    const maxWind = windIsWest ? calc.westWind : calc.eastWind;
+    const windName = windIsWest ? '서부선' : '동부선';
+    add(
+      maxWind >= cfg.THRESHOLDS.wind.stopMs
+        ? 'red'
+        : maxWind >= cfg.THRESHOLDS.wind.cautionMs
+          ? 'yellow'
+          : 'blue',
+      sourceTime(data?.meta?.dataTimes?.weatherObservation),
+      '풍속 변동',
+      `${windName} 최대풍속 ${fmt(maxWind, 1)}m/s`
+    );
 
-    $('dashboardEventList').innerHTML = events.slice(0, 4).map(event => `
+    const hangang = data?.hydrology?.hangangBridge || {};
+    const hangangHistory = hangang.history || [];
+    const hangangNow = Number(hangang.waterLevelM);
+    const hangangPrev = historyValue(hangangHistory, 1, 'value');
+    const hangangDelta = Number.isFinite(hangangNow) && hangangPrev !== null
+      ? hangangNow - hangangPrev
+      : 0;
+    add(
+      Math.abs(hangangDelta) >= .10 ? 'yellow' : 'blue',
+      sourceTime(hangang.observedAt),
+      Math.abs(hangangDelta) < .01 ? '수위 안정' : '수위 변동',
+      `한강대교 ${Number.isFinite(hangangNow) ? fmt(hangangNow,2)+'m' : '-'} · 10분 ${signed(hangangDelta,2,'m')}`
+    );
+
+    $('dashboardEventList').innerHTML = events.slice(0, 5).map(event => `
       <div class="dashboard-event-item ${event.state}">
-        <i></i>
-        <div>
-          <b>${event.title}</b>
+        <div class="event-time-row"><b>${event.time}</b><em>${event.state === 'red' ? '위험' : event.state === 'yellow' ? '주의' : '정보'}</em></div>
+        <div class="event-copy">
+          <strong>${event.title}</strong>
           <span>${event.detail}</span>
         </div>
       </div>

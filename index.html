@@ -4,7 +4,7 @@
 <head><script>
 (() => {
   'use strict';
-  const BUILD = '93.0';
+  const BUILD = '93.1';
   const LEGACY_ROUTES={
     '#analysis-dam':'analysis-dam.html',
     '#analysis-bridge':'analysis-bridge.html',
@@ -32,7 +32,7 @@
 <link href="./assets/hangangbus-logo.png?v=88" rel="shortcut icon" type="image/png"/>
 <link href="./assets/hangangbus-logo.png?v=88" rel="apple-touch-icon"/>
 <link href="dashboard.css?v=92.7" rel="stylesheet"/>
-<link href="dashboard-visual-v93.css?v=93.0" rel="stylesheet"/>
+<link href="dashboard-visual-v93.css?v=93.1" rel="stylesheet"/>
 <link href="shared-sidebar.css?v=92.1" rel="stylesheet"/>
 </head>
 <body class="dashboard-body">
@@ -100,22 +100,23 @@
 <article class="control-card river-overview hydro-impact-overview hydro-compact-card">
 <div class="card-heading hydro-heading">
 <div>
-<span>수문 운항중단 판단</span>
-<h2>운항중단 핵심 기준</h2>
+<span>핵심 운항판단</span>
+<h2>운항중단 핵심 기준 <small>수문·기상 통합 판정</small></h2>
 </div>
 <a href="./river.html?v=92.7">수문 상세</a>
 </div>
 
 <div class="hydro-decision-banner hydro-decision-simple" id="hydroImpactSummary">
 <div class="hydro-decision-main">
-<span>현재 수문 기준</span>
-<b id="hydroImpactState">판단 중</b>
+<i class="hydro-decision-check" aria-hidden="true">✓</i>
+<div><span>현재 운항 상태</span>
+<b id="hydroImpactState">판단 중</b></div>
 <p id="hydroImpactText" class="hydro-internal-hidden">수문 기준 확인 중</p>
 </div>
 </div>
 
 <div class="hydro-visual-grid">
-<a class="hydro-visual-card jamsu" href="./jamsu.html?v=93.0">
+<a class="hydro-visual-card jamsu" href="./jamsu.html?v=93.1">
 <div class="hydro-visual-head"><div><span>동부선 · 잠수교</span><b>통과높이</b></div></div>
 <div class="hydro-main-number"><strong id="hydroJamsuValue">-</strong><em id="hydroJamsuTrend">-</em></div>
 <div class="hydro-gauge-caption"><span>운항중단 기준 7.30m</span><b id="hydroJamsuMargin">-</b></div>
@@ -125,7 +126,7 @@
 <div class="mini-chart-wrap"><svg id="jamsuMiniChart" aria-label="잠수교 통과높이 최근 추이"></svg></div>
 </a>
 
-<a class="hydro-visual-card paldang" href="./paldang.html?v=93.0">
+<a class="hydro-visual-card paldang" href="./paldang.html?v=93.1">
 <div class="hydro-visual-head"><div><span>동·서부선 · 팔당댐</span><b>방류량</b></div></div>
 <div class="hydro-main-number"><strong id="hydroPaldangValue">-</strong><em id="hydroPaldangTrend">-</em></div>
 <div class="hydro-dual-threshold">
@@ -164,7 +165,7 @@
 <div class="card-heading">
 <div>
 <span>기상 전망</span>
-<h2>강수·풍속 핵심값</h2>
+<h2>강수·풍속 핵심값 <small>최근 3시간</small></h2>
 </div>
 <a href="./rain.html?v=92.1">상세보기</a>
 </div>
@@ -187,9 +188,9 @@
 <div class="card-heading">
 <div>
 <span>최근 변화</span>
-<h2>상황 이벤트</h2>
+<h2>상황 이벤트 <small>최근 12시간</small></h2>
 </div>
-<span class="card-time" id="dashboardEventTime">-</span>
+<div class="event-head-right"><span class="card-time" id="dashboardEventTime">-</span><a href="./detail.html?v=93.1">전체 보기</a></div>
 </div>
 <div class="dashboard-event-list" id="dashboardEventList"></div>
 </article>
@@ -223,7 +224,7 @@
 <script src="kma.js?v=92.1"></script>
 <script src="ocean.js?v=92.1"></script>
 <script src="dashboard.js?v=92.7"></script>
-<script src="dashboard-visual-v93.js?v=93.0"></script>
-<script src="shared-navigation.js?v=92.1"></script>
+<script src="dashboard-visual-v93.js?v=93.1"></script>
+<script src="shared-navigation.js?v=93.1"></script>
 <script src="./app-bootstrap.js?v=92.1"></script></body>
 </html>
