@@ -22,5 +22,11 @@
       "database_name": "hangangbus-auth",
       "database_id": "d26ba20a-e94e-4b2e-bd7b-1b12e86aa7c9"
     }
+  ],
+  "services": [
+    {
+      "binding": "HISTORY_API",
+      "service": "hangangbus-history-api"
+    }
   ]
 }

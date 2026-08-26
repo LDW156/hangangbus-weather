@@ -28,6 +28,9 @@ export default {
     if (path === '/api/auth/change-password' && request.method === 'POST') {
       return changePassword(request, env);
     }
+    if (path.startsWith('/api/history/')) {
+      return proxyHistoryApi(request, env);
+    }
 
     if (path === '/api/admin/users' && request.method === 'GET') {
       return adminListUsers(request, env);
@@ -84,6 +87,66 @@ export default {
     return isNavigation ? noStoreAsset(response) : response;
   }
 };
+
+
+async function proxyHistoryApi(request, env) {
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405, { 'Allow': 'GET, HEAD' });
+  }
+
+  const auth = await authenticate(request, env, { checkDb: true });
+  if (!auth.ok) {
+    return json({ ok: false, error: 'AUTH_REQUIRED' }, 401, {
+      'Set-Cookie': clearCookie(),
+      'Cache-Control': 'no-store, private'
+    });
+  }
+
+  if (!env.HISTORY_API || typeof env.HISTORY_API.fetch !== 'function') {
+    return json({ ok: false, error: 'HISTORY_SERVICE_UNAVAILABLE' }, 503);
+  }
+
+  const incoming = new URL(request.url);
+  const upstreamUrl = new URL(request.url);
+  upstreamUrl.pathname = incoming.pathname.replace(/^\/api\/history/, '') || '/';
+
+  const upstreamHeaders = new Headers(request.headers);
+  upstreamHeaders.delete('cookie');
+  upstreamHeaders.delete('authorization');
+  upstreamHeaders.delete('cf-connecting-ip');
+  upstreamHeaders.delete('x-forwarded-for');
+  upstreamHeaders.set('x-hangang-portal-user', auth.user.user_id);
+  upstreamHeaders.set('x-hangang-portal-role', auth.user.role);
+
+  const upstreamRequest = new Request(upstreamUrl.toString(), {
+    method: request.method,
+    headers: upstreamHeaders,
+    redirect: 'manual'
+  });
+
+  try {
+    const upstream = await env.HISTORY_API.fetch(upstreamRequest);
+    const headers = new Headers(upstream.headers);
+    headers.delete('access-control-allow-origin');
+    headers.delete('access-control-allow-credentials');
+    headers.delete('access-control-allow-headers');
+    headers.delete('access-control-allow-methods');
+    headers.set('Cache-Control', 'no-store, private');
+    headers.set('X-Content-Type-Options', 'nosniff');
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers
+    });
+  } catch (error) {
+    return json({
+      ok: false,
+      error: 'HISTORY_PROXY_FAILED',
+      message: String(error?.message || error || 'history proxy failed').slice(0, 180)
+    }, 502);
+  }
+}
 
 function isPublicAsset(path) {
   return path === '/' || path === '/home.html' || path === '/setup.html' ||
