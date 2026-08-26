@@ -27,7 +27,16 @@
 </div>
 <script>
 const $=id=>document.getElementById(id);const form=$('form'),status=$('status');
-(async()=>{try{const r=await fetch('/api/auth/bootstrap/status',{cache:'no-store'});const j=await r.json();if(!j.needsBootstrap)location.replace('/home.html');}catch{}})();
-form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='생성 중...';if($('password').value!==$('confirm').value){status.className='status error';status.textContent='비밀번호 확인이 일치하지 않습니다.';return;}try{const r=await fetch('/api/auth/bootstrap',{method:'POST',headers:{'content-type':'application/json','x-bootstrap-token':$('token').value},body:JSON.stringify({userId:$('userId').value,displayName:$('displayName').value,email:$('email').value,organization:$('organization').value,position:$('position').value,password:$('password').value})});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.message||j.error||'생성 실패');status.className='status ok';status.textContent='관리자 생성 완료. 로그인 화면으로 이동합니다.';setTimeout(()=>location.replace('/home.html'),900);}catch(err){status.className='status error';status.textContent=err.message;}});
+async function apiJson(r){
+  const ct=(r.headers.get('content-type')||'').toLowerCase();
+  const raw=await r.text();
+  if(!ct.includes('application/json')){
+    const hint=raw.replace(/\s+/g,' ').slice(0,120);
+    throw new Error(`서버 응답 오류 (HTTP ${r.status})${hint?` · ${hint}`:''}`);
+  }
+  try{return JSON.parse(raw)}catch{throw new Error(`서버 JSON 응답 오류 (HTTP ${r.status})`)}
+}
+(async()=>{try{const r=await fetch('/api/auth/bootstrap/status',{cache:'no-store'});const j=await apiJson(r);if(!j.needsBootstrap)location.replace('/home.html');}catch(err){status.className='status error';status.textContent=err.message;}})();
+form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='생성 중...';if($('password').value!==$('confirm').value){status.className='status error';status.textContent='비밀번호 확인이 일치하지 않습니다.';return;}try{const r=await fetch('/api/auth/bootstrap',{method:'POST',headers:{'content-type':'application/json','x-bootstrap-token':$('token').value},body:JSON.stringify({userId:$('userId').value,displayName:$('displayName').value,email:$('email').value,organization:$('organization').value,position:$('position').value,password:$('password').value})});const j=await apiJson(r);if(!r.ok||!j.ok)throw new Error(j.message||j.error||'생성 실패');status.className='status ok';status.textContent='관리자 생성 완료. 로그인 화면으로 이동합니다.';setTimeout(()=>location.replace('/home.html'),900);}catch(err){status.className='status error';status.textContent=err.message;}});
 </script>
 </body></html>
